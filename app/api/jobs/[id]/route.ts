@@ -1,18 +1,24 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/client"
+import { verifyToken } from "@/lib/auth-custom"
+
+async function getAuthenticatedUser(request: NextRequest) {
+  const token = request.cookies.get("auth-token")?.value
+  if (!token) {
+    return null
+  }
+  return await verifyToken(token)
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const supabase = createServerClient()
-    const { id } = await params // Await params to get the id
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const { id } = await params
+    const supabase = createClient()
 
     const { data: job, error } = await supabase
       .from("jobs")
@@ -24,7 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         carts:cart_id(name, details),
         receipts:receipt_id(receipt_number, status, total_amount)
       `)
-      .eq("id", id) // Use awaited id
+      .eq("id", id)
       .eq("created_by_id", user.id)
       .single()
 
@@ -40,18 +46,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const supabase = createServerClient()
-    const { id } = await params // Await params to get the id
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
+    const supabase = createClient()
 
     const updateData = {
       ...body,
@@ -61,7 +63,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { data: job, error } = await supabase
       .from("jobs")
       .update(updateData)
-      .eq("id", id) // Use awaited id
+      .eq("id", id)
       .eq("created_by_id", user.id)
       .select()
       .single()
@@ -78,18 +80,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const supabase = createServerClient()
-    const { id } = await params // Await params to get the id
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { error } = await supabase.from("jobs").delete().eq("id", id).eq("created_by_id", user.id) // Use awaited id
+    const { id } = await params
+    const supabase = createClient()
+
+    const { error } = await supabase.from("jobs").delete().eq("id", id).eq("created_by_id", user.id)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

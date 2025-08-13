@@ -1,19 +1,25 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/client"
+import { verifyToken } from "@/lib/auth-custom"
 import { invoiceService } from "@/lib/invoice-service"
+
+async function getAuthenticatedUser(request: NextRequest) {
+  const token = request.cookies.get("auth-token")?.value
+  if (!token) {
+    return null
+  }
+  return await verifyToken(token)
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const supabase = createServerClient()
-    const { id } = await params // Await params to get the id
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const { id } = await params
+    const supabase = createClient()
 
     // Get receipt with related data
     const { data: receipt, error: receiptError } = await supabase
@@ -22,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         *,
         clients:client_id(company_name, contact_person, email, address, city, payment_method)
       `)
-      .eq("id", id) // Use awaited id
+      .eq("id", id)
       .eq("created_by_id", user.id)
       .single()
 
@@ -37,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         *,
         workers:worker_id(name)
       `)
-      .eq("receipt_id", id) // Use awaited id
+      .eq("receipt_id", id)
       .eq("created_by_id", user.id)
 
     if (jobsError) {

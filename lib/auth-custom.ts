@@ -28,6 +28,34 @@ function verifyPassword(inputPassword: string, storedPassword: string): boolean 
   return inputPassword === storedPassword
 }
 
+// Verify token and return user if valid
+export async function verifyToken(token: string): Promise<User | null> {
+  const supabase = createClient()
+
+  const { data: session, error } = await supabase
+    .from("user_sessions")
+    .select(`
+      *,
+      user_profiles!inner(*)
+    `)
+    .eq("session_token", token)
+    .gt("expires_at", new Date().toISOString())
+    .single()
+
+  if (error || !session) {
+    return null
+  }
+
+  return {
+    id: session.user_profiles.id,
+    username: session.user_profiles.username,
+    full_name: session.user_profiles.full_name,
+    role: session.user_profiles.role,
+    is_active: session.user_profiles.is_active,
+    permissions: session.user_profiles.permissions,
+  }
+}
+
 // Create a new session
 export async function createSession(userId: string): Promise<string> {
   const supabase = createClient()
