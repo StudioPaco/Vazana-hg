@@ -1,19 +1,20 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
   // Check if already logged in
@@ -28,11 +29,16 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("Login attempt:", { username, password }) // Added debug logging
     setIsLoading(true)
     setError("")
 
+    // Add small delay to show loading state
+    await new Promise((resolve) => setTimeout(resolve, 500))
+
     // Simple hardcoded authentication
     if (username === "root" && password === "10203040") {
+      console.log("Login successful") // Added debug logging
       localStorage.setItem("vazana_logged_in", "true")
       localStorage.setItem(
         "vazana_user",
@@ -44,6 +50,7 @@ export default function LoginPage() {
       )
       router.push("/")
     } else {
+      console.log("Login failed") // Added debug logging
       setError("שם משתמש או סיסמה שגויים") // Invalid username or password in Hebrew
     }
 
@@ -83,6 +90,7 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 className="text-left"
                 placeholder="root"
+                autoComplete="username" // Added missing autocomplete attribute
                 required
                 disabled={isLoading}
               />
@@ -91,20 +99,32 @@ export default function LoginPage() {
               <Label htmlFor="password" className="text-right block text-vazana-dark">
                 סיסמה
               </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="text-left"
-                autoComplete="current-password"
-                required
-                disabled={isLoading}
-              />
+              <div className="relative">
+                {" "}
+                {/* Added password visibility toggle container */}
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="text-left pr-10"
+                  autoComplete="current-password"
+                  required
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <Button
               type="submit"
-              className="w-full bg-vazana-yellow hover:bg-vazana-yellow/90 text-vazana-dark font-medium"
+              className="w-full bg-vazana-yellow hover:bg-vazana-yellow/90 text-vazana-dark font-medium transition-all duration-200 active:scale-95" // Added visual feedback
               disabled={isLoading}
             >
               {isLoading ? "מתחבר..." : "התחבר"}
