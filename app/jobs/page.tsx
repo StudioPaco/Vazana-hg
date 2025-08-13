@@ -1,5 +1,51 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import JobsPage from "@/components/jobs/jobs-page"
+import SidebarNavigation from "@/components/layout/sidebar-navigation"
 
 export default function Jobs() {
-  return <JobsPage />
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const loggedIn = localStorage.getItem("vazana_logged_in")
+
+      if (loggedIn === "true") {
+        setIsLoggedIn(true)
+      } else {
+        router.push("/auth/login")
+      }
+      setIsLoading(false)
+    }
+  }, [router])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-vazana-yellow/10 to-vazana-teal/10">
+        <div className="text-vazana-dark text-lg font-hebrew">טוען...</div>
+      </div>
+    )
+  }
+
+  if (!isLoggedIn) {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Main Content */}
+      <div className="flex-1 pr-64">
+        <div className="p-6">
+          <JobsPage />
+        </div>
+      </div>
+
+      {/* Sidebar Navigation */}
+      <SidebarNavigation />
+    </div>
+  )
 }
