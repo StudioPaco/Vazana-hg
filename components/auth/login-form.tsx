@@ -1,46 +1,39 @@
 "use client"
 
-import { useActionState } from "react"
-import { useFormStatus } from "react-dom"
+import type React from "react"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { signIn } from "@/lib/auth-actions"
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button
-      type="submit"
-      disabled={pending}
-      className="w-full bg-[#FFCC00] hover:bg-[#E6B800] text-[#1A1A1A] py-6 text-lg font-medium rounded-lg h-[60px]"
-    >
-      {pending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          מתחבר...
-        </>
-      ) : (
-        "התחבר"
-      )}
-    </Button>
-  )
-}
+import { clientAuth } from "@/lib/client-auth"
 
 export default function LoginForm() {
   const router = useRouter()
-  const [state, formAction] = useActionState(signIn, null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  // Handle successful login by redirecting
-  useEffect(() => {
-    if (state?.success) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    const formData = new FormData(e.currentTarget)
+    const username = formData.get("username") as string
+    const password = formData.get("password") as string
+
+    const user = clientAuth.login(username, password)
+
+    if (user) {
       router.push("/")
+    } else {
+      setError("שם משתמש או סיסמה שגויים")
     }
-  }, [state, router])
+
+    setLoading(false)
+  }
 
   return (
     <Card className="w-full max-w-md shadow-xl border-gray-200">
@@ -55,11 +48,9 @@ export default function LoginForm() {
       </CardHeader>
 
       <CardContent>
-        <form action={formAction} className="space-y-6">
-          {state?.error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-right">
-              {state.error}
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-right">{error}</div>
           )}
 
           <div className="space-y-4">
@@ -73,6 +64,7 @@ export default function LoginForm() {
                 type="text"
                 placeholder="root"
                 required
+                autoComplete="username"
                 className="h-12 text-base border-gray-300 focus:border-[#00DAC0] text-right"
                 dir="ltr"
               />
@@ -86,13 +78,27 @@ export default function LoginForm() {
                 name="password"
                 type="password"
                 required
+                autoComplete="current-password"
                 className="h-12 text-base border-gray-300 focus:border-[#00DAC0]"
                 dir="ltr"
               />
             </div>
           </div>
 
-          <SubmitButton />
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#FFCC00] hover:bg-[#E6B800] text-[#1A1A1A] py-6 text-lg font-medium rounded-lg h-[60px]"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                מתחבר...
+              </>
+            ) : (
+              "התחבר"
+            )}
+          </Button>
 
           <div className="text-center text-gray-500 text-sm">משתמש ברירת מחדל: root | סיסמה: 10203040</div>
         </form>

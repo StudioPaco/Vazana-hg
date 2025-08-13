@@ -1,8 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { cookies } from "next/headers"
-import { verifyToken } from "@/lib/auth-custom"
-import Navigation from "@/components/layout/navigation"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -12,23 +9,11 @@ export const metadata: Metadata = {
   generator: "v0.dev",
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  let user = null
-  try {
-    const cookieStore = cookies()
-    const token = cookieStore.get("auth-token")?.value
-    if (token) {
-      user = await verifyToken(token)
-    }
-  } catch (error) {
-    // User not authenticated, will show login page
-    user = null
-  }
-
   return (
     <html lang="he" dir="rtl" className="font-hebrew" suppressHydrationWarning>
       <head>
@@ -39,14 +24,7 @@ export default async function RootLayout({
       </head>
       <body className="antialiased bg-neutral-50" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-          {user ? (
-            <div className="flex h-screen bg-neutral-50">
-              <Navigation user={user} />
-              <main className="flex-1 overflow-auto">{children}</main>
-            </div>
-          ) : (
-            children
-          )}
+          {children}
         </ThemeProvider>
       </body>
     </html>
