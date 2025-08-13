@@ -102,21 +102,19 @@ export default function LoginPage() {
                 סיסמה
               </Label>
               <div className="relative">
-                {" "}
-                {/* Added password visibility toggle container */}
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="text-left pr-10"
+                  className="text-left pl-10" // Changed from pr-10 to pl-10 to add padding on left side for icon
                   autoComplete="current-password"
                   required
                   disabled={isLoading}
                 />
                 <button
                   type="button"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" // Changed from left-3 to right-3 to position eye icon on opposite side from text (LTR)
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >

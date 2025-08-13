@@ -3,10 +3,10 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Users, Briefcase, FileText, Settings, Archive, Calculator, Plus, LogOut } from "lucide-react"
+import Image from "next/image"
 
 const navigationItems = [
   { name: "ניווט", href: "/", icon: Home },
-  { name: "לוח בקרה", href: "/dashboard", icon: Home },
   { name: "עבודות", href: "/jobs", icon: Briefcase },
   { name: "לקוחות", href: "/clients", icon: Users },
   { name: "עבודה חדשה", href: "/jobs/new", icon: Plus },
@@ -27,11 +27,11 @@ export default function SidebarNavigation() {
 
   return (
     <div className="w-64 bg-white border-l border-gray-200 h-screen fixed right-0 top-0 z-40 shadow-lg">
-      {/* Header */}
+      {/* Header with Logo */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="text-right">
-            <h2 className="text-lg font-bold text-vazana-dark font-hebrew">וזאנה אבטחת כבישים</h2>
+        <div className="flex flex-col items-center justify-center space-y-3">
+          <Image src="/images/vazana-logo.png" alt="Vazana Logo" width={120} height={60} className="object-contain" />
+          <div className="text-center">
             <p className="text-sm text-gray-600 font-hebrew">ניהול לקוחות ועבודות</p>
           </div>
         </div>
