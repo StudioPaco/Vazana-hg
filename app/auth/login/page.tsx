@@ -48,7 +48,9 @@ export default function LoginPage() {
           role: "admin",
         }),
       )
-      router.push("/")
+
+      console.log("Redirecting to dashboard...")
+      window.location.href = "/"
     } else {
       console.log("Login failed") // Added debug logging
       setError("שם משתמש או סיסמה שגויים") // Invalid username or password in Hebrew
