@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Dashboard from "@/components/dashboard/dashboard"
+import SimpleDashboard from "@/components/dashboard/simple-dashboard"
 
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -33,5 +33,5 @@ export default function HomePage() {
     return null
   }
 
-  return <Dashboard />
+  return <SimpleDashboard />
 }
