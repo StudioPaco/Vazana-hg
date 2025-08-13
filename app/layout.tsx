@@ -30,15 +30,15 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="he" dir="rtl" className="font-hebrew">
+    <html lang="he" dir="rtl" className="font-hebrew" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Futura:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="antialiased bg-neutral-50">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      <body className="antialiased bg-neutral-50" suppressHydrationWarning>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           {user ? (
             <div className="flex h-screen bg-neutral-50">
               <Navigation user={user} />
