@@ -1,6 +1,7 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase/server"
+import { signInWithUsername, signOutUser, getCurrentSession } from "@/lib/auth-custom"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 export async function signIn(prevState: any, formData: FormData) {
@@ -8,24 +9,28 @@ export async function signIn(prevState: any, formData: FormData) {
     return { error: "Form data is missing" }
   }
 
-  const email = formData.get("email")
+  const username = formData.get("username")
   const password = formData.get("password")
 
-  if (!email || !password) {
-    return { error: "Email and password are required" }
+  if (!username || !password) {
+    return { error: "Username and password are required" }
   }
 
-  const supabase = createServerClient()
-
   try {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.toString(),
-      password: password.toString(),
-    })
+    const result = await signInWithUsername(username.toString(), password.toString())
 
-    if (error) {
-      return { error: error.message }
+    if (!result.success) {
+      return { error: result.error || "Login failed" }
     }
+
+    // Set session cookie
+    const cookieStore = cookies()
+    cookieStore.set("session_token", result.sessionToken!, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    })
 
     return { success: true }
   } catch (error) {
@@ -34,44 +39,19 @@ export async function signIn(prevState: any, formData: FormData) {
   }
 }
 
-export async function signUp(prevState: any, formData: FormData) {
-  if (!formData) {
-    return { error: "Form data is missing" }
+export async function signOut() {
+  const session = await getCurrentSession()
+  if (session) {
+    await signOutUser(session.session_token)
   }
 
-  const email = formData.get("email")
-  const password = formData.get("password")
-
-  if (!email || !password) {
-    return { error: "Email and password are required" }
-  }
-
-  const supabase = createServerClient()
-
-  try {
-    const { error } = await supabase.auth.signUp({
-      email: email.toString(),
-      password: password.toString(),
-      options: {
-        emailRedirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-          `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}`,
-      },
-    })
-
-    if (error) {
-      return { error: error.message }
-    }
-
-    return { success: "Check your email to confirm your account." }
-  } catch (error) {
-    console.error("Sign up error:", error)
-    return { error: "An unexpected error occurred. Please try again." }
-  }
+  const cookieStore = cookies()
+  cookieStore.delete("session_token")
+  redirect("/auth/login")
 }
 
-export async function signOut() {
-  const supabase = createServerClient()
-  await supabase.auth.signOut()
-  redirect("/auth/login")
+// Add placeholder signUp function to prevent import errors
+export async function signUp() {
+  // Registration is disabled - users are managed through admin settings
+  return { error: "Registration is disabled. Contact administrator for account creation." }
 }

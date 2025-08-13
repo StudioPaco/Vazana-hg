@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = createServerClient()
+    const { id } = await params // Await params to get the id
 
     const {
       data: { user },
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         carts:cart_id(name, details),
         receipts:receipt_id(receipt_number, status, total_amount)
       `)
-      .eq("id", params.id)
+      .eq("id", id) // Use awaited id
       .eq("created_by_id", user.id)
       .single()
 
@@ -37,9 +38,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = createServerClient()
+    const { id } = await params // Await params to get the id
 
     const {
       data: { user },
@@ -59,7 +61,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const { data: job, error } = await supabase
       .from("jobs")
       .update(updateData)
-      .eq("id", params.id)
+      .eq("id", id) // Use awaited id
       .eq("created_by_id", user.id)
       .select()
       .single()
@@ -74,9 +76,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = createServerClient()
+    const { id } = await params // Await params to get the id
 
     const {
       data: { user },
@@ -86,7 +89,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { error } = await supabase.from("jobs").delete().eq("id", params.id).eq("created_by_id", user.id)
+    const { error } = await supabase.from("jobs").delete().eq("id", id).eq("created_by_id", user.id) // Use awaited id
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

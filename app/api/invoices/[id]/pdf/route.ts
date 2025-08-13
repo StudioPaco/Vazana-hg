@@ -2,9 +2,10 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { invoiceService } from "@/lib/invoice-service"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = createServerClient()
+    const { id } = await params // Await params to get the id
 
     const {
       data: { user },
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         *,
         clients:client_id(company_name, contact_person, email, address, city, payment_method)
       `)
-      .eq("id", params.id)
+      .eq("id", id) // Use awaited id
       .eq("created_by_id", user.id)
       .single()
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         *,
         workers:worker_id(name)
       `)
-      .eq("receipt_id", params.id)
+      .eq("receipt_id", id) // Use awaited id
       .eq("created_by_id", user.id)
 
     if (jobsError) {

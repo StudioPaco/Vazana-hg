@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Building2 } from "lucide-react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { signIn } from "@/lib/auth-actions"
@@ -23,10 +22,10 @@ function SubmitButton() {
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Signing in...
+          מתחבר...
         </>
       ) : (
-        "Sign In"
+        "התחבר"
       )}
     </Button>
   )
@@ -65,14 +64,14 @@ export default function LoginForm() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-[#1A1A1A] text-right">
-                אימייל
+              <label htmlFor="username" className="block text-sm font-medium text-[#1A1A1A] text-right">
+                שם משתמש
               </label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@company.com"
+                id="username"
+                name="username"
+                type="text"
+                placeholder="root"
                 required
                 className="h-12 text-base border-gray-300 focus:border-[#00DAC0] text-right"
                 dir="ltr"
@@ -95,12 +94,7 @@ export default function LoginForm() {
 
           <SubmitButton />
 
-          <div className="text-center text-gray-600">
-            אין לך חשבון?{" "}
-            <Link href="/auth/sign-up" className="text-[#00DAC0] hover:text-[#00C4B4] font-medium">
-              הרשמה
-            </Link>
-          </div>
+          <div className="text-center text-gray-500 text-sm">משתמש ברירת מחדל: root | סיסמה: 10203040</div>
         </form>
       </CardContent>
     </Card>
