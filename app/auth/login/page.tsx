@@ -1,21 +1,18 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { getCurrentUser } from "@/lib/auth-custom"
 import { redirect } from "next/navigation"
 import LoginForm from "@/components/auth/login-form"
 
 export default async function LoginPage() {
-  // Check if user is already logged in
-  const supabase = createServerClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  // Check if user is already logged in using custom auth
+  const user = await getCurrentUser()
 
   // If user is logged in, redirect to home page
-  if (session) {
+  if (user) {
     redirect("/")
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-vazana-yellow/10 to-vazana-teal/10 px-4 py-12 sm:px-6 lg:px-8">
       <LoginForm />
     </div>
   )
