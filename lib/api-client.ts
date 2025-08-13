@@ -9,9 +9,12 @@ class ApiClient {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${this.baseUrl}/api${endpoint}`
 
+    const authToken = typeof window !== "undefined" ? localStorage.getItem("vazana_auth_token") : null
+
     const response = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
         ...options.headers,
       },
       ...options,
