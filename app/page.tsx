@@ -1,17 +1,36 @@
-import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Dashboard from "@/components/dashboard/dashboard"
 
-export default async function HomePage() {
-  const supabase = createServerClient()
+export default function HomePage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const loggedIn = localStorage.getItem("vazana_logged_in")
+      if (loggedIn === "true") {
+        setIsLoggedIn(true)
+      } else {
+        router.push("/auth/login")
+      }
+      setIsLoading(false)
+    }
+  }, [router])
 
-  if (authError || !user) {
-    redirect("/auth/login")
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-vazana-dark">טוען...</div>
+      </div>
+    )
+  }
+
+  if (!isLoggedIn) {
+    return null
   }
 
   return <Dashboard />

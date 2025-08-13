@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -18,13 +18,13 @@ import {
   X,
   Settings,
 } from "lucide-react"
-import { signOut } from "@/lib/auth-actions"
 import { cn } from "@/lib/utils"
 
 interface NavigationProps {
-  user: {
+  user?: {
     email?: string
-    id: string
+    username?: string
+    id?: string
   }
 }
 
@@ -41,9 +41,28 @@ const navigationItems = [
   { name: "Calendar", href: "/calendar", icon: Calendar, nameHe: "יומן" },
 ]
 
-export default function Navigation({ user }: NavigationProps) {
+export default function Navigation({ user: propUser }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
   const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const userData = localStorage.getItem("vazana_user")
+      if (userData) {
+        setUser(JSON.parse(userData))
+      }
+    }
+  }, [])
+
+  const handleSignOut = () => {
+    localStorage.removeItem("vazana_logged_in")
+    localStorage.removeItem("vazana_user")
+    router.push("/auth/login")
+  }
+
+  const currentUser = propUser || user
 
   return (
     <>
@@ -104,24 +123,25 @@ export default function Navigation({ user }: NavigationProps) {
             <div className="flex items-center space-x-3 mb-4">
               <Avatar>
                 <AvatarFallback className="bg-vazana-teal text-white">
-                  {user.email?.charAt(0).toUpperCase() || "U"}
+                  {currentUser?.username?.charAt(0).toUpperCase() || currentUser?.email?.charAt(0).toUpperCase() || "R"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-vazana-dark truncate">{user.email}</p>
+                <p className="text-sm font-medium text-vazana-dark truncate">
+                  {currentUser?.username || currentUser?.email || "root"}
+                </p>
                 <p className="text-xs text-gray-500">Business Owner</p>
               </div>
             </div>
-            <form action={signOut}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full bg-transparent border-vazana-dark text-vazana-dark hover:bg-vazana-dark hover:text-white"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
-              </Button>
-            </form>
+            <Button
+              onClick={handleSignOut}
+              variant="outline"
+              size="sm"
+              className="w-full bg-transparent border-vazana-dark text-vazana-dark hover:bg-vazana-dark hover:text-white"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </div>
