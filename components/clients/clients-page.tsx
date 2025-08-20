@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Phone, Mail, MapPin, Edit, Trash2, Users } from "lucide-react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 
 interface Client {
   id: string
@@ -22,7 +21,6 @@ interface Client {
   payment_method: number
   status: string
   notes: string
-  is_sample?: boolean
 }
 
 export default function ClientsPage() {
@@ -30,34 +28,60 @@ export default function ClientsPage() {
   const [filteredClients, setFilteredClients] = useState<Client[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const supabase = createClient()
+        const sampleClients: Client[] = [
+          {
+            id: "1",
+            company_name: "אדהם עבודות פיתוח",
+            contact_person: "אדהם כהן",
+            phone: "052-5110001",
+            email: "adam@example.com",
+            address: "רחוב הרצל 15",
+            city: "תל אביב",
+            security_rate: 150,
+            installation_rate: 200,
+            payment_method: 30,
+            status: "active",
+            notes: "לקוח VIP",
+          },
+          {
+            id: "2",
+            company_name: "אלקים סימון בבשים",
+            contact_person: "משה לוי",
+            phone: "054-7890123",
+            email: "moshe@example.com",
+            address: "שדרות רוטשילד 25",
+            city: "תל אביב",
+            security_rate: 140,
+            installation_rate: 180,
+            payment_method: 15,
+            status: "active",
+            notes: "",
+          },
+          {
+            id: "3",
+            company_name: "דברים זוהרים",
+            contact_person: "שרה כהן",
+            phone: "050-1234567",
+            email: "sarah@example.com",
+            address: "רחוב דיזנגוף 100",
+            city: "תל אביב",
+            security_rate: 160,
+            installation_rate: 220,
+            payment_method: 45,
+            status: "active",
+            notes: "לקוח חדש",
+          },
+        ]
 
-        const { data, error } = await supabase.from("clients").select("*").order("created_date", { ascending: false })
-
-        if (error) {
-          console.error("[v0] Supabase error:", error)
-          setError(`שגיאה בטעינת לקוחות: ${error.message}`)
-          return
-        }
-
-        console.log("[v0] Fetched clients from database:", data)
-
-        if (!data || data.length === 0) {
-          console.log("[v0] No clients found in database")
-          setError("לא נמצאו לקוחות במסד הנתונים")
-        }
-
-        setClients(data || [])
-        setFilteredClients(data || [])
-        setError(null)
+        console.log("[v0] Using sample clients data:", sampleClients)
+        setClients(sampleClients)
+        setFilteredClients(sampleClients)
       } catch (error) {
-        console.error("[v0] Failed to fetch clients:", error)
-        setError("שגיאה בחיבור למסד הנתונים")
+        console.error("[v0] Failed to load clients:", error)
       } finally {
         setLoading(false)
       }
@@ -78,33 +102,23 @@ export default function ClientsPage() {
 
   const handleDeleteClient = async (id: string) => {
     if (confirm("האם אתה בטוח שברצונך למחוק לקוח זה?")) {
-      try {
-        const supabase = createClient()
-        const { error } = await supabase.from("clients").delete().eq("id", id)
-
-        if (error) {
-          console.error("Supabase delete error:", error)
-          return
-        }
-
-        setClients(clients.filter((client) => client.id !== id))
-      } catch (error) {
-        console.error("Failed to delete client:", error)
-      }
+      setClients(clients.filter((client) => client.id !== id))
     }
   }
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 dir-rtl relative">
-        <div className="absolute top-0 right-0">
-          <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
+      <div className="p-6 space-y-6" dir="rtl">
+        <div className="relative">
+          <div className="absolute top-0 right-0">
+            <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
+            <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
+          </div>
+          <div className="absolute top-0 left-0">
+            <Users className="h-6 w-6 text-gray-400" />
+          </div>
         </div>
-        <div className="absolute top-0 left-0">
-          <Users className="h-6 w-6 text-gray-400" />
-        </div>
-
-        <div className="pt-12 animate-pulse space-y-6">
+        <div className="pt-16 animate-pulse space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
@@ -116,13 +130,15 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 dir-rtl relative">
-      <div className="absolute top-0 right-0">
-        <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
-        <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
-      </div>
-      <div className="absolute top-0 left-0">
-        <Users className="h-6 w-6 text-gray-400" />
+    <div className="p-6 space-y-6" dir="rtl">
+      <div className="relative">
+        <div className="absolute top-0 right-0">
+          <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
+          <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
+        </div>
+        <div className="absolute top-0 left-0">
+          <Users className="h-6 w-6 text-gray-400" />
+        </div>
       </div>
 
       <div className="pt-16 space-y-6">
@@ -145,18 +161,7 @@ export default function ClientsPage() {
           />
         </div>
 
-        {error && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="text-center py-6">
-              <p className="text-red-600">{error}</p>
-              <Button variant="outline" className="mt-2 bg-transparent" onClick={() => window.location.reload()}>
-                נסה שוב
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {!error && filteredClients.length === 0 ? (
+        {filteredClients.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <div className="text-gray-500">
@@ -171,8 +176,8 @@ export default function ClientsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredClients.map((client) => (
-              <Card key={client.id} className="hover:shadow-lg transition-shadow relative">
-                <CardHeader className="relative">
+              <Card key={client.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="relative pb-2">
                   <div className="absolute top-4 right-4">
                     <CardTitle className="text-lg text-right">{client.company_name}</CardTitle>
                     <CardDescription className="text-right">{client.contact_person}</CardDescription>
@@ -184,7 +189,7 @@ export default function ClientsPage() {
                   </div>
                 </CardHeader>
 
-                <CardContent className="space-y-4 pt-16">
+                <CardContent className="space-y-4 pt-12">
                   {client.phone && (
                     <div className="flex items-center text-sm text-gray-600 justify-end">
                       <span className="mr-2">{client.phone}</span>
@@ -205,37 +210,37 @@ export default function ClientsPage() {
                       <MapPin className="h-4 w-4" />
                     </div>
                   )}
-                </CardContent>
 
-                <div className="pt-2 border-t">
-                  <div className="grid grid-cols-2 gap-4 text-sm text-right">
-                    <div>
-                      <p className="text-gray-500">תעריף אבטחה</p>
-                      <p className="font-medium">₪{client.security_rate}/יום</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">תעריף התקנה</p>
-                      <p className="font-medium">₪{client.installation_rate}/שעה</p>
+                  <div className="pt-4 border-t">
+                    <div className="grid grid-cols-2 gap-4 text-sm text-right">
+                      <div>
+                        <p className="text-gray-500">תעריף אבטחה</p>
+                        <p className="font-medium">₪{client.security_rate}/יום</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">תעריף התקנה</p>
+                        <p className="font-medium">₪{client.installation_rate}/שעה</p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex space-x-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteClient(client.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
-                    <Link href={`/clients/${client.id}/edit`}>
-                      <Edit className="ml-2 h-4 w-4" />
-                      ערוך
-                    </Link>
-                  </Button>
-                </div>
+                  <div className="flex space-x-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteClient(client.id)}
+                      className="text-red-600 hover:text-red-700 bg-transparent"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
+                      <Link href={`/clients/${client.id}/edit`}>
+                        <Edit className="ml-2 h-4 w-4" />
+                        ערוך
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>

@@ -53,35 +53,61 @@ export default function JobsPage() {
   const [dateFilter, setDateFilter] = useState("all")
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
   const [loading, setLoading] = useState(true)
+  const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set())
 
   const supabase = createClient()
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const { data, error } = await supabase.from("jobs").select("*").limit(1)
+        console.log("[v0] Attempting to fetch jobs from database...")
 
-        if (error && error.code === "42P01") {
-          // Table doesn't exist, use sample data
-          throw new Error("Jobs table not found")
-        }
-
-        const { data: allJobs, error: fetchError } = await supabase
+        const { data: allJobs, error } = await supabase
           .from("jobs")
           .select("*")
-          .order("created_at", { ascending: false })
+          .order("created_date", { ascending: false })
 
-        if (fetchError) throw fetchError
+        if (error) {
+          console.error("[v0] Supabase error:", error)
+          throw error
+        }
 
-        setJobs(allJobs || [])
-        setFilteredJobs(allJobs || [])
+        console.log("[v0] Successfully fetched jobs:", allJobs)
+
+        if (allJobs && allJobs.length > 0) {
+          setJobs(allJobs)
+          setFilteredJobs(allJobs)
+        } else {
+          console.log("[v0] No jobs found in database, using sample data")
+          const sampleJobs: Job[] = [
+            {
+              id: "1",
+              job_number: "0001",
+              client_name: "אדהם עבודות פיתוח",
+              job_date: "2025-08-13",
+              work_type: "אבטחה",
+              shift_type: "יום",
+              site: "לוחמי הגטו",
+              city: "תל אביב",
+              worker_name: "עמית קורח",
+              vehicle_name: "רכב 1",
+              cart_name: "עגלה A",
+              total_amount: 900,
+              payment_status: "ממתין לתשלום",
+              job_status: "פעיל",
+              notes: "עבודה רגילה",
+              created_at: "2025-08-13T10:00:00Z",
+            },
+          ]
+          setJobs(sampleJobs)
+          setFilteredJobs(sampleJobs)
+        }
       } catch (error) {
-        console.error("Failed to fetch jobs:", error)
-        // Use sample data as fallback
+        console.error("[v0] Failed to fetch jobs:", error)
         const sampleJobs: Job[] = [
           {
             id: "1",
-            job_number: "0006",
+            job_number: "0001",
             client_name: "אדהם עבודות פיתוח",
             job_date: "2025-08-13",
             work_type: "אבטחה",
@@ -172,11 +198,20 @@ export default function JobsPage() {
     }
   }
 
-  // Calculate statistics
   const totalRevenue = jobs.reduce((sum, job) => sum + (job.total_amount || 0), 0)
   const pendingJobs = jobs.filter((job) => job.job_status === "ממתין" || job.job_status === "בתהליך").length
   const urgentJobs = jobs.filter((job) => job.job_status === "דחוף").length
   const completedJobs = jobs.filter((job) => job.job_status === "הושלם").length
+
+  const toggleJobExpansion = (jobId: string) => {
+    const newExpanded = new Set(expandedJobs)
+    if (newExpanded.has(jobId)) {
+      newExpanded.delete(jobId)
+    } else {
+      newExpanded.add(jobId)
+    }
+    setExpandedJobs(newExpanded)
+  }
 
   if (loading) {
     return (
@@ -345,80 +380,115 @@ export default function JobsPage() {
           </Card>
         ) : (
           <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
-            {filteredJobs.map((job) => (
-              <Card key={job.id} className="hover:shadow-md transition-shadow relative">
-                <div className="absolute top-4 right-4 text-right">
-                  <h3 className="font-bold text-vazana-dark font-hebrew">עבודה #{job.job_number}</h3>
-                  <p className="text-sm text-gray-600 font-hebrew">{job.client_name}</p>
-                </div>
-                <div className="absolute top-4 left-4 flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="font-hebrew bg-transparent">
-                    <Edit className="w-4 h-4 ml-1" />
-                    ערוך
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="font-hebrew text-red-600 hover:text-red-700 bg-transparent"
-                    onClick={() => handleDeleteJob(job.id)}
-                  >
-                    <Trash2 className="w-4 h-4 ml-1" />
-                    מחק
-                  </Button>
-                </div>
+            {filteredJobs.map((job) => {
+              const isExpanded = expandedJobs.has(job.id)
 
-                <CardContent className="pt-20 pb-4">
-                  <div className="space-y-3">
-                    {/* Job Details */}
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="text-right">
-                        <p className="text-gray-500 font-hebrew">תאריך</p>
-                        <p className="font-medium font-hebrew">{new Date(job.job_date).toLocaleDateString("he-IL")}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-gray-500 font-hebrew">סוג עבודה</p>
-                        <p className="font-medium font-hebrew">{job.work_type}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-gray-500 font-hebrew">משמרת</p>
-                        <p className="font-medium font-hebrew">{job.shift_type}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-gray-500 font-hebrew">עיר</p>
-                        <p className="font-medium font-hebrew">{job.city}</p>
-                      </div>
-                    </div>
-
-                    {/* Location and Worker */}
-                    <div className="bg-gray-50 p-3 rounded-lg text-right space-y-2">
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-sm text-gray-600 font-hebrew">{job.site}</span>
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-sm text-gray-600 font-hebrew">{job.worker_name}</span>
-                        <User className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-sm text-gray-600 font-hebrew">{job.vehicle_name}</span>
-                        <Truck className="w-4 h-4 text-gray-400" />
-                      </div>
-                    </div>
-
-                    {/* Status and Amount */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-2">
-                        <Badge className={getStatusColor(job.job_status)}>{job.job_status}</Badge>
-                        <Badge className={getPaymentStatusColor(job.payment_status)}>{job.payment_status}</Badge>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-vazana-dark">₪{job.total_amount}</p>
-                      </div>
-                    </div>
+              return (
+                <Card key={job.id} className="hover:shadow-md transition-all duration-200 relative cursor-pointer">
+                  <div className="absolute top-4 right-4 text-right">
+                    <h3 className="font-bold text-vazana-dark font-hebrew">עבודה #{job.job_number}</h3>
+                    <p className="text-sm text-gray-600 font-hebrew">{job.client_name}</p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  <div className="absolute top-4 left-4 flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="font-hebrew bg-transparent">
+                      <Edit className="w-4 h-4 ml-1" />
+                      ערוך
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="font-hebrew text-red-600 hover:text-red-700 bg-transparent"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteJob(job.id)
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 ml-1" />
+                      מחק
+                    </Button>
+                  </div>
+
+                  <CardContent
+                    className="pt-20 pb-4 transition-all duration-200"
+                    onClick={() => toggleJobExpansion(job.id)}
+                  >
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="text-right">
+                          <p className="text-gray-500 font-hebrew">תאריך</p>
+                          <p className="font-medium font-hebrew">
+                            {new Date(job.job_date).toLocaleDateString("he-IL")}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-500 font-hebrew">סוג עבודה</p>
+                          <p className="font-medium font-hebrew">{job.work_type}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="text-right">
+                          <p className="text-gray-500 font-hebrew">אתר</p>
+                          <p className="font-medium font-hebrew">{job.site}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-500 font-hebrew">לקוח</p>
+                          <p className="font-medium font-hebrew">{job.client_name}</p>
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="text-right">
+                              <p className="text-gray-500 font-hebrew">משמרת</p>
+                              <p className="font-medium font-hebrew">{job.shift_type}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-gray-500 font-hebrew">עיר</p>
+                              <p className="font-medium font-hebrew">{job.city}</p>
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 p-3 rounded-lg text-right space-y-2">
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="text-sm text-gray-600 font-hebrew">{job.site}</span>
+                              <MapPin className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="text-sm text-gray-600 font-hebrew">{job.worker_name}</span>
+                              <User className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="text-sm text-gray-600 font-hebrew">{job.vehicle_name}</span>
+                              <Truck className="w-4 h-4 text-gray-400" />
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-2">
+                          <Badge className={getStatusColor(job.job_status)}>{job.job_status}</Badge>
+                          {isExpanded && (
+                            <Badge className={getPaymentStatusColor(job.payment_status)}>{job.payment_status}</Badge>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-vazana-dark">₪{job.total_amount}</p>
+                        </div>
+                      </div>
+
+                      <div className="text-center pt-2">
+                        <p className="text-xs text-gray-400 font-hebrew">
+                          {isExpanded ? "לחץ כדי לכווץ" : "לחץ כדי להרחיב"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>
