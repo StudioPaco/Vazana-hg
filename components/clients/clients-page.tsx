@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Phone, Mail, MapPin, Edit, Trash2, Users } from "lucide-react"
+import { Plus, Search, Phone, Mail, MapPin, Users } from "lucide-react"
 import Link from "next/link"
 
 interface Client {
@@ -106,6 +106,16 @@ export default function ClientsPage() {
     }
   }
 
+  const handleCopyClient = async (client: Client) => {
+    const clientInfo = `${client.company_name}\n${client.contact_person}\n${client.phone}\n${client.email}\n${client.address}, ${client.city}`
+    try {
+      await navigator.clipboard.writeText(clientInfo)
+      alert("פרטי הלקוח הועתקו ללוח")
+    } catch (error) {
+      console.error("Failed to copy client info:", error)
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-6 space-y-6" dir="rtl">
@@ -142,23 +152,53 @@ export default function ClientsPage() {
       </div>
 
       <div className="pt-16 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <Button asChild className="bg-yellow-500 hover:bg-yellow-600 text-black">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">לקוחות לא פעילים</p>
+                  <p className="text-2xl font-bold">0</p>
+                </div>
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <Users className="h-5 w-5 text-gray-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">לקוחות פעילים</p>
+                  <p className="text-2xl font-bold">5</p>
+                </div>
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Users className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="relative">
+            <Input
+              placeholder="חפש לקוחות (שם, איש קשר, עיר)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10 text-right h-full"
+            />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          </div>
+        </div>
+
+        <div className="flex justify-start">
+          <Button asChild className="bg-vazana-teal hover:bg-vazana-teal/90 text-white">
             <Link href="/clients/new">
               <Plus className="ml-2 h-4 w-4" />
               הוסף לקוח
             </Link>
           </Button>
-        </div>
-
-        <div className="relative max-w-md mr-auto">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="חפש לקוחות..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pr-10 text-right"
-          />
         </div>
 
         {filteredClients.length === 0 ? (
@@ -174,71 +214,73 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-4">
             {filteredClients.map((client) => (
               <Card key={client.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="relative pb-2">
-                  <div className="absolute top-4 right-4">
-                    <CardTitle className="text-lg text-right">{client.company_name}</CardTitle>
-                    <CardDescription className="text-right">{client.contact_person}</CardDescription>
-                  </div>
-                  <div className="absolute top-4 left-4">
-                    <Badge variant={client.status === "active" ? "default" : "secondary"}>
-                      {client.status === "active" ? "פעיל" : "לא פעיל"}
-                    </Badge>
-                  </div>
-                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyClient(client)}
+                        className="bg-transparent border-gray-300"
+                      >
+                        העתק
+                      </Button>
+                      <Button variant="outline" size="sm" asChild className="bg-transparent border-gray-300">
+                        <Link href={`/clients/${client.id}/edit`}>ערוך</Link>
+                      </Button>
+                    </div>
 
-                <CardContent className="space-y-4 pt-12">
-                  {client.phone && (
-                    <div className="flex items-center text-sm text-gray-600 justify-end">
-                      <span className="mr-2">{client.phone}</span>
-                      <Phone className="h-4 w-4" />
+                    <div className="text-right">
+                      <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
+                      <p className="text-sm text-gray-600">{client.contact_person}</p>
+                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1">
+                        {client.status === "active" ? "פעיל" : "לא פעיל"}
+                      </Badge>
                     </div>
-                  )}
-                  {client.email && (
-                    <div className="flex items-center text-sm text-gray-600 justify-end">
-                      <span className="mr-2">{client.email}</span>
-                      <Mail className="h-4 w-4" />
-                    </div>
-                  )}
-                  {client.address && (
-                    <div className="flex items-center text-sm text-gray-600 justify-end">
-                      <span className="mr-2">
-                        {client.address}, {client.city}
-                      </span>
-                      <MapPin className="h-4 w-4" />
-                    </div>
-                  )}
+                  </div>
 
-                  <div className="pt-4 border-t">
-                    <div className="grid grid-cols-2 gap-4 text-sm text-right">
-                      <div>
-                        <p className="text-gray-500">תעריף אבטחה</p>
-                        <p className="font-medium">₪{client.security_rate}/יום</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                    <div className="text-right">
+                      <div className="flex items-center justify-end mb-2">
+                        <span className="mr-2">{client.phone}</span>
+                        <Phone className="h-4 w-4 text-gray-500" />
                       </div>
-                      <div>
-                        <p className="text-gray-500">תעריף התקנה</p>
-                        <p className="font-medium">₪{client.installation_rate}/שעה</p>
+                      <div className="flex items-center justify-end mb-2">
+                        <span className="mr-2">{client.email}</span>
+                        <Mail className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <div className="flex items-center justify-end">
+                        <span className="mr-2">
+                          {client.address}, {client.city}
+                        </span>
+                        <MapPin className="h-4 w-4 text-gray-500" />
                       </div>
                     </div>
+
+                    <div className="text-right">
+                      <p className="text-gray-600 mb-1">תעריף אבטחה (₪/משמרת)</p>
+                      <p className="font-medium mb-3">₪{client.security_rate}</p>
+                      <p className="text-gray-600 mb-1">תעריף התקנה (₪/משמרת)</p>
+                      <p className="font-medium">₪{client.installation_rate}</p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-gray-600 mb-1">אופן תשלום (יומי)</p>
+                      <p className="font-medium">{client.payment_method}</p>
+                      {client.notes && (
+                        <div className="mt-3">
+                          <p className="text-gray-600 mb-1">הערות</p>
+                          <p className="text-sm text-gray-700">{client.notes}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex space-x-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteClient(client.id)}
-                      className="text-red-600 hover:text-red-700 bg-transparent"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
-                      <Link href={`/clients/${client.id}/edit`}>
-                        <Edit className="ml-2 h-4 w-4" />
-                        ערוך
-                      </Link>
-                    </Button>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 text-center">מציגים שירי כל 10 החודש</p>
                   </div>
                 </CardContent>
               </Card>

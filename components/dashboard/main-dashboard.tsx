@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { DollarSign, Briefcase, Users, CheckCircle, TrendingUp, Calendar, Bell, Plus, FileText } from "lucide-react"
+import Link from "next/link"
 
 export default function MainDashboard() {
   const [stats, setStats] = useState({
@@ -32,10 +33,12 @@ export default function MainDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <button className="bg-vazana-teal text-white px-4 py-2 rounded-lg flex items-center gap-2 font-hebrew hover:bg-opacity-90">
-          <Plus className="w-4 h-4" />
-          עבודה חדשה
-        </button>
+        <Link href="/jobs/new">
+          <button className="bg-vazana-teal text-white px-4 py-2 rounded-lg flex items-center gap-2 font-hebrew hover:bg-opacity-90">
+            <Plus className="w-4 h-4" />
+            עבודה חדשה
+          </button>
+        </Link>
         <div className="text-right">
           <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">לוח בקרה</h1>
           <p className="text-gray-600 font-hebrew">ברוכים השבים למערכת ניהול הלקוחות של וזאנה סטודיו</p>
@@ -132,7 +135,9 @@ export default function MainDashboard() {
         {/* Recent Jobs */}
         <div className="lg:col-span-2 bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <button className="text-vazana-teal hover:underline text-sm font-hebrew">צפה בכל העבודות</button>
+            <Link href="/jobs" className="text-vazana-teal hover:underline text-sm font-hebrew">
+              צפה בכל העבודות
+            </Link>
             <h3 className="text-lg font-semibold text-vazana-dark font-hebrew">עבודות אחרונות</h3>
           </div>
 
@@ -158,9 +163,11 @@ export default function MainDashboard() {
             <div className="text-center py-8">
               <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 font-hebrew">אין עבודות עדיין</p>
-              <button className="mt-3 bg-vazana-teal text-white px-4 py-2 rounded-lg font-hebrew hover:bg-opacity-90">
-                צור את העבודה הראשונה שלך
-              </button>
+              <Link href="/jobs/new">
+                <button className="mt-3 bg-vazana-teal text-white px-4 py-2 rounded-lg font-hebrew hover:bg-opacity-90">
+                  צור את העבודה הראשונה שלך
+                </button>
+              </Link>
             </div>
           )}
         </div>
@@ -171,13 +178,14 @@ export default function MainDashboard() {
         <h3 className="text-lg font-semibold text-vazana-dark mb-4 text-right font-hebrew">פעולות מהירות</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {quickActions.map((action) => (
-            <button
-              key={action.name}
-              className={`${action.color} text-white p-4 rounded-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity font-hebrew`}
-            >
-              <span>{action.name}</span>
-              <action.icon className="w-5 h-5" />
-            </button>
+            <Link key={action.name} href={action.href}>
+              <button
+                className={`${action.color} text-white p-4 rounded-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity font-hebrew w-full`}
+              >
+                <span>{action.name}</span>
+                <action.icon className="w-5 h-5" />
+              </button>
+            </Link>
           ))}
         </div>
       </div>

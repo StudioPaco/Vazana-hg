@@ -1,0 +1,263 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { UserIcon } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import SidebarNavigation from "@/components/layout/sidebar-navigation"
+
+export default function NewClientPage() {
+  const router = useRouter()
+  const [formData, setFormData] = useState({
+    companyName: "",
+    contactPerson: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    postalCode: "",
+    paymentTerms: "active",
+    hourlyRate: "",
+    maintenanceRate: "",
+    notes: "",
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    try {
+      const supabase = createClient()
+      const clientData = {
+        company_name: formData.companyName,
+        contact_person: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        postal_code: formData.postalCode,
+        payment_terms: formData.paymentTerms,
+        hourly_rate: Number.parseFloat(formData.hourlyRate) || 0,
+        maintenance_rate: Number.parseFloat(formData.maintenanceRate) || 0,
+        notes: formData.notes,
+        created_by: "root",
+      }
+
+      const { data, error } = await supabase.from("clients").insert([clientData]).select()
+
+      if (error) {
+        console.error("Error creating client:", error)
+        alert("שגיאה ביצירת הלקוח")
+        return
+      }
+
+      console.log("Client created successfully:", data)
+      router.push("/clients")
+    } catch (error) {
+      console.error("Failed to create client:", error)
+      alert("שגיאה ביצירת הלקוח")
+    }
+  }
+
+  const handleCancel = () => {
+    router.push("/clients")
+  }
+
+  return (
+    <div className="flex min-h-screen bg-gray-50" dir="rtl">
+      <SidebarNavigation />
+      <div className="flex-1 mr-64">
+        <div className="p-6 max-w-4xl mx-auto">
+          {/* Title positioned in top-right corner */}
+          <div className="relative mb-8">
+            <UserIcon className="absolute top-0 left-0 w-6 h-6 text-vazana-teal" />
+            <h1 className="text-2xl font-bold text-gray-900 text-right">הוסף לקוח חדש</h1>
+            <p className="text-gray-600 text-right mt-2">נהל את קשרי הלקוחות ומידע חשוב שלך</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <UserIcon className="h-5 w-5 text-vazana-teal" />
+                  <span>הוסף לקוח חדש</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName" className="text-right block">
+                    שם החברה *
+                  </Label>
+                  <Input
+                    id="companyName"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    placeholder="הזן שם חברה"
+                    className="text-right"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactPerson" className="text-right block">
+                    איש קשר *
+                  </Label>
+                  <Input
+                    id="contactPerson"
+                    value={formData.contactPerson}
+                    onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                    placeholder="שם איש קשר ראשי"
+                    className="text-right"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-right block">
+                    כתובת דוא"ל *
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="contact@company.com"
+                    className="text-left"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-right block">
+                    מספר טלפון *
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="050-1234567"
+                    className="text-right"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address" className="text-right block">
+                    כתובת
+                  </Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="כתובת רחוב"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city" className="text-right block">
+                    עיר
+                  </Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="שם העיר"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="postalCode" className="text-right block">
+                    מיקוד דואר (מיקוד)
+                  </Label>
+                  <Input
+                    id="postalCode"
+                    value={formData.postalCode}
+                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                    placeholder="מספר מיקוד דואר"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="paymentTerms" className="text-right block">
+                    סטטוס
+                  </Label>
+                  <Select onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}>
+                    <SelectTrigger className="text-right">
+                      <SelectValue placeholder="פעיל" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">פעיל</SelectItem>
+                      <SelectItem value="inactive">לא פעיל</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hourlyRate" className="text-right block">
+                    אופן תשלום (יומי)
+                  </Label>
+                  <Input
+                    id="hourlyRate"
+                    type="number"
+                    value={formData.hourlyRate}
+                    onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                    placeholder="30"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maintenanceRate" className="text-right block">
+                    תעריף אחזקה (₪/משמרת)
+                  </Label>
+                  <Input
+                    id="maintenanceRate"
+                    type="number"
+                    value={formData.maintenanceRate}
+                    onChange={(e) => setFormData({ ...formData, maintenanceRate: e.target.value })}
+                    placeholder="תעריף שעתי סטנדרטי לאחזקה"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="text-right block">
+                    תעריף אחזקה (₪/משמרת)
+                  </Label>
+                  <Input
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="תעריף שעתי סטנדרטי לאחזקה"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="fullNotes" className="text-right block">
+                    הערות
+                  </Label>
+                  <Textarea
+                    id="fullNotes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="הערות נוספות על לקוח זה..."
+                    className="min-h-[80px] text-right"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex gap-4 justify-start">
+              <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 text-white px-8">
+                הוסף לקוח
+              </Button>
+              <Button type="button" variant="outline" onClick={handleCancel} className="px-8 bg-transparent">
+                ביטול
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
