@@ -38,6 +38,7 @@ import {
   Lock,
 } from "lucide-react"
 import SidebarNavigation from "@/components/layout/sidebar-navigation"
+import Link from "next/link"
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true)
@@ -311,17 +312,17 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="font-hebrew text-right block">שעת סיום משמרת יום</Label>
+                    <Label className="font-hebrew text-right block">שעות סיום משמרת יום</Label>
                     <Input defaultValue="17:00" type="time" className="text-right font-hebrew" dir="rtl" />
                     <p className="text-sm text-gray-600 font-hebrew text-right">
-                      הגדר את שעת הסיום של משמרת היום בכל ימי השבוע (לאוטומטי סטטוסים).
+                      הגדר את שעות הסיום של משמרת היום בכל ימי השבוע (לאוטומטי סטטוסים).
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-hebrew text-right block">שעת סיום משמרת לילה</Label>
+                    <Label className="font-hebrew text-right block">שעות סיום משמרת לילה</Label>
                     <Input defaultValue="06:00" type="time" className="text-right font-hebrew" dir="rtl" />
                     <p className="text-sm text-gray-600 font-hebrew text-right">
-                      הגדר את שעת הסיום של משמרת הלילה בכל ימי השבוע (לאוטומטי סטטוסים).
+                      הגדר את שעות הסיום של משמרת הלילה בכל ימי השבוע (לאוטומטי סטטוסים).
                     </p>
                   </div>
                 </CardContent>
@@ -431,13 +432,14 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
+            {/* Resources */}
             <TabsContent value="resources" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <div className="flex items-center justify-between">
                     <Settings className="w-5 h-5 text-vazana-teal" />
-                    <span>ניהול משאבים</span>
-                  </CardTitle>
+                    <CardTitle className="font-hebrew">ניהול משאבים</CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -447,10 +449,10 @@ export default function SettingsPage() {
                         <h3 className="font-semibold font-hebrew">עובדים</h3>
                       </div>
                       <p className="text-sm text-gray-600 font-hebrew text-right mb-3">
-                        ערוך את רשימת העובדים הזמינים לביצוע עבודות.
+                        ערוך את רשימת העובדים הזמינו לביצוע עבודות.
                       </p>
-                      <Button variant="outline" className="w-full font-hebrew bg-transparent">
-                        נהל עובדים
+                      <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
+                        <Link href="/settings/resources/workers">נהל עובדים</Link>
                       </Button>
                     </Card>
 
@@ -460,10 +462,10 @@ export default function SettingsPage() {
                         <h3 className="font-semibold font-hebrew">סוג עבודה</h3>
                       </div>
                       <p className="text-sm text-gray-600 font-hebrew text-right mb-3">
-                        ערוך את סוג העבודות הזמינים במערכת.
+                        ערוך את סוג העבודות הזמינו במערכת.
                       </p>
-                      <Button variant="outline" className="w-full font-hebrew bg-transparent">
-                        נהל סוגי עבודה
+                      <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
+                        <Link href="/settings/resources/job-types">נהל סוגי עבודה</Link>
                       </Button>
                     </Card>
 
@@ -473,10 +475,10 @@ export default function SettingsPage() {
                         <h3 className="font-semibold font-hebrew">עגלות/נגררים</h3>
                       </div>
                       <p className="text-sm text-gray-600 font-hebrew text-right mb-3">
-                        ערוך את רשימת העגלות או הנגררים הזמינים.
+                        ערוך את רשימת העגלות או הנגררים הזמינו.
                       </p>
-                      <Button variant="outline" className="w-full font-hebrew bg-transparent">
-                        נהל עגלות/נגררים
+                      <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
+                        <Link href="/settings/resources/shopping-carts">נהל עגלות/נגררים</Link>
                       </Button>
                     </Card>
 
@@ -486,10 +488,10 @@ export default function SettingsPage() {
                         <h3 className="font-semibold font-hebrew">כלי רכב</h3>
                       </div>
                       <p className="text-sm text-gray-600 font-hebrew text-right mb-3">
-                        ערוך את רשימת כלי הרכב הזמינים ופרטיהם.
+                        ערוך את רשימת כלי הרכב הזמינו ופרטיהם.
                       </p>
-                      <Button variant="outline" className="w-full font-hebrew bg-transparent">
-                        נהל כלי רכב
+                      <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
+                        <Link href="/settings/resources/vehicles">נהל כלי רכב</Link>
                       </Button>
                     </Card>
                   </div>
