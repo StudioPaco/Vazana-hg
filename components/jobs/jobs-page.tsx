@@ -409,36 +409,59 @@ export default function JobsPage() {
                   </div>
 
                   <CardContent
-                    className="pt-20 pb-4 transition-all duration-200"
+                    className={`pt-20 pb-4 transition-all duration-200 ${
+                      isExpanded ? "min-h-[300px]" : "min-h-[120px]"
+                    }`}
                     onClick={() => toggleJobExpansion(job.id)}
                   >
                     <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="text-right">
-                          <p className="text-gray-500 font-hebrew">תאריך</p>
-                          <p className="font-medium font-hebrew">
-                            {new Date(job.job_date).toLocaleDateString("he-IL")}
-                          </p>
+                      {!isExpanded ? (
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="text-right">
+                            <p className="text-gray-500 font-hebrew text-xs">תאריך</p>
+                            <p className="font-medium font-hebrew text-sm">
+                              {new Date(job.job_date).toLocaleDateString("he-IL")}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-gray-500 font-hebrew text-xs">סוג עבודה</p>
+                            <p className="font-medium font-hebrew text-sm">{job.work_type}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-gray-500 font-hebrew text-xs">אתר</p>
+                            <p className="font-medium font-hebrew text-sm">{job.site}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-gray-500 font-hebrew text-xs">לקוח</p>
+                            <p className="font-medium font-hebrew text-sm">{job.client_name}</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-gray-500 font-hebrew">סוג עבודה</p>
-                          <p className="font-medium font-hebrew">{job.work_type}</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="text-right">
-                          <p className="text-gray-500 font-hebrew">אתר</p>
-                          <p className="font-medium font-hebrew">{job.site}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-gray-500 font-hebrew">לקוח</p>
-                          <p className="font-medium font-hebrew">{job.client_name}</p>
-                        </div>
-                      </div>
-
-                      {isExpanded && (
+                      ) : (
                         <>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="text-right">
+                              <p className="text-gray-500 font-hebrew">תאריך</p>
+                              <p className="font-medium font-hebrew">
+                                {new Date(job.job_date).toLocaleDateString("he-IL")}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-gray-500 font-hebrew">סוג עבודה</p>
+                              <p className="font-medium font-hebrew">{job.work_type}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="text-right">
+                              <p className="text-gray-500 font-hebrew">אתר</p>
+                              <p className="font-medium font-hebrew">{job.site}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-gray-500 font-hebrew">לקוח</p>
+                              <p className="font-medium font-hebrew">{job.client_name}</p>
+                            </div>
+                          </div>
+
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="text-right">
                               <p className="text-gray-500 font-hebrew">משמרת</p>
@@ -475,11 +498,13 @@ export default function JobsPage() {
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-bold text-vazana-dark">₪{job.total_amount}</p>
+                          <p className={`font-bold text-vazana-dark ${isExpanded ? "text-lg" : "text-sm"}`}>
+                            ₪{job.total_amount}
+                          </p>
                         </div>
                       </div>
 
-                      <div className="text-center pt-2">
+                      <div className="text-center pt-1">
                         <p className="text-xs text-gray-400 font-hebrew">
                           {isExpanded ? "לחץ כדי לכווץ" : "לחץ כדי להרחיב"}
                         </p>

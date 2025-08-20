@@ -153,7 +153,14 @@ export function MainContent({ children }: { children: React.ReactNode }) {
   const { isMinimized } = useSidebar()
 
   return (
-    <div className={`transition-all duration-300 ${isMinimized ? "mr-24" : "mr-64"}`} style={{ minHeight: "100vh" }}>
+    <div
+      className={`transition-all duration-300 w-full`}
+      style={{
+        marginRight: isMinimized ? "96px" : "256px",
+        minHeight: "100vh",
+        width: `calc(100vw - ${isMinimized ? "96px" : "256px"})`,
+      }}
+    >
       {children}
     </div>
   )
