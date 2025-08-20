@@ -99,6 +99,11 @@
   --color-vazana-yellow: #ffcc00;
   --color-vazana-teal: #00dac0;
   --color-vazana-dark: #1a1a1a;
+
+  /* Dynamic color variables that can be updated by theme system */
+  --theme-primary: var(--color-vazana-yellow);
+  --theme-secondary: var(--color-vazana-teal);
+  --theme-accent: #ffffff;
 }
 
 .dark {
@@ -239,6 +244,47 @@
 }
 .border-vazana-dark {
   border-color: var(--color-vazana-dark);
+}
+
+/* Dynamic theme color support */
+.theme-primary {
+  background-color: var(--color-primary);
+}
+.theme-secondary {
+  background-color: var(--color-secondary);
+}
+.theme-accent {
+  background-color: var(--color-accent);
+}
+
+/* Rounded containers theme */
+.rounded-theme .rounded-lg,
+.rounded-theme .rounded-md,
+.rounded-theme .rounded,
+.rounded-theme [class*="rounded"] {
+  border-radius: 1rem !important;
+}
+
+.rounded-theme .rounded-xl {
+  border-radius: 1.5rem !important;
+}
+
+.rounded-theme .rounded-2xl {
+  border-radius: 2rem !important;
+}
+
+/* Apply dynamic colors to components */
+.bg-primary {
+  background-color: var(--theme-primary) !important;
+}
+.bg-secondary {
+  background-color: var(--theme-secondary) !important;
+}
+.text-primary {
+  color: var(--theme-primary) !important;
+}
+.text-secondary {
+  color: var(--theme-secondary) !important;
 }
 
 @layer base {

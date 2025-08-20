@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,6 +39,8 @@ import {
 } from "lucide-react"
 import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { useTheme } from "@/lib/theme-context"
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true)
@@ -53,25 +55,116 @@ export default function SettingsPage() {
     phone: "",
   })
   const [users, setUsers] = useState([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת" }])
+  const [financialSettings, setFinancialSettings] = useState({
+    vatPercentage: 18,
+    autoInvoiceSync: false,
+    dayShiftEnd: "17:00",
+    nightShiftEnd: "06:00",
+  })
 
   const { isMinimized } = useSidebar()
+  const { pendingSettings, setPendingSettings, applySettings, colorThemes } = useTheme()
+  const supabase = createClient()
 
-  const handleSaveBusinessDetails = () => {
-    localStorage.setItem("vazana_company_data", JSON.stringify(companyData))
-    alert("פרטי העסק נשמרו בהצלחה!")
+  useEffect(() => {
+    loadBusinessSettings()
+    loadUsers()
+  }, [])
+
+  const loadBusinessSettings = async () => {
+    try {
+      const { data, error } = await supabase.from("business_settings").select("*").single()
+
+      if (data) {
+        setCompanyData({
+          name: data.company_name || "וזאנה אבטחת כבישים",
+          email: data.company_email || "",
+          registration: data.registration_number || "",
+          address: data.address || "",
+          phone: data.phone || "",
+        })
+        setFinancialSettings({
+          vatPercentage: data.vat_percentage || 18,
+          autoInvoiceSync: data.auto_invoice_sync || false,
+          dayShiftEnd: data.day_shift_end_time || "17:00",
+          nightShiftEnd: data.night_shift_end_time || "06:00",
+        })
+      }
+    } catch (error) {
+      console.error("Error loading business settings:", error)
+    }
   }
 
-  const handleAddUser = (userData: any) => {
-    console.log("[v0] Adding new user:", userData)
-    const newUser = {
-      id: Date.now().toString(),
-      username: userData.username || "משתמש חדש",
-      role: userData.role === "admin" ? "מנהל" : "משתמש",
-      description: userData.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
+  const loadUsers = async () => {
+    try {
+      const { data, error } = await supabase.from("user_profiles").select("*")
+
+      if (data) {
+        const formattedUsers = data.map((user) => ({
+          id: user.id,
+          username: user.username,
+          role: user.role === "admin" ? "מנהל" : "משתמש",
+          description: user.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
+        }))
+        setUsers([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת" }, ...formattedUsers])
+      }
+    } catch (error) {
+      console.error("Error loading users:", error)
     }
-    setUsers((prev) => [...prev, newUser])
-    setIsAddUserOpen(false)
-    alert("משתמש חדש נוסף בהצלחה!")
+  }
+
+  const handleSaveBusinessDetails = async () => {
+    try {
+      const { error } = await supabase.from("business_settings").upsert({
+        company_name: companyData.name,
+        company_email: companyData.email,
+        registration_number: companyData.registration,
+        address: companyData.address,
+        phone: companyData.phone,
+        vat_percentage: financialSettings.vatPercentage,
+        auto_invoice_sync: financialSettings.autoInvoiceSync,
+        day_shift_end_time: financialSettings.dayShiftEnd,
+        night_shift_end_time: financialSettings.nightShiftEnd,
+        updated_at: new Date().toISOString(),
+      })
+
+      if (error) throw error
+      alert("פרטי העסק נשמרו בהצלחה!")
+    } catch (error) {
+      console.error("Error saving business settings:", error)
+      alert("שגיאה בשמירת פרטי העסק")
+    }
+  }
+
+  const handleAddUser = async (userData: any) => {
+    try {
+      const { data, error } = await supabase
+        .from("user_profiles")
+        .insert({
+          username: userData.username,
+          full_name: userData.username,
+          role: userData.role,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      const newUser = {
+        id: data.id,
+        username: data.username,
+        role: data.role === "admin" ? "מנהל" : "משתמש",
+        description: data.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
+      }
+      setUsers((prev) => [...prev, newUser])
+      setIsAddUserOpen(false)
+      alert("משתמש חדש נוסף בהצלחה!")
+    } catch (error) {
+      console.error("Error adding user:", error)
+      alert("שגיאה בהוספת משתמש")
+    }
   }
 
   const handleEditUser = (userId: string) => {
@@ -88,18 +181,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" dir="rtl">
       <SidebarNavigation />
-      <div className={`${isMinimized ? "mr-20" : "mr-64"} p-6 transition-all duration-300`}>
+      <div className={`${isMinimized ? "mr-24" : "mr-64"} p-6 transition-all duration-300`}>
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Header */}
           <div className="text-right">
             <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">הגדרות</h1>
             <p className="text-gray-600 font-hebrew">נהל העדפות אפליקציה ומידע עסקי</p>
           </div>
 
           <Tabs defaultValue="general" className="space-y-6" dir="rtl">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-6" dir="rtl">
               <TabsTrigger value="general" className="font-hebrew">
                 כללי
               </TabsTrigger>
@@ -120,7 +212,6 @@ export default function SettingsPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* General Settings */}
             <TabsContent value="general" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -154,14 +245,75 @@ export default function SettingsPage() {
                     התאם את מראה המערכת לפי העדפותיך.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <Switch />
+                    <Switch
+                      checked={pendingSettings.isDark}
+                      onCheckedChange={(checked) => setPendingSettings({ ...pendingSettings, isDark: checked })}
+                    />
                     <Label className="font-hebrew">מצב כהה</Label>
                   </div>
+
                   <div className="flex items-center justify-between">
-                    <Switch defaultChecked />
-                    <Label className="font-hebrew">הצגת סרגל צד</Label>
+                    <Switch
+                      checked={pendingSettings.sidebarMinimizedByDefault}
+                      onCheckedChange={(checked) =>
+                        setPendingSettings({ ...pendingSettings, sidebarMinimizedByDefault: checked })
+                      }
+                    />
+                    <Label className="font-hebrew">סרגל צד מוקטן כברירת מחדל</Label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Switch
+                      checked={pendingSettings.roundedContainers}
+                      onCheckedChange={(checked) =>
+                        setPendingSettings({ ...pendingSettings, roundedContainers: checked })
+                      }
+                    />
+                    <Label className="font-hebrew">מכולות מעוגלות</Label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="font-hebrew text-right block">ערכת צבעים</Label>
+                    <Select
+                      value={pendingSettings.colorTheme.name}
+                      onValueChange={(value) => {
+                        const theme = colorThemes.find((t) => t.name === value)
+                        if (theme) {
+                          setPendingSettings({ ...pendingSettings, colorTheme: theme })
+                        }
+                      }}
+                      dir="rtl"
+                    >
+                      <SelectTrigger className="text-right font-hebrew">
+                        <SelectValue placeholder="בחר ערכת צבעים..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {colorThemes.map((theme) => (
+                          <SelectItem key={theme.name} value={theme.name} className="font-hebrew">
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-1">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: theme.primary }} />
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: theme.secondary }} />
+                                <div
+                                  className="w-3 h-3 rounded-full border"
+                                  style={{ backgroundColor: theme.accent }}
+                                />
+                              </div>
+                              <span>{theme.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex justify-start pt-4">
+                    <Button onClick={applySettings} className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
+                      <Save className="ml-2 w-4 h-4" />
+                      החל הגדרות
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -217,19 +369,18 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* Business Info */}
             <TabsContent value="business" className="space-y-6">
-              <Card>
+              <Card dir="rtl">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between font-hebrew">
-                    <Briefcase className="w-5 h-5 text-vazana-teal" />
                     <span>פרטי עסק</span>
+                    <Briefcase className="w-5 h-5 text-vazana-teal" />
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">שם החברה</Label>
+                      <Label className="font-hebrew text-right block">שם החברה *</Label>
                       <Input
                         value={companyData.name}
                         onChange={(e) => setCompanyData({ ...companyData, name: e.target.value })}
@@ -238,12 +389,12 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">אימייל החברה</Label>
+                      <Label className="font-hebrew text-right block">אימייל החברה *</Label>
                       <Input
                         type="email"
                         value={companyData.email}
                         onChange={(e) => setCompanyData({ ...companyData, email: e.target.value })}
-                        placeholder="הזן אימייל החברה..."
+                        placeholder="company@example.com"
                         className="text-right font-hebrew"
                         dir="rtl"
                       />
@@ -279,68 +430,85 @@ export default function SettingsPage() {
                       />
                     </div>
                   </div>
-                  <Button
-                    onClick={handleSaveBusinessDetails}
-                    className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
-                  >
-                    <Save className="ml-2 w-4 h-4" />
-                    שמור שינויים
-                  </Button>
+                  <div className="flex justify-start">
+                    <Button
+                      onClick={handleSaveBusinessDetails}
+                      className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
+                    >
+                      <Save className="ml-2 w-4 h-4" />
+                      שמור שינויים
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card dir="rtl">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between font-hebrew">
-                    <DollarSign className="w-5 h-5 text-vazana-teal" />
                     <span>הגדרת כספים</span>
+                    <DollarSign className="w-5 h-5 text-vazana-teal" />
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label className="font-hebrew text-right block">אחוז מע"מ ברירת מחדל (%)</Label>
-                    <Input defaultValue="18" className="text-right font-hebrew" dir="rtl" />
+                    <Input
+                      type="number"
+                      value={financialSettings.vatPercentage}
+                      onChange={(e) =>
+                        setFinancialSettings({ ...financialSettings, vatPercentage: Number(e.target.value) })
+                      }
+                      className="text-right font-hebrew"
+                      dir="rtl"
+                    />
                     <p className="text-sm text-gray-600 font-hebrew text-right">
                       הגדר את שיעור המע"מ ברירת מחדל עבור חשבוניות חדשות.
                     </p>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Switch />
+                    <Switch
+                      checked={financialSettings.autoInvoiceSync}
+                      onCheckedChange={(checked) =>
+                        setFinancialSettings({ ...financialSettings, autoInvoiceSync: checked })
+                      }
+                    />
                     <Label className="font-hebrew">התאמה אוטומטית לחשבונית</Label>
                   </div>
-                  <p className="text-sm text-gray-600 font-hebrew text-right">
-                    נהל סטטוס מחוון, עיבוד והזדרת נתונים לחשבונית.
-                  </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card dir="rtl">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between font-hebrew">
-                    <Clock className="w-5 h-5 text-vazana-teal" />
                     <span>הגדרת פעולות</span>
+                    <Clock className="w-5 h-5 text-vazana-teal" />
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label className="font-hebrew text-right block">שעות סיום משמרת יום</Label>
-                    <Input defaultValue="17:00" type="time" className="text-right font-hebrew" dir="rtl" />
-                    <p className="text-sm text-gray-600 font-hebrew text-right">
-                      הגדר את שעות הסיום של משמרת היום בכל ימי השבוע (לאוטומטי סטטוסים).
-                    </p>
+                    <Input
+                      type="time"
+                      value={financialSettings.dayShiftEnd}
+                      onChange={(e) => setFinancialSettings({ ...financialSettings, dayShiftEnd: e.target.value })}
+                      className="text-right font-hebrew"
+                      dir="rtl"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="font-hebrew text-right block">שעות סיום משמרת לילה</Label>
-                    <Input defaultValue="06:00" type="time" className="text-right font-hebrew" dir="rtl" />
-                    <p className="text-sm text-gray-600 font-hebrew text-right">
-                      הגדר את שעות הסיום של משמרת הלילה בכל ימי השבוע (לאוטומטי סטטוסים).
-                    </p>
+                    <Input
+                      type="time"
+                      value={financialSettings.nightShiftEnd}
+                      onChange={(e) => setFinancialSettings({ ...financialSettings, nightShiftEnd: e.target.value })}
+                      className="text-right font-hebrew"
+                      dir="rtl"
+                    />
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Users */}
             <TabsContent value="users" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -462,7 +630,6 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* Resources */}
             <TabsContent value="resources" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -529,7 +696,6 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* Integrations */}
             <TabsContent value="integrations" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -564,7 +730,6 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* Data Management */}
             <TabsContent value="data" className="space-y-6">
               <Card>
                 <CardHeader>
