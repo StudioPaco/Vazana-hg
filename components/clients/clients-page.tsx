@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Phone, Mail, MapPin, Edit, Trash2 } from "lucide-react"
+import { Plus, Search, Phone, Mail, MapPin, Edit, Trash2, Users } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
@@ -22,6 +22,7 @@ interface Client {
   payment_method: number
   status: string
   notes: string
+  is_sample?: boolean
 }
 
 export default function ClientsPage() {
@@ -29,23 +30,34 @@ export default function ClientsPage() {
   const [filteredClients, setFilteredClients] = useState<Client[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
         const supabase = createClient()
+
         const { data, error } = await supabase.from("clients").select("*").order("created_date", { ascending: false })
 
         if (error) {
-          console.error("Supabase error:", error)
+          console.error("[v0] Supabase error:", error)
+          setError(`שגיאה בטעינת לקוחות: ${error.message}`)
           return
         }
 
-        console.log("[v0] Fetched clients:", data)
+        console.log("[v0] Fetched clients from database:", data)
+
+        if (!data || data.length === 0) {
+          console.log("[v0] No clients found in database")
+          setError("לא נמצאו לקוחות במסד הנתונים")
+        }
+
         setClients(data || [])
         setFilteredClients(data || [])
+        setError(null)
       } catch (error) {
-        console.error("Failed to fetch clients:", error)
+        console.error("[v0] Failed to fetch clients:", error)
+        setError("שגיאה בחיבור למסד הנתונים")
       } finally {
         setLoading(false)
       }
@@ -84,9 +96,15 @@ export default function ClientsPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+      <div className="p-6 space-y-6 dir-rtl relative">
+        <div className="absolute top-0 right-0">
+          <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
+        </div>
+        <div className="absolute top-0 left-0">
+          <Users className="h-6 w-6 text-gray-400" />
+        </div>
+
+        <div className="pt-12 animate-pulse space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
@@ -98,59 +116,75 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 dir-rtl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-right">
-          <h1 className="text-3xl font-bold text-gray-900">לקוחות</h1>
-          <p className="text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
+    <div className="p-6 space-y-6 dir-rtl relative">
+      <div className="absolute top-0 right-0">
+        <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
+        <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
+      </div>
+      <div className="absolute top-0 left-0">
+        <Users className="h-6 w-6 text-gray-400" />
+      </div>
+
+      <div className="pt-16 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <Button asChild className="bg-yellow-500 hover:bg-yellow-600 text-black">
+            <Link href="/clients/new">
+              <Plus className="ml-2 h-4 w-4" />
+              הוסף לקוח
+            </Link>
+          </Button>
         </div>
-        <Button asChild>
-          <Link href="/clients/new">
-            <Plus className="ml-2 h-4 w-4" />
-            הוסף לקוח
-          </Link>
-        </Button>
-      </div>
 
-      <div className="relative max-w-md mr-auto">
-        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          placeholder="חפש לקוחות..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pr-10 text-right"
-        />
-      </div>
+        <div className="relative max-w-md mr-auto">
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="חפש לקוחות..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pr-10 text-right"
+          />
+        </div>
 
-      {filteredClients.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <div className="text-gray-500">
-              <Plus className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-lg font-medium mb-2">לא נמצאו לקוחות</p>
-              <p className="text-sm">
-                {searchTerm ? "נסה לשנות את מונחי החיפוש" : "הוסף את הלקוח הראשון שלך כדי להתחיל"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClients.map((client) => (
-            <Card key={client.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <Badge variant={client.status === "active" ? "default" : "secondary"}>
-                    {client.status === "active" ? "פעיל" : "לא פעיל"}
-                  </Badge>
-                  <div className="flex-1 text-right">
-                    <CardTitle className="text-lg">{client.company_name}</CardTitle>
-                    <CardDescription>{client.contact_person}</CardDescription>
+        {error && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="text-center py-6">
+              <p className="text-red-600">{error}</p>
+              <Button variant="outline" className="mt-2 bg-transparent" onClick={() => window.location.reload()}>
+                נסה שוב
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {!error && filteredClients.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <div className="text-gray-500">
+                <Plus className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                <p className="text-lg font-medium mb-2">לא נמצאו לקוחות</p>
+                <p className="text-sm">
+                  {searchTerm ? "נסה לשנות את מונחי החיפוש" : "הוסף את הלקוח הראשון שלך כדי להתחיל"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredClients.map((client) => (
+              <Card key={client.id} className="hover:shadow-lg transition-shadow relative">
+                <CardHeader className="relative">
+                  <div className="absolute top-4 right-4">
+                    <CardTitle className="text-lg text-right">{client.company_name}</CardTitle>
+                    <CardDescription className="text-right">{client.contact_person}</CardDescription>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
+                  <div className="absolute top-4 left-4">
+                    <Badge variant={client.status === "active" ? "default" : "secondary"}>
+                      {client.status === "active" ? "פעיל" : "לא פעיל"}
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4 pt-16">
                   {client.phone && (
                     <div className="flex items-center text-sm text-gray-600 justify-end">
                       <span className="mr-2">{client.phone}</span>
@@ -171,7 +205,7 @@ export default function ClientsPage() {
                       <MapPin className="h-4 w-4" />
                     </div>
                   )}
-                </div>
+                </CardContent>
 
                 <div className="pt-2 border-t">
                   <div className="grid grid-cols-2 gap-4 text-sm text-right">
@@ -202,11 +236,11 @@ export default function ClientsPage() {
                     </Link>
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

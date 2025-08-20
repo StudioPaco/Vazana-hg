@@ -11,10 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { CalendarIcon, ClipboardIcon, SettingsIcon } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function NewJobForm() {
   const router = useRouter()
-  const [jobCount, setJobCount] = useState(0)
+  const [jobNumber, setJobNumber] = useState("0001")
+  const [clients, setClients] = useState<any[]>([])
   const [clientType, setClientType] = useState<"new" | "existing">("new")
   const [formData, setFormData] = useState({
     jobType: "",
@@ -37,18 +39,98 @@ export default function NewJobForm() {
   })
 
   useEffect(() => {
-    const jobs = JSON.parse(localStorage.getItem("vazana_jobs") || "[]")
-    setJobCount(jobs.length + 1)
+    const fetchJobNumber = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from("jobs")
+          .select("job_number")
+          .order("created_date", { ascending: false })
+          .limit(1)
+
+        if (error) {
+          console.error("[v0] Error fetching last job number:", error)
+          setJobNumber("0001")
+          return
+        }
+
+        if (data && data.length > 0) {
+          const lastJobNumber = data[0].job_number
+          const nextNumber = Number.parseInt(lastJobNumber) + 1
+          setJobNumber(nextNumber.toString().padStart(4, "0"))
+        } else {
+          setJobNumber("0001")
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch job number:", error)
+        setJobNumber("0001")
+      }
+    }
+
+    const fetchClients = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from("clients")
+          .select("id, company_name, contact_person")
+          .order("company_name", { ascending: true })
+
+        if (error) {
+          console.error("[v0] Error fetching clients:", error)
+          return
+        }
+
+        console.log("[v0] Fetched clients for dropdown:", data)
+        setClients(data || [])
+      } catch (error) {
+        console.error("[v0] Failed to fetch clients:", error)
+      }
+    }
+
+    fetchJobNumber()
+    fetchClients()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const jobs = JSON.parse(localStorage.getItem("vazana_jobs") || "[]")
-    const newJob = { ...formData, id: jobCount, createdAt: new Date().toISOString() }
-    jobs.push(newJob)
-    localStorage.setItem("vazana_jobs", JSON.stringify(jobs))
-    console.log("Creating job:", newJob)
-    router.push("/jobs")
+
+    try {
+      const supabase = createClient()
+      const jobData = {
+        job_number: jobNumber,
+        work_type: formData.jobType,
+        job_date: formData.date,
+        site: formData.location,
+        shift_type: formData.shiftType,
+        city: formData.city,
+        client_name:
+          clientType === "new"
+            ? formData.clientName
+            : clients.find((c) => c.id === formData.existingClientId)?.company_name,
+        client_id: clientType === "existing" ? formData.existingClientId : null,
+        worker_name: formData.employee,
+        vehicle_name: formData.vehicle,
+        cart_name: formData.cart,
+        service_description: formData.description,
+        add_to_calendar: formData.calendarSync,
+        payment_status: "pending",
+        created_by: "root",
+      }
+
+      const { data, error } = await supabase.from("jobs").insert([jobData]).select()
+
+      if (error) {
+        console.error("[v0] Error creating job:", error)
+        alert("שגיאה ביצירת העבודה")
+        return
+      }
+
+      console.log("[v0] Job created successfully:", data)
+      router.push("/jobs")
+    } catch (error) {
+      console.error("[v0] Failed to create job:", error)
+      alert("שגיאה ביצירת העבודה")
+    }
   }
 
   const handleCancel = () => {
@@ -60,7 +142,7 @@ export default function NewJobForm() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">עבודה חדשה</h1>
         <div className="text-sm text-gray-500">
-          מספר עבודה: <span className="text-vazana-teal font-semibold">{jobCount.toString().padStart(4, "0")}</span>
+          מספר עבודה: <span className="text-vazana-teal font-semibold">{jobNumber}</span>
         </div>
       </div>
       <p className="text-gray-600 mb-8 text-right">יצירת כרטיס עבודה חדש</p>
@@ -180,12 +262,14 @@ export default function NewJobForm() {
                 </Label>
                 <Select onValueChange={(value) => setFormData({ ...formData, existingClientId: value })}>
                   <SelectTrigger className="text-right">
-                    <SelectValue placeholder="עובד 1" />
+                    <SelectValue placeholder="בחר לקוח" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="client1">אדהם עבודות פיתוח</SelectItem>
-                    <SelectItem value="client2">אלקיים סימון כבישים</SelectItem>
-                    <SelectItem value="client3">דרכים זוהרים</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.company_name} - {client.contact_person}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
