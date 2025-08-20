@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import MainDashboard from "@/components/dashboard/main-dashboard"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -40,12 +40,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Main Content */}
-      <div className="flex-1 pr-64">
+      <MainContent>
         <div className="p-6">
           <MainDashboard />
         </div>
-      </div>
+      </MainContent>
 
       {/* Sidebar Navigation */}
       <SidebarNavigation />

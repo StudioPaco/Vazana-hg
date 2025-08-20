@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import JobsPage from "@/components/jobs/jobs-page"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 
 export default function Jobs() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -37,12 +37,11 @@ export default function Jobs() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Main Content */}
-      <div className="flex-1 pr-64">
+      <MainContent>
         <div className="p-6">
           <JobsPage />
         </div>
-      </div>
+      </MainContent>
 
       {/* Sidebar Navigation */}
       <SidebarNavigation />

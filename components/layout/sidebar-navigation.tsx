@@ -60,11 +60,11 @@ export default function SidebarNavigation() {
   return (
     <div
       className={`${
-        isMinimized ? "w-20" : "w-64"
+        isMinimized ? "w-24" : "w-64"
       } bg-white border-l border-gray-200 h-screen fixed right-0 top-0 z-40 shadow-lg transition-all duration-300`}
     >
       {/* Header with Logo */}
-      <div className={`${isMinimized ? "p-2" : "p-6"} border-b border-gray-200 relative`}>
+      <div className={`${isMinimized ? "p-3" : "p-6"} border-b border-gray-200 relative`}>
         <button
           onClick={() => setIsMinimized(!isMinimized)}
           className="absolute left-2 top-2 p-1 rounded-md hover:bg-gray-100 transition-colors z-10"
@@ -91,7 +91,7 @@ export default function SidebarNavigation() {
       </div>
 
       {/* Navigation */}
-      <nav className={`${isMinimized ? "p-2" : "p-4"} space-y-2`}>
+      <nav className={`${isMinimized ? "p-3" : "p-4"} space-y-2`}>
         {navigationItems.map((item) => {
           const isActive = pathname === item.href
           return (
@@ -99,14 +99,14 @@ export default function SidebarNavigation() {
               key={item.href}
               href={item.href}
               className={`group relative flex items-center ${
-                isMinimized ? "justify-center p-3" : "justify-end gap-3 px-4 py-3"
+                isMinimized ? "justify-center p-4" : "justify-end gap-3 px-4 py-3"
               } rounded-lg transition-colors font-hebrew ${
                 isActive ? "bg-vazana-yellow text-vazana-dark font-semibold" : "text-gray-700 hover:bg-gray-100"
               }`}
               title={isMinimized ? item.name : undefined}
             >
               {!isMinimized && <span>{item.name}</span>}
-              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <item.icon className="w-6 h-6 flex-shrink-0" />
 
               {isMinimized && (
                 <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
@@ -145,6 +145,16 @@ export default function SidebarNavigation() {
           )}
         </button>
       </div>
+    </div>
+  )
+}
+
+export function MainContent({ children }: { children: React.ReactNode }) {
+  const { isMinimized } = useSidebar()
+
+  return (
+    <div className={`transition-all duration-300 ${isMinimized ? "mr-24" : "mr-64"}`} style={{ minHeight: "100vh" }}>
+      {children}
     </div>
   )
 }
