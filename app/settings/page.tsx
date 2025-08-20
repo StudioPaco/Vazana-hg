@@ -37,7 +37,7 @@ import {
   Clock,
   Lock,
 } from "lucide-react"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
+import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
 import Link from "next/link"
 
 export default function SettingsPage() {
@@ -52,6 +52,9 @@ export default function SettingsPage() {
     address: "",
     phone: "",
   })
+  const [users, setUsers] = useState([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת" }])
+
+  const { isMinimized } = useSidebar()
 
   const handleSaveBusinessDetails = () => {
     localStorage.setItem("vazana_company_data", JSON.stringify(companyData))
@@ -60,18 +63,26 @@ export default function SettingsPage() {
 
   const handleAddUser = (userData: any) => {
     console.log("[v0] Adding new user:", userData)
+    const newUser = {
+      id: Date.now().toString(),
+      username: userData.username || "משתמש חדש",
+      role: userData.role === "admin" ? "מנהל" : "משתמש",
+      description: userData.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
+    }
+    setUsers((prev) => [...prev, newUser])
     setIsAddUserOpen(false)
     alert("משתמש חדש נוסף בהצלחה!")
   }
 
   const handleEditUser = (userId: string) => {
     console.log("[v0] Editing user:", userId)
-    alert("עריכת משתמש - בקרוב!")
+    window.location.href = `/settings/users/${userId}/edit`
   }
 
   const handleDeleteUser = (userId: string) => {
     console.log("[v0] Deleting user:", userId)
     if (confirm("האם אתה בטוח שברצונך למחוק את המשתמש?")) {
+      setUsers((prev) => prev.filter((user) => user.id !== userId))
       alert("משתמש נמחק בהצלחה!")
     }
   }
@@ -79,7 +90,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarNavigation />
-      <div className="mr-64 p-6">
+      <div className={`${isMinimized ? "mr-20" : "mr-64"} p-6 transition-all duration-300`}>
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}
           <div className="text-right">
@@ -356,77 +367,96 @@ export default function SettingsPage() {
                               הזן את פרטי המשתמש החדש להוספה למערכת.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="space-y-2">
-                              <Label className="font-hebrew text-right block">שם משתמש</Label>
-                              <Input placeholder="הזן שם משתמש..." className="text-right font-hebrew" dir="rtl" />
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault()
+                              const formData = new FormData(e.target as HTMLFormElement)
+                              handleAddUser({
+                                username: formData.get("username"),
+                                password: formData.get("password"),
+                                role: formData.get("role"),
+                              })
+                            }}
+                          >
+                            <div className="grid gap-4 py-4">
+                              <div className="space-y-2">
+                                <Label className="font-hebrew text-right block">שם משתמש</Label>
+                                <Input
+                                  name="username"
+                                  placeholder="הזן שם משתמש..."
+                                  className="text-right font-hebrew"
+                                  dir="rtl"
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="font-hebrew text-right block">סיסמה</Label>
+                                <Input
+                                  name="password"
+                                  type="password"
+                                  placeholder="הזן סיסמה..."
+                                  className="text-right font-hebrew"
+                                  dir="rtl"
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="font-hebrew text-right block">תפקיד</Label>
+                                <Select name="role" dir="rtl" required>
+                                  <SelectTrigger className="text-right font-hebrew">
+                                    <SelectValue placeholder="בחר תפקיד..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="admin" className="font-hebrew">
+                                      מנהל
+                                    </SelectItem>
+                                    <SelectItem value="user" className="font-hebrew">
+                                      משתמש
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
-                            <div className="space-y-2">
-                              <Label className="font-hebrew text-right block">סיסמה</Label>
-                              <Input
-                                type="password"
-                                placeholder="הזן סיסמה..."
-                                className="text-right font-hebrew"
-                                dir="rtl"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="font-hebrew text-right block">תפקיד</Label>
-                              <Select dir="rtl">
-                                <SelectTrigger className="text-right font-hebrew">
-                                  <SelectValue placeholder="בחר תפקיד..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="admin" className="font-hebrew">
-                                    מנהל
-                                  </SelectItem>
-                                  <SelectItem value="user" className="font-hebrew">
-                                    משתמש
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button
-                              onClick={() => handleAddUser({})}
-                              className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
-                            >
-                              הוסף משתמש
-                            </Button>
-                          </DialogFooter>
+                            <DialogFooter>
+                              <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
+                                הוסף משתמש
+                              </Button>
+                            </DialogFooter>
+                          </form>
                         </DialogContent>
                       </Dialog>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-vazana-teal text-white font-hebrew">מנהל</Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditUser("root")}
-                          className="font-hebrew bg-transparent"
-                        >
-                          <Edit className="ml-1 w-3 h-3" />
-                          ערוך
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteUser("root")}
-                          className="font-hebrew bg-transparent text-red-600 hover:text-red-700"
-                          disabled
-                        >
-                          <Trash2 className="ml-1 w-3 h-3" />
-                          מחק
-                        </Button>
+                    {users.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-vazana-teal text-white font-hebrew">{user.role}</Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditUser(user.id)}
+                            className="font-hebrew bg-transparent"
+                          >
+                            <Edit className="ml-1 w-3 h-3" />
+                            ערוך
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="font-hebrew bg-transparent text-red-600 hover:text-red-700"
+                            disabled={user.id === "root"}
+                          >
+                            <Trash2 className="ml-1 w-3 h-3" />
+                            מחק
+                          </Button>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold font-hebrew">{user.username}</p>
+                          <p className="text-sm text-gray-600 font-hebrew">{user.description}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold font-hebrew">root</p>
-                        <p className="text-sm text-gray-600 font-hebrew">מנהל מערכת</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
