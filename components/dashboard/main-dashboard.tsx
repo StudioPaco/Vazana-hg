@@ -32,16 +32,24 @@ export default function MainDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Link href="/jobs/new">
-          <button className="bg-vazana-teal text-white px-4 py-2 rounded-lg flex items-center gap-2 font-hebrew hover:bg-opacity-90">
-            <Plus className="w-4 h-4" />
-            עבודה חדשה
-          </button>
-        </Link>
-        <div className="text-right">
+      <div className="text-right space-y-4">
+        <div>
           <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">לוח בקרה</h1>
           <p className="text-gray-600 font-hebrew">ברוכים השבים למערכת ניהול הלקוחות של וזאנה סטודיו</p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {quickActions.map((action) => (
+            <Link key={action.name} href={action.href}>
+              <button
+                className={`${action.color} text-white p-4 rounded-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity font-hebrew w-full`}
+              >
+                <span>{action.name}</span>
+                <action.icon className="w-5 h-5" />
+              </button>
+            </Link>
+          ))}
         </div>
       </div>
 
@@ -170,23 +178,6 @@ export default function MainDashboard() {
               </Link>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-lg font-semibold text-vazana-dark mb-4 text-right font-hebrew">פעולות מהירות</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {quickActions.map((action) => (
-            <Link key={action.name} href={action.href}>
-              <button
-                className={`${action.color} text-white p-4 rounded-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity font-hebrew w-full`}
-              >
-                <span>{action.name}</span>
-                <action.icon className="w-5 h-5" />
-              </button>
-            </Link>
-          ))}
         </div>
       </div>
     </div>

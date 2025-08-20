@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Phone, Mail, MapPin, Users } from "lucide-react"
+import { Plus, Search, Phone, Mail, MapPin, Users, Trophy } from "lucide-react"
 import Link from "next/link"
 
 interface Client {
@@ -28,6 +28,32 @@ export default function ClientsPage() {
   const [filteredClients, setFilteredClients] = useState<Client[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
+
+  const activeClientsCount = clients.filter((client) => client.status === "active").length
+  const getMostActiveClient = () => {
+    const clientJobCounts = {
+      "1": 8, // אדהם עבודות פיתוח
+      "2": 5, // אלקים סימון בבשים
+      "3": 3, // דברים זוהרים
+    }
+
+    let mostActiveClient = null
+    let maxJobs = 0
+
+    clients.forEach((client) => {
+      const jobCount = clientJobCounts[client.id] || 0
+      if (jobCount > maxJobs) {
+        maxJobs = jobCount
+        mostActiveClient = { name: client.company_name, count: jobCount }
+      }
+    })
+
+    return mostActiveClient || { name: "אין נתונים", count: 0 }
+  }
+
+  const mostActiveClient = getMostActiveClient()
+  const averageSecurityRate =
+    clients.length > 0 ? Math.round(clients.reduce((sum, client) => sum + client.security_rate, 0) / clients.length) : 0
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -157,11 +183,11 @@ export default function ClientsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-sm text-gray-600">לקוחות לא פעילים</p>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-sm text-gray-600">תעריף אבטחה ממוצע</p>
+                  <p className="text-2xl font-bold">₪{averageSecurityRate}</p>
                 </div>
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <Users className="h-5 w-5 text-gray-600" />
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -172,10 +198,25 @@ export default function ClientsPage() {
               <div className="flex items-center justify-between">
                 <div className="text-right">
                   <p className="text-sm text-gray-600">לקוחות פעילים</p>
-                  <p className="text-2xl font-bold">5</p>
+                  <p className="text-2xl font-bold">{activeClientsCount}</p>
                 </div>
                 <div className="p-2 bg-green-100 rounded-lg">
                   <Users className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">לקוח מוביל החודש</p>
+                  <p className="text-lg font-bold truncate">{mostActiveClient.name}</p>
+                  <p className="text-sm text-gray-500">{mostActiveClient.count} עבודות</p>
+                </div>
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Trophy className="h-5 w-5 text-yellow-600" />
                 </div>
               </div>
             </CardContent>

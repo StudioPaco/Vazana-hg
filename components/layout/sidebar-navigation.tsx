@@ -2,8 +2,21 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Briefcase, FileText, Settings, Archive, Calculator, Plus, LogOut } from "lucide-react"
+import {
+  Home,
+  Users,
+  Briefcase,
+  FileText,
+  Settings,
+  Archive,
+  Calculator,
+  Plus,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import Image from "next/image"
+import { useState } from "react"
 
 const navigationItems = [
   { name: "ניווט", href: "/", icon: Home },
@@ -18,6 +31,7 @@ const navigationItems = [
 
 export default function SidebarNavigation() {
   const pathname = usePathname()
+  const [isMinimized, setIsMinimized] = useState(false)
 
   const handleLogout = () => {
     localStorage.removeItem("vazana_logged_in")
@@ -26,15 +40,26 @@ export default function SidebarNavigation() {
   }
 
   return (
-    <div className="w-64 bg-white border-l border-gray-200 h-screen fixed right-0 top-0 z-40 shadow-lg">
+    <div
+      className={`${isMinimized ? "w-16" : "w-64"} bg-white border-l border-gray-200 h-screen fixed right-0 top-0 z-40 shadow-lg transition-all duration-300`}
+    >
       {/* Header with Logo */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col items-center justify-center space-y-3">
-          <Image src="/images/vazana-logo.png" alt="Vazana Logo" width={120} height={60} className="object-contain" />
-          <div className="text-center">
-            <p className="text-sm text-gray-600 font-hebrew">ניהול לקוחות ועבודות</p>
+      <div className="p-6 border-b border-gray-200 relative">
+        <button
+          onClick={() => setIsMinimized(!isMinimized)}
+          className="absolute left-2 top-2 p-1 rounded-md hover:bg-gray-100 transition-colors"
+        >
+          {isMinimized ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </button>
+
+        {!isMinimized && (
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <Image src="/images/vazana-logo.png" alt="Vazana Logo" width={120} height={60} className="object-contain" />
+            <div className="text-center">
+              <p className="text-sm text-gray-600 font-hebrew">ניהול לקוחות ועבודות</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -45,12 +70,19 @@ export default function SidebarNavigation() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center justify-end gap-3 px-4 py-3 rounded-lg transition-colors font-hebrew ${
+              className={`group relative flex items-center ${isMinimized ? "justify-center" : "justify-end"} gap-3 px-4 py-3 rounded-lg transition-colors font-hebrew ${
                 isActive ? "bg-vazana-yellow text-vazana-dark font-semibold" : "text-gray-700 hover:bg-gray-100"
               }`}
+              title={isMinimized ? item.name : undefined}
             >
-              <span>{item.name}</span>
+              {!isMinimized && <span>{item.name}</span>}
               <item.icon className="w-5 h-5" />
+
+              {isMinimized && (
+                <div className="absolute right-full mr-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                  {item.name}
+                </div>
+              )}
             </Link>
           )
         })}
@@ -58,16 +90,25 @@ export default function SidebarNavigation() {
 
       {/* User Info & Logout */}
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-        <div className="text-right mb-3">
-          <p className="text-sm font-semibold text-vazana-dark font-hebrew">שלום, root</p>
-          <p className="text-xs text-gray-600 font-hebrew">מנהל מערכת</p>
-        </div>
+        {!isMinimized && (
+          <div className="text-right mb-3">
+            <p className="text-sm font-semibold text-vazana-dark font-hebrew">שלום, root</p>
+            <p className="text-xs text-gray-600 font-hebrew">מנהל מערכת</p>
+          </div>
+        )}
         <button
           onClick={handleLogout}
-          className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-hebrew"
+          className={`group relative flex items-center ${isMinimized ? "justify-center" : "justify-center"} gap-2 w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-hebrew`}
+          title={isMinimized ? "התנתק" : undefined}
         >
-          <span>התנתק</span>
+          {!isMinimized && <span>התנתק</span>}
           <LogOut className="w-4 h-4" />
+
+          {isMinimized && (
+            <div className="absolute right-full mr-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              התנתק
+            </div>
+          )}
         </button>
       </div>
     </div>
