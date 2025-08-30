@@ -69,19 +69,26 @@ export default function NewJobForm() {
 
     const fetchClients = async () => {
       try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from("clients")
-          .select("id, company_name, contact_person")
-          .order("company_name", { ascending: true })
+        const sampleClients = [
+          {
+            id: "1",
+            company_name: "אדהם עבודות פיתוח",
+            contact_person: "אדהם כהן",
+          },
+          {
+            id: "2",
+            company_name: "אלקים סימון בבשים",
+            contact_person: "משה לוי",
+          },
+          {
+            id: "3",
+            company_name: "דברים זוהרים",
+            contact_person: "שרה כהן",
+          },
+        ]
 
-        if (error) {
-          console.error("[v0] Error fetching clients:", error)
-          return
-        }
-
-        console.log("[v0] Fetched clients for dropdown:", data)
-        setClients(data || [])
+        console.log("[v0] Using sample clients for dropdown:", sampleClients)
+        setClients(sampleClients)
       } catch (error) {
         console.error("[v0] Failed to fetch clients:", error)
       }
@@ -371,7 +378,7 @@ export default function NewJobForm() {
         </Card>
 
         <div className="flex gap-4 justify-start">
-          <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 text-white px-8">
+          <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 text-white px-8 btn-primary">
             יצר עבודה
           </Button>
           <Button type="button" variant="outline" onClick={handleCancel} className="px-8 bg-transparent">

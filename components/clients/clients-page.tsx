@@ -167,7 +167,7 @@ export default function ClientsPage() {
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
-      <div className="relative">
+      <div className="relative pb-4">
         <div className="absolute top-0 right-0">
           <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
           <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
@@ -177,7 +177,7 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      <div className="pt-16 space-y-6">
+      <div className="pt-12 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="bg-white">
             <CardContent className="p-4">
@@ -244,10 +244,10 @@ export default function ClientsPage() {
 
         {filteredClients.length === 0 ? (
           <Card>
-            <CardContent className="text-center py-12">
+            <CardContent className="text-center py-8">
               <div className="text-gray-500">
-                <Plus className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                <p className="text-lg font-medium mb-2">לא נמצאו לקוחות</p>
+                <Plus className="mx-auto h-8 w-8 text-gray-300 mb-3" />
+                <p className="text-base font-medium mb-1">לא נמצאו לקוחות</p>
                 <p className="text-sm">
                   {searchTerm ? "נסה לשנות את מונחי החיפוש" : "הוסף את הלקוח הראשון שלך כדי להתחיל"}
                 </p>
@@ -255,73 +255,78 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredClients.map((client) => (
-              <Card key={client.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+              <Card key={client.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleCopyClient(client)}
-                        className="bg-transparent border-gray-300"
+                        className="bg-transparent border-gray-300 text-xs px-2 py-1 h-7"
                       >
                         העתק
                       </Button>
-                      <Button variant="outline" size="sm" asChild className="bg-transparent border-gray-300">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="bg-transparent border-gray-300 text-xs px-2 py-1 h-7"
+                      >
                         <Link href={`/clients/${client.id}/edit`}>ערוך</Link>
                       </Button>
                     </div>
 
                     <div className="text-right">
-                      <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
+                      <h3 className="text-base font-bold text-gray-900">{client.company_name}</h3>
                       <p className="text-sm text-gray-600">{client.contact_person}</p>
-                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1">
+                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
                         {client.status === "active" ? "פעיל" : "לא פעיל"}
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                    <div className="text-right">
-                      <div className="flex items-center justify-end mb-2">
-                        <span className="mr-2">{client.phone}</span>
-                        <Phone className="h-4 w-4 text-gray-500" />
-                      </div>
-                      <div className="flex items-center justify-end mb-2">
-                        <span className="mr-2">{client.email}</span>
-                        <Mail className="h-4 w-4 text-gray-500" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="text-right space-y-1">
+                      <div className="flex items-center justify-end">
+                        <span className="mr-2 text-sm">{client.phone}</span>
+                        <Phone className="h-3 w-3 text-gray-500" />
                       </div>
                       <div className="flex items-center justify-end">
-                        <span className="mr-2">
+                        <span className="mr-2 text-sm">{client.email}</span>
+                        <Mail className="h-3 w-3 text-gray-500" />
+                      </div>
+                      <div className="flex items-center justify-end">
+                        <span className="mr-2 text-sm">
                           {client.address}, {client.city}
                         </span>
-                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <MapPin className="h-3 w-3 text-gray-500" />
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <p className="text-gray-600 mb-1">תעריף אבטחה (₪/משמרת)</p>
-                      <p className="font-medium mb-3">₪{client.security_rate}</p>
-                      <p className="text-gray-600 mb-1">תעריף התקנה (₪/משמרת)</p>
-                      <p className="font-medium">₪{client.installation_rate}</p>
+                      <p className="text-gray-600 text-xs mb-1">תעריף אבטחה</p>
+                      <p className="font-medium text-sm mb-2">₪{client.security_rate}</p>
+                      <p className="text-gray-600 text-xs mb-1">תעריף התקנה</p>
+                      <p className="font-medium text-sm">₪{client.installation_rate}</p>
                     </div>
 
                     <div className="text-right">
-                      <p className="text-gray-600 mb-1">אופן תשלום (יומי)</p>
-                      <p className="font-medium">{client.payment_method}</p>
+                      <p className="text-gray-600 text-xs mb-1">תשלום (יומי)</p>
+                      <p className="font-medium text-sm">{client.payment_method}</p>
                       {client.notes && (
-                        <div className="mt-3">
-                          <p className="text-gray-600 mb-1">הערות</p>
-                          <p className="text-sm text-gray-700">{client.notes}</p>
+                        <div className="mt-2">
+                          <p className="text-gray-600 text-xs mb-1">הערות</p>
+                          <p className="text-xs text-gray-700">{client.notes}</p>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-500 text-center">מציגים שירי כל 10 החודש</p>
+                  <div className="mt-3 pt-2 border-t border-gray-100">
+                    <p className="text-xs text-gray-400 text-center">מציגים שירי כל 10 החודש</p>
                   </div>
                 </CardContent>
               </Card>

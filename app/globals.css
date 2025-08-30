@@ -273,6 +273,33 @@
   border-radius: 2rem !important;
 }
 
+/* Apply animations to all buttons */
+.btn-animate {
+  transition: all 0.15s ease-in-out;
+  transform: translateY(0);
+}
+
+.btn-animate:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-animate:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button,
+.btn,
+[role="button"] {
+  @apply btn-animate;
+}
+
+/* Special animation for primary buttons */
+.btn-primary:active {
+  transform: scale(0.98) translateY(1px);
+}
+
 /* Apply dynamic colors to components */
 .bg-primary {
   background-color: var(--theme-primary) !important;
