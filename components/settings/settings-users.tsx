@@ -5,10 +5,10 @@ import { User } from "@/entities/User"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, UserPlus } from "lucide-react"
-import Link from "next/link"
+import { Link } from "react-router-dom"
+import { createPageUrl } from "@/utils"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { createPageUrl } from "@/utils/createPageUrl" // Declare the variable before using it
 
 export default function SettingsUsers() {
   const [users, setUsers] = useState([])
@@ -108,7 +108,7 @@ export default function SettingsUsers() {
               >
                 <UserPlus className="w-4 h-4" /> {t.inviteUser}
               </Button>
-              <Link href={createPageUrl("Settings")}>
+              <Link to={createPageUrl("Settings")}>
                 <Button
                   variant="outline"
                   className="flex items-center gap-2 border-neutral-300 text-neutral-700 hover:bg-neutral-100 bg-transparent"

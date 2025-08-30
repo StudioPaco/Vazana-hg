@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Save, Briefcase, ArrowLeft, AlertTriangle } from "lucide-react"
-import { useRouter } from "next/navigation" // Fixed import - using Next.js navigation instead of react-router-dom
-import { createPageUrl } from "@/utils/pageUtils" // Declare the variable before using it
+import { useNavigate } from "react-router-dom"
+import { createPageUrl } from "@/utils"
+// Import Receipt entity if we were to implement the "Apply to Active Invoices"
+// For now, it's not strictly needed for the mock button.
+// import { Receipt } from "@/entities/Receipt";
 
 // localStorage keys
 const BUSINESS_NAME_KEY = "vazana-business-name"
@@ -17,7 +20,7 @@ const BUSINESS_VAT_ID_KEY = "vazana-business-vat-id"
 const BUSINESS_EMAIL_KEY = "vazana-business-email" // New
 
 export default function SettingsBusinessInfo() {
-  const router = useRouter() // Use Next.js router instead of react-router-dom navigate
+  const navigate = useNavigate()
   const [language, setLanguage] = useState(() => localStorage.getItem("vazana-language") || "he")
 
   const [businessName, setBusinessName] = useState(() => localStorage.getItem(BUSINESS_NAME_KEY) || "")
@@ -129,7 +132,7 @@ export default function SettingsBusinessInfo() {
             </div>
             <Button
               variant="outline"
-              onClick={() => router.push(createPageUrl("Settings"))} // Use Next.js router push instead of navigate
+              onClick={() => navigate(createPageUrl("Settings"))}
               className="border-neutral-300 text-neutral-700 hover:bg-neutral-100"
             >
               <ArrowLeft className={`w-4 h-4 ${isHebrew ? "ml-2" : "mr-2"}`} />

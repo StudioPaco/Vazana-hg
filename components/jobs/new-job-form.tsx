@@ -69,6 +69,61 @@ export default function NewJobForm() {
 
     const fetchClients = async () => {
       try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from("clients")
+          .select("id, company_name, contact_person")
+          .order("company_name", { ascending: true })
+
+        if (error) {
+          console.error("[v0] Error fetching clients:", error)
+          const sampleClients = [
+            {
+              id: "1",
+              company_name: "אדהם עבודות פיתוח",
+              contact_person: "אדהם כהן",
+            },
+            {
+              id: "2",
+              company_name: "אלקים סימון בבשים",
+              contact_person: "משה לוי",
+            },
+            {
+              id: "3",
+              company_name: "דברים זוהרים",
+              contact_person: "שרה כהן",
+            },
+          ]
+          setClients(sampleClients)
+          return
+        }
+
+        if (data && data.length > 0) {
+          console.log("[v0] Fetched clients from database:", data)
+          setClients(data)
+        } else {
+          console.log("[v0] No clients found in database, using sample data")
+          const sampleClients = [
+            {
+              id: "1",
+              company_name: "אדהם עבודות פיתוח",
+              contact_person: "אדהם כהן",
+            },
+            {
+              id: "2",
+              company_name: "אלקים סימון בבשים",
+              contact_person: "משה לוי",
+            },
+            {
+              id: "3",
+              company_name: "דברים זוהרים",
+              contact_person: "שרה כהן",
+            },
+          ]
+          setClients(sampleClients)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch clients:", error)
         const sampleClients = [
           {
             id: "1",
@@ -86,11 +141,7 @@ export default function NewJobForm() {
             contact_person: "שרה כהן",
           },
         ]
-
-        console.log("[v0] Using sample clients for dropdown:", sampleClients)
         setClients(sampleClients)
-      } catch (error) {
-        console.error("[v0] Failed to fetch clients:", error)
       }
     }
 

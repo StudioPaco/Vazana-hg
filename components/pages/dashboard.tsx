@@ -4,10 +4,17 @@ import { useState, useEffect } from "react"
 import { Job, Client, Receipt } from "@/entities/all" // Changed from Invoice to Receipt
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import Link from "next/link" // Fixed import - using Next.js Link instead of react-router-dom
-import { Briefcase, Users, FileText, Plus, Calendar, DollarSign } from "lucide-react"
+import { Link } from "react-router-dom"
+import { createPageUrl } from "@/utils"
+import {
+  Briefcase,
+  Users,
+  FileText, // Can remain for "Generate Invoice" visual
+  Plus,
+  Calendar,
+  DollarSign,
+} from "lucide-react"
 import { startOfMonth, endOfMonth } from "date-fns"
-import { createPageUrl } from "@/utils/helpers" // Declared the variable before using it
 
 import StatsCard from "../components/dashboard/StatsCard"
 import RecentJobs from "../components/dashboard/RecentJobs"
@@ -124,7 +131,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-neutral-900 mb-2">{t.title}</h1>
             <p className="text-neutral-600">{t.subtitle}</p>
           </div>
-          <Link href={createPageUrl("NewJob")}>
+          <Link to={createPageUrl("NewJob")}>
             <Button className="bg-primary hover:bg-primary-dark text-primary-foreground shadow-lg">
               <Plus className={`w-4 h-4 ${isHebrew ? "ms-2" : "me-2"}`} />
               {t.newJob}
@@ -191,7 +198,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4">
-                <Link href={createPageUrl("NewJob")}>
+                <Link to={createPageUrl("NewJob")}>
                   <Button
                     variant="outline"
                     className="w-full justify-start border-neutral-300 text-neutral-700 hover:bg-neutral-200 bg-transparent"
@@ -200,7 +207,7 @@ export default function Dashboard() {
                     {t.createNewJob}
                   </Button>
                 </Link>
-                <Link href={createPageUrl("GenerateInvoice")}>
+                <Link to={createPageUrl("GenerateInvoice")}>
                   {" "}
                   {/* Changed from GenerateReceipt */}
                   <Button
@@ -211,7 +218,7 @@ export default function Dashboard() {
                     {t.generateInvoice} {/* Changed */}
                   </Button>
                 </Link>
-                <Link href={createPageUrl("Clients")}>
+                <Link to={createPageUrl("Clients")}>
                   <Button
                     variant="outline"
                     className="w-full justify-start border-neutral-300 text-neutral-700 hover:bg-neutral-200 bg-transparent"

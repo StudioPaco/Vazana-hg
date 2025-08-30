@@ -6,13 +6,23 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { Link, useNavigate } from "react-router-dom"
+import { createPageUrl } from "@/utils"
 import { format, parseISO } from "date-fns"
-import { Trash2, Save, Printer, Mail, Edit3, CheckCircle, RotateCcw, X, ChevronLeft, CalendarClock } from "lucide-react"
+import {
+  Trash2,
+  Save,
+  Printer,
+  Mail,
+  Edit3,
+  CheckCircle,
+  RotateCcw,
+  X,
+  ChevronLeft,
+  CalendarClock, // Added as per outline, replaces CalendarDays in usage
+} from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { createPageUrl } from "@/utils/page-utils" // Declared the variable before using it
 
 const BUSINESS_NAME_KEY = "vazana-business-name"
 const BUSINESS_ADDRESS_KEY = "vazana-business-address"
@@ -24,7 +34,7 @@ const LOGO_URL =
 
 export default function ViewInvoice() {
   // Renamed from ViewReceipt
-  const router = useRouter()
+  const navigate = useNavigate()
   const [item, setItem] = useState(null) // Generic 'item' for the current "invoice" (data from Receipt)
   const [client, setClient] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -220,7 +230,7 @@ export default function ViewInvoice() {
           )
           await Promise.all(jobUpdatePromises)
         }
-        router.push(createPageUrl("Invoices")) // Navigate to Invoices archive
+        navigate(createPageUrl("Invoices")) // Navigate to Invoices archive
       } catch (error) {
         console.error("Error deleting item:", error)
         alert(t.deleteFailed)
@@ -326,7 +336,7 @@ export default function ViewInvoice() {
         dir={isHebrew ? "rtl" : "ltr"}
       >
         <h1 className="text-2xl font-bold text-neutral-900 mb-4">{t.notFound}</h1>
-        <Link href={createPageUrl("Invoices")}>
+        <Link to={createPageUrl("Invoices")}>
           <Button variant="outline" className="flex items-center gap-1 bg-transparent">
             <ChevronLeft className={`w-4 h-4 ${isHebrew ? "transform scale-x-[-1] ml-1" : "mr-1"}`} /> {t.backToArchive}
           </Button>
@@ -359,7 +369,7 @@ export default function ViewInvoice() {
         {/* Back Button */}
         <div className="mb-6">
           <Link
-            href={createPageUrl("Invoices")}
+            to={createPageUrl("Invoices")}
             className="inline-flex items-center text-primary hover:text-primary-dark"
           >
             <ChevronLeft className={`w-5 h-5 ${isHebrew ? "transform scale-x-[-1] ml-1" : "mr-1"}`} />
@@ -374,7 +384,7 @@ export default function ViewInvoice() {
             {/* Logo and Business Info */}
             <div className="flex items-start gap-4">
               <img
-                src={LOGO_URL || "/placeholder.svg"}
+                src={LOGO_URL}
                 alt="Logo"
                 className="w-16 h-16 object-contain mt-1" // Adjusted logo style
               />

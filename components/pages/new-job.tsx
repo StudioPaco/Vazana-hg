@@ -11,7 +11,8 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarDays, Save, Building2, Briefcase, Cog, FileText, X } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
+import { createPageUrl } from "@/utils"
 import { format } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -35,7 +36,7 @@ const getWorkerAvailabilityKeys = (dateString, shiftType) => {
 }
 
 export default function NewJob() {
-  const navigate = useRouter()
+  const navigate = useNavigate()
   // Raw lists from API
   const [clients, setClients] = useState([])
   const [workTypes, setWorkTypes] = useState([]) // This state holds the work types for the dropdown
@@ -577,7 +578,7 @@ export default function NewJob() {
       }
 
       await Job.create(jobDataToCreate)
-      navigate.push("/Jobs")
+      navigate(createPageUrl("Jobs"))
     } catch (error) {
       console.error("Error creating job:", error)
       setErrors((prev) => ({ ...prev, submit: "Failed to create job. " + (error.message || "") }))
@@ -1136,7 +1137,7 @@ export default function NewJob() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate.push("/Jobs")}
+                onClick={() => navigate(createPageUrl("Jobs"))}
                 disabled={isSubmitting}
                 className="flex items-center gap-2 border-neutral-300 text-neutral-700 hover:bg-neutral-100"
               >
