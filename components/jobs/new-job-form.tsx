@@ -77,71 +77,13 @@ export default function NewJobForm() {
 
         if (error) {
           console.error("[v0] Error fetching clients:", error)
-          const sampleClients = [
-            {
-              id: "1",
-              company_name: "אדהם עבודות פיתוח",
-              contact_person: "אדהם כהן",
-            },
-            {
-              id: "2",
-              company_name: "אלקים סימון בבשים",
-              contact_person: "משה לוי",
-            },
-            {
-              id: "3",
-              company_name: "דברים זוהרים",
-              contact_person: "שרה כהן",
-            },
-          ]
-          setClients(sampleClients)
           return
         }
 
-        if (data && data.length > 0) {
-          console.log("[v0] Fetched clients from database:", data)
-          setClients(data)
-        } else {
-          console.log("[v0] No clients found in database, using sample data")
-          const sampleClients = [
-            {
-              id: "1",
-              company_name: "אדהם עבודות פיתוח",
-              contact_person: "אדהם כהן",
-            },
-            {
-              id: "2",
-              company_name: "אלקים סימון בבשים",
-              contact_person: "משה לוי",
-            },
-            {
-              id: "3",
-              company_name: "דברים זוהרים",
-              contact_person: "שרה כהן",
-            },
-          ]
-          setClients(sampleClients)
-        }
+        console.log("[v0] Fetched clients for dropdown:", data)
+        setClients(data || [])
       } catch (error) {
         console.error("[v0] Failed to fetch clients:", error)
-        const sampleClients = [
-          {
-            id: "1",
-            company_name: "אדהם עבודות פיתוח",
-            contact_person: "אדהם כהן",
-          },
-          {
-            id: "2",
-            company_name: "אלקים סימון בבשים",
-            contact_person: "משה לוי",
-          },
-          {
-            id: "3",
-            company_name: "דברים זוהרים",
-            contact_person: "שרה כהן",
-          },
-        ]
-        setClients(sampleClients)
       }
     }
 
@@ -429,7 +371,7 @@ export default function NewJobForm() {
         </Card>
 
         <div className="flex gap-4 justify-start">
-          <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 text-white px-8 btn-primary">
+          <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 text-white px-8">
             יצר עבודה
           </Button>
           <Button type="button" variant="outline" onClick={handleCancel} className="px-8 bg-transparent">
