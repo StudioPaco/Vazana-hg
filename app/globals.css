@@ -287,6 +287,37 @@
   color: var(--theme-secondary) !important;
 }
 
+/* Button press animations */
+.btn-animate {
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-animate:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-animate:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button,
+.btn,
+[role="button"] {
+  @apply btn-animate;
+}
+
+/* Primary button specific animations */
+.bg-vazana-teal:active,
+.bg-primary:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.bg-vazana-yellow:active {
+  transform: translateY(1px) scale(0.98);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
