@@ -3,7 +3,6 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SidebarProvider } from "@/components/layout/sidebar-navigation"
-import { ThemeProvider as CustomThemeProvider } from "@/lib/theme-context"
 
 export const metadata: Metadata = {
   title: "Vazana Studio - וזאנה סטודיו",
@@ -25,11 +24,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Futura:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="antialiased bg-neutral-50" suppressHydrationWarning>
-        <CustomThemeProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-            <SidebarProvider>{children}</SidebarProvider>
-          </ThemeProvider>
-        </CustomThemeProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <SidebarProvider>{children}</SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

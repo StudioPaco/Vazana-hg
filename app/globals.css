@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/ui";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -94,16 +95,6 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-
-  /* Custom Vazana Studio colors */
-  --color-vazana-yellow: #ffcc00;
-  --color-vazana-teal: #00dac0;
-  --color-vazana-dark: #1a1a1a;
-
-  /* Dynamic color variables that can be updated by theme system */
-  --theme-primary: var(--color-vazana-yellow);
-  --theme-secondary: var(--color-vazana-teal);
-  --theme-accent: #ffffff;
 }
 
 .dark {
@@ -146,18 +137,16 @@
   --font-english: "Futura", sans-serif;
   --font-sans: var(--font-english);
   --font-mono: var(--font-roboto-mono);
-
-  /* Updated color palette to match user specifications */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--color-vazana-yellow);
-  --color-primary-foreground: var(--color-vazana-dark);
-  --color-secondary: var(--color-vazana-teal);
-  --color-secondary-foreground: var(--color-vazana-dark);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -184,6 +173,15 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 /* Hebrew text direction support */
@@ -213,112 +211,4 @@
   font-family: var(--font-english);
   direction: ltr;
   text-align: left;
-}
-
-/* Custom utility classes for Vazana Studio color scheme */
-.bg-vazana-yellow {
-  background-color: var(--color-vazana-yellow);
-}
-.text-vazana-yellow {
-  color: var(--color-vazana-yellow);
-}
-.border-vazana-yellow {
-  border-color: var(--color-vazana-yellow);
-}
-
-.bg-vazana-teal {
-  background-color: var(--color-vazana-teal);
-}
-.text-vazana-teal {
-  color: var(--color-vazana-teal);
-}
-.border-vazana-teal {
-  border-color: var(--color-vazana-teal);
-}
-
-.bg-vazana-dark {
-  background-color: var(--color-vazana-dark);
-}
-.text-vazana-dark {
-  color: var(--color-vazana-dark);
-}
-.border-vazana-dark {
-  border-color: var(--color-vazana-dark);
-}
-
-/* Dynamic theme color support */
-.theme-primary {
-  background-color: var(--color-primary);
-}
-.theme-secondary {
-  background-color: var(--color-secondary);
-}
-.theme-accent {
-  background-color: var(--color-accent);
-}
-
-/* Rounded containers theme */
-.rounded-theme .rounded-lg,
-.rounded-theme .rounded-md,
-.rounded-theme .rounded,
-.rounded-theme [class*="rounded"] {
-  border-radius: 1rem !important;
-}
-
-.rounded-theme .rounded-xl {
-  border-radius: 1.5rem !important;
-}
-
-.rounded-theme .rounded-2xl {
-  border-radius: 2rem !important;
-}
-
-/* Apply animations to all buttons */
-.btn-animate {
-  transition: all 0.15s ease-in-out;
-  transform: translateY(0);
-}
-
-.btn-animate:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.btn-animate:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-button,
-.btn,
-[role="button"] {
-  @apply btn-animate;
-}
-
-/* Special animation for primary buttons */
-.btn-primary:active {
-  transform: scale(0.98) translateY(1px);
-}
-
-/* Apply dynamic colors to components */
-.bg-primary {
-  background-color: var(--theme-primary) !important;
-}
-.bg-secondary {
-  background-color: var(--theme-secondary) !important;
-}
-.text-primary {
-  color: var(--theme-primary) !important;
-}
-.text-secondary {
-  color: var(--theme-secondary) !important;
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
 }
