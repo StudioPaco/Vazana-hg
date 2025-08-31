@@ -39,6 +39,11 @@ export default function NewJobForm() {
     cart: "",
     description: "",
     calendarSync: false,
+    totalAmount: null,
+    jobSpecificShiftRate: null,
+    notes: null,
+    receiptId: null,
+    isSample: false,
   })
 
   useEffect(() => {
@@ -124,15 +129,15 @@ export default function NewJobForm() {
         const supabase = createClient()
         const { data, error } = await supabase
           .from("workers")
-          .select("id, name, phone")
+          .select("id, name, phone_number")
           .order("name", { ascending: true })
 
         if (error) {
           console.error("[v0] Error fetching employees:", error)
           const fallbackEmployees = [
-            { id: "emp-1", name: "עובד 1", phone: "050-1234567" },
-            { id: "emp-2", name: "עובד 2", phone: "050-2345678" },
-            { id: "emp-3", name: "עובד 3", phone: "050-3456789" },
+            { id: "emp-1", name: "עובד 1", phone_number: "050-1234567" },
+            { id: "emp-2", name: "עובד 2", phone_number: "050-2345678" },
+            { id: "emp-3", name: "עובד 3", phone_number: "050-3456789" },
           ]
           setEmployees(fallbackEmployees)
           return
@@ -142,18 +147,18 @@ export default function NewJobForm() {
           setEmployees(data)
         } else {
           const fallbackEmployees = [
-            { id: "emp-1", name: "עובד 1", phone: "050-1234567" },
-            { id: "emp-2", name: "עובד 2", phone: "050-2345678" },
-            { id: "emp-3", name: "עובד 3", phone: "050-3456789" },
+            { id: "emp-1", name: "עובד 1", phone_number: "050-1234567" },
+            { id: "emp-2", name: "עובד 2", phone_number: "050-2345678" },
+            { id: "emp-3", name: "עובד 3", phone_number: "050-3456789" },
           ]
           setEmployees(fallbackEmployees)
         }
       } catch (error) {
         console.error("[v0] Failed to fetch employees:", error)
         const fallbackEmployees = [
-          { id: "emp-1", name: "עובד 1", phone: "050-1234567" },
-          { id: "emp-2", name: "עובד 2", phone: "050-2345678" },
-          { id: "emp-3", name: "עובד 3", phone: "050-3456789" },
+          { id: "emp-1", name: "עובד 1", phone_number: "050-1234567" },
+          { id: "emp-2", name: "עובד 2", phone_number: "050-2345678" },
+          { id: "emp-3", name: "עובד 3", phone_number: "050-3456789" },
         ]
         setEmployees(fallbackEmployees)
       }
@@ -164,15 +169,15 @@ export default function NewJobForm() {
         const supabase = createClient()
         const { data, error } = await supabase
           .from("vehicles")
-          .select("id, license_plate, model, type")
+          .select("id, license_plate, name, details")
           .order("license_plate", { ascending: true })
 
         if (error) {
           console.error("[v0] Error fetching vehicles:", error)
           const fallbackVehicles = [
-            { id: "veh-1", license_plate: "123-45-678", model: "טויוטה קורולה", type: "רכב" },
-            { id: "veh-2", license_plate: "234-56-789", model: "הונדה סיוויק", type: "רכב" },
-            { id: "veh-3", license_plate: "345-67-890", model: "מיצובישי לנסר", type: "רכב" },
+            { id: "veh-1", license_plate: "123-45-678", name: "טויוטה קורולה", details: "רכב" },
+            { id: "veh-2", license_plate: "234-56-789", name: "הונדה סיוויק", details: "רכב" },
+            { id: "veh-3", license_plate: "345-67-890", name: "מיצובישי לנסר", details: "רכב" },
           ]
           setVehicles(fallbackVehicles)
           return
@@ -182,18 +187,18 @@ export default function NewJobForm() {
           setVehicles(data)
         } else {
           const fallbackVehicles = [
-            { id: "veh-1", license_plate: "123-45-678", model: "טויוטה קורולה", type: "רכב" },
-            { id: "veh-2", license_plate: "234-56-789", model: "הונדה סיוויק", type: "רכב" },
-            { id: "veh-3", license_plate: "345-67-890", model: "מיצובישי לנסר", type: "רכב" },
+            { id: "veh-1", license_plate: "123-45-678", name: "טויוטה קורולה", details: "רכב" },
+            { id: "veh-2", license_plate: "234-56-789", name: "הונדה סיוויק", details: "רכב" },
+            { id: "veh-3", license_plate: "345-67-890", name: "מיצובישי לנסר", details: "רכב" },
           ]
           setVehicles(fallbackVehicles)
         }
       } catch (error) {
         console.error("[v0] Failed to fetch vehicles:", error)
         const fallbackVehicles = [
-          { id: "veh-1", license_plate: "123-45-678", model: "טויוטה קורולה", type: "רכב" },
-          { id: "veh-2", license_plate: "234-56-789", model: "הונדה סיוויק", type: "רכב" },
-          { id: "veh-3", license_plate: "345-67-890", model: "מיצובישי לנסר", type: "רכב" },
+          { id: "veh-1", license_plate: "123-45-678", name: "טויוטה קורולה", details: "רכב" },
+          { id: "veh-2", license_plate: "234-56-789", name: "הונדה סיוויק", details: "רכב" },
+          { id: "veh-3", license_plate: "345-67-890", name: "מיצובישי לנסר", details: "רכב" },
         ]
         setVehicles(fallbackVehicles)
       }
@@ -204,15 +209,15 @@ export default function NewJobForm() {
         const supabase = createClient()
         const { data, error } = await supabase
           .from("carts")
-          .select("id, cart_number, type, capacity")
-          .order("cart_number", { ascending: true })
+          .select("id, name, details")
+          .order("name", { ascending: true })
 
         if (error) {
           console.error("[v0] Error fetching carts:", error)
           const fallbackCarts = [
-            { id: "cart-1", cart_number: "עגלה 1", type: "עגלת ציוד", capacity: "גדולה" },
-            { id: "cart-2", cart_number: "עגלה 2", type: "עגלת ציוד", capacity: "בינונית" },
-            { id: "cart-3", cart_number: "נגרר 1", type: "נגרר", capacity: "גדולה" },
+            { id: "cart-1", name: "עגלה 1", details: "עגלת ציוד גדולה" },
+            { id: "cart-2", name: "עגלה 2", details: "עגלת ציוד בינונית" },
+            { id: "cart-3", name: "נגרר 1", details: "נגרר גדול" },
           ]
           setCarts(fallbackCarts)
           return
@@ -222,18 +227,18 @@ export default function NewJobForm() {
           setCarts(data)
         } else {
           const fallbackCarts = [
-            { id: "cart-1", cart_number: "עגלה 1", type: "עגלת ציוד", capacity: "גדולה" },
-            { id: "cart-2", cart_number: "עגלה 2", type: "עגלת ציוד", capacity: "בינונית" },
-            { id: "cart-3", cart_number: "נגרר 1", type: "נגרר", capacity: "גדולה" },
+            { id: "cart-1", name: "עגלה 1", details: "עגלת ציוד גדולה" },
+            { id: "cart-2", name: "עגלה 2", details: "עגלת ציוד בינונית" },
+            { id: "cart-3", name: "נגרר 1", details: "נגרר גדול" },
           ]
           setCarts(fallbackCarts)
         }
       } catch (error) {
         console.error("[v0] Failed to fetch carts:", error)
         const fallbackCarts = [
-          { id: "cart-1", cart_number: "עגלה 1", type: "עגלת ציוד", capacity: "גדולה" },
-          { id: "cart-2", cart_number: "עגלה 2", type: "עגלת ציוד", capacity: "בינונית" },
-          { id: "cart-3", cart_number: "נגרר 1", type: "נגרר", capacity: "גדולה" },
+          { id: "cart-1", name: "עגלה 1", details: "עגלת ציוד גדולה" },
+          { id: "cart-2", name: "עגלה 2", details: "עגלת ציוד בינונית" },
+          { id: "cart-3", name: "נגרר 1", details: "נגרר גדול" },
         ]
         setCarts(fallbackCarts)
       }
@@ -268,15 +273,21 @@ export default function NewJobForm() {
             ? formData.clientName
             : clients.find((c) => c.id === formData.existingClientId)?.company_name,
         client_id: clientType === "existing" ? formData.existingClientId : null,
-        worker_name: selectedEmployee?.name || formData.employee,
-        vehicle_name: selectedVehicle
-          ? `${selectedVehicle.license_plate} - ${selectedVehicle.model}`
-          : formData.vehicle,
-        cart_name: selectedCart?.cart_number || formData.cart,
+        worker_name: selectedEmployee?.name || null,
+        worker_id: formData.employee || null,
+        vehicle_name: selectedVehicle ? `${selectedVehicle.license_plate} - ${selectedVehicle.name}` : null,
+        vehicle_id: formData.vehicle || null,
+        cart_name: selectedCart?.name || null,
+        cart_id: formData.cart || null,
         service_description: formData.description,
         add_to_calendar: formData.calendarSync,
         payment_status: "pending",
         created_by: "root",
+        total_amount: formData.totalAmount,
+        job_specific_shift_rate: formData.jobSpecificShiftRate,
+        notes: formData.notes,
+        receipt_id: formData.receiptId,
+        is_sample: formData.isSample,
       }
 
       console.log("[v0] Submitting job data:", jobData)
@@ -531,7 +542,7 @@ export default function NewJobForm() {
                 <SelectContent>
                   {vehicles.map((vehicle) => (
                     <SelectItem key={vehicle.id} value={vehicle.id}>
-                      {vehicle.license_plate} - {vehicle.model}
+                      {vehicle.license_plate} - {vehicle.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -548,7 +559,7 @@ export default function NewJobForm() {
                 <SelectContent>
                   {carts.map((cart) => (
                     <SelectItem key={cart.id} value={cart.id}>
-                      {cart.cart_number} - {cart.type}
+                      {cart.name} - {cart.details}
                     </SelectItem>
                   ))}
                 </SelectContent>
