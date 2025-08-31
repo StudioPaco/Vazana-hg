@@ -287,6 +287,56 @@
   color: var(--theme-secondary) !important;
 }
 
+/* RTL Dropdown Menu Styles */
+[dir="rtl"] select,
+[dir="rtl"] .dropdown-menu,
+[dir="rtl"] [role="listbox"],
+[dir="rtl"] [role="combobox"] {
+  text-align: right;
+  direction: rtl;
+}
+
+[dir="rtl"] .dropdown-content {
+  right: 0;
+  left: auto;
+}
+
+/* Hebrew dropdown text alignment */
+select[dir="rtl"],
+.select-trigger[dir="rtl"] {
+  text-align: right;
+  padding-right: 12px;
+  padding-left: 32px;
+}
+
+/* Button Press Animations */
+button,
+.btn,
+[role="button"] {
+  transition: all 0.15s ease-in-out;
+}
+
+button:hover,
+.btn:hover,
+[role="button"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button:active,
+.btn:active,
+[role="button"]:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Primary button specific animations */
+button.bg-primary:active,
+button[class*="bg-teal"]:active,
+button[class*="bg-yellow"]:active {
+  transform: translateY(1px) scale(0.98);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
