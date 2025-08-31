@@ -4,7 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SidebarProvider } from "@/components/layout/sidebar-navigation"
 import { ThemeProvider as CustomThemeProvider } from "@/lib/theme-context"
-import LoadingOverlay from "@/components/layout/loading-overlay"
+import { LoadingProvider } from "@/components/layout/loading-overlay"
 
 export const metadata: Metadata = {
   title: "Vazana Studio - וזאנה סטודיו",
@@ -28,10 +28,9 @@ export default function RootLayout({
       <body className="antialiased bg-neutral-50" suppressHydrationWarning>
         <CustomThemeProvider>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-            <SidebarProvider>
-              <LoadingOverlay />
-              {children}
-            </SidebarProvider>
+            <LoadingProvider>
+              <SidebarProvider>{children}</SidebarProvider>
+            </LoadingProvider>
           </ThemeProvider>
         </CustomThemeProvider>
       </body>

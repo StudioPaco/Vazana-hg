@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { useState, createContext, useContext } from "react"
+import { useLoading } from "./loading-overlay"
 
 const SidebarContext = createContext<{
   isMinimized: boolean
@@ -49,6 +50,7 @@ export default function SidebarNavigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { isMinimized, setIsMinimized } = useSidebar()
+  const { setLoading } = useLoading()
 
   const handleLogout = () => {
     localStorage.removeItem("vazana_logged_in")
@@ -57,6 +59,7 @@ export default function SidebarNavigation() {
   }
 
   const handleNavigation = (href: string) => {
+    setLoading(true)
     router.prefetch(href)
     router.push(href)
   }
