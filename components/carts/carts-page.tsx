@@ -39,6 +39,11 @@ export default function CartsPage() {
               name: "עגלת ציוד 2",
               details: "עגלה לציוד כבד",
             },
+            {
+              id: "cart-3",
+              name: "נגרר גדול",
+              details: "נגרר להובלת ציוד כבד",
+            },
           ]
           setCarts(sampleCarts)
           setFilteredCarts(sampleCarts)

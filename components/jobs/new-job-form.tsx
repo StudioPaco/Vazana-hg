@@ -136,9 +136,9 @@ export default function NewJobForm() {
         if (error) {
           console.error("[v0] Error fetching employees:", error)
           const fallbackEmployees = [
-            { id: "emp-1", name: "עובד 1", phone_number: "050-1234567" },
-            { id: "emp-2", name: "עובד 2", phone_number: "050-2345678" },
-            { id: "emp-3", name: "עובד 3", phone_number: "050-3456789" },
+            { id: "worker-1", name: "עובד 1 - נגר", phone_number: "050-1234567" },
+            { id: "worker-2", name: "עובד 2 - חשמלאל", phone_number: "052-7654321" },
+            { id: "worker-3", name: "עובד 3 - צבע", phone_number: "050-3456789" },
           ]
           setEmployees(fallbackEmployees)
           return
@@ -148,18 +148,18 @@ export default function NewJobForm() {
           setEmployees(data)
         } else {
           const fallbackEmployees = [
-            { id: "emp-1", name: "עובד 1", phone_number: "050-1234567" },
-            { id: "emp-2", name: "עובד 2", phone_number: "050-2345678" },
-            { id: "emp-3", name: "עובד 3", phone_number: "050-3456789" },
+            { id: "worker-1", name: "עובד 1 - נגר", phone_number: "050-1234567" },
+            { id: "worker-2", name: "עובד 2 - חשמלאל", phone_number: "052-7654321" },
+            { id: "worker-3", name: "עובד 3 - צבע", phone_number: "050-3456789" },
           ]
           setEmployees(fallbackEmployees)
         }
       } catch (error) {
         console.error("[v0] Failed to fetch employees:", error)
         const fallbackEmployees = [
-          { id: "emp-1", name: "עובד 1", phone_number: "050-1234567" },
-          { id: "emp-2", name: "עובד 2", phone_number: "050-2345678" },
-          { id: "emp-3", name: "עובד 3", phone_number: "050-3456789" },
+          { id: "worker-1", name: "עובד 1 - נגר", phone_number: "050-1234567" },
+          { id: "worker-2", name: "עובד 2 - חשמלאל", phone_number: "052-7654321" },
+          { id: "worker-3", name: "עובד 3 - צבע", phone_number: "050-3456789" },
         ]
         setEmployees(fallbackEmployees)
       }
@@ -176,9 +176,14 @@ export default function NewJobForm() {
         if (error) {
           console.error("[v0] Error fetching vehicles:", error)
           const fallbackVehicles = [
-            { id: "veh-1", license_plate: "123-45-678", name: "טויוטה קורולה", details: "רכב" },
-            { id: "veh-2", license_plate: "234-56-789", name: "הונדה סיוויק", details: "רכב" },
-            { id: "veh-3", license_plate: "345-67-890", name: "מיצובישי לנסר", details: "רכב" },
+            { id: "vehicle-1", name: "טנדר - טויוטה קمري לבן", license_plate: "345-67-890", details: "רכב עבודה ראשי" },
+            {
+              id: "vehicle-2",
+              name: "משאית - פורד טרנזיט",
+              license_plate: "123-45-678",
+              details: "משאית להובלת ציוד כבד",
+            },
+            { id: "vehicle-3", name: "רכב פרטי - הונדה סיוויק", license_plate: "234-56-789", details: "רכב קל" },
           ]
           setVehicles(fallbackVehicles)
           return
@@ -188,18 +193,28 @@ export default function NewJobForm() {
           setVehicles(data)
         } else {
           const fallbackVehicles = [
-            { id: "veh-1", license_plate: "123-45-678", name: "טויוטה קורולה", details: "רכב" },
-            { id: "veh-2", license_plate: "234-56-789", name: "הונדה סיוויק", details: "רכב" },
-            { id: "veh-3", license_plate: "345-67-890", name: "מיצובישי לנסר", details: "רכב" },
+            { id: "vehicle-1", name: "טנדר - טויוטה קمري לבן", license_plate: "345-67-890", details: "רכב עבודה ראשי" },
+            {
+              id: "vehicle-2",
+              name: "משאית - פורד טרנזיט",
+              license_plate: "123-45-678",
+              details: "משאית להובלת ציוד כבד",
+            },
+            { id: "vehicle-3", name: "רכב פרטי - הונדה סיוויק", license_plate: "234-56-789", details: "רכב קל" },
           ]
           setVehicles(fallbackVehicles)
         }
       } catch (error) {
         console.error("[v0] Failed to fetch vehicles:", error)
         const fallbackVehicles = [
-          { id: "veh-1", license_plate: "123-45-678", name: "טויוטה קורולה", details: "רכב" },
-          { id: "veh-2", license_plate: "234-56-789", name: "הונדה סיוויק", details: "רכב" },
-          { id: "veh-3", license_plate: "345-67-890", name: "מיצובישי לנסר", details: "רכב" },
+          { id: "vehicle-1", name: "טנדר - טויוטה קمري לבן", license_plate: "345-67-890", details: "רכב עבודה ראשי" },
+          {
+            id: "vehicle-2",
+            name: "משאית - פורד טרנזיט",
+            license_plate: "123-45-678",
+            details: "משאית להובלת ציוד כבד",
+          },
+          { id: "vehicle-3", name: "רכב פרטי - הונדה סיוויק", license_plate: "234-56-789", details: "רכב קל" },
         ]
         setVehicles(fallbackVehicles)
       }
@@ -216,9 +231,9 @@ export default function NewJobForm() {
         if (error) {
           console.error("[v0] Error fetching carts:", error)
           const fallbackCarts = [
-            { id: "cart-1", name: "עגלה 1", details: "עגלת ציוד גדולה" },
-            { id: "cart-2", name: "עגלה 2", details: "עגלת ציוד בינונית" },
-            { id: "cart-3", name: "נגרר 1", details: "נגרר גדול" },
+            { id: "cart-1", name: "עגלת ציוד 1", details: "עגלה לכלי עבודה בסיסיים" },
+            { id: "cart-2", name: "עגלת ציוד 2", details: "עגלה לציוד כבד" },
+            { id: "cart-3", name: "נגרר גדול", details: "נגרר להובלת ציוד כבד" },
           ]
           setCarts(fallbackCarts)
           return
@@ -228,18 +243,18 @@ export default function NewJobForm() {
           setCarts(data)
         } else {
           const fallbackCarts = [
-            { id: "cart-1", name: "עגלה 1", details: "עגלת ציוד גדולה" },
-            { id: "cart-2", name: "עגלה 2", details: "עגלת ציוד בינונית" },
-            { id: "cart-3", name: "נגרר 1", details: "נגרר גדול" },
+            { id: "cart-1", name: "עגלת ציוד 1", details: "עגלה לכלי עבודה בסיסיים" },
+            { id: "cart-2", name: "עגלת ציוד 2", details: "עגלה לציוד כבד" },
+            { id: "cart-3", name: "נגרר גדול", details: "נגרר להובלת ציוד כבד" },
           ]
           setCarts(fallbackCarts)
         }
       } catch (error) {
         console.error("[v0] Failed to fetch carts:", error)
         const fallbackCarts = [
-          { id: "cart-1", name: "עגלה 1", details: "עגלת ציוד גדולה" },
-          { id: "cart-2", name: "עגלה 2", details: "עגלת ציוד בינונית" },
-          { id: "cart-3", name: "נגרר 1", details: "נגרר גדול" },
+          { id: "cart-1", name: "עגלת ציוד 1", details: "עגלה לכלי עבודה בסיסיים" },
+          { id: "cart-2", name: "עגלת ציוד 2", details: "עגלה לציוד כבד" },
+          { id: "cart-3", name: "נגרר גדול", details: "נגרר להובלת ציוד כבד" },
         ]
         setCarts(fallbackCarts)
       }

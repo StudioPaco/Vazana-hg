@@ -41,6 +41,7 @@ import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navig
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useTheme } from "@/lib/theme-context"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true)
@@ -62,14 +63,23 @@ export default function SettingsPage() {
     nightShiftEnd: "06:00",
   })
 
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const { isMinimized } = useSidebar()
   const { pendingSettings, setPendingSettings, applySettings, colorThemes } = useTheme()
   const supabase = createClient()
+  const [activeTab, setActiveTab] = useState("general")
 
   useEffect(() => {
+    const tabFromUrl = searchParams.get("tab")
+    if (tabFromUrl && ["general", "business", "users", "resources", "integrations", "data"].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl)
+    } else {
+      setActiveTab("general")
+    }
     loadBusinessSettings()
     loadUsers()
-  }, [])
+  }, [searchParams])
 
   const loadBusinessSettings = async () => {
     try {
@@ -180,6 +190,13 @@ export default function SettingsPage() {
     }
   }
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    const newUrl = new URL(window.location.href)
+    newUrl.searchParams.set("tab", value)
+    router.replace(newUrl.pathname + newUrl.search, { scroll: false })
+  }
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <SidebarNavigation />
@@ -190,7 +207,7 @@ export default function SettingsPage() {
             <p className="text-gray-600 font-hebrew">נהל העדפות אפליקציה ומידע עסקי</p>
           </div>
 
-          <Tabs defaultValue="general" className="space-y-6" dir="rtl">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" dir="rtl">
             <TabsList className="grid w-full grid-cols-6" dir="rtl">
               <TabsTrigger value="general" className="font-hebrew">
                 כללי
@@ -649,7 +666,7 @@ export default function SettingsPage() {
                         ערוך את רשימת העובדים הזמינו לביצוע עבודות.
                       </p>
                       <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
-                        <Link href="/settings/resources/workers">נהל עובדים</Link>
+                        <Link href="/settings/resources/workers?tab=resources">נהל עובדים</Link>
                       </Button>
                     </Card>
 
@@ -662,7 +679,7 @@ export default function SettingsPage() {
                         ערוך את סוג העבודות הזמינו במערכת.
                       </p>
                       <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
-                        <Link href="/settings/resources/job-types">נהל סוגי עבודה</Link>
+                        <Link href="/settings/resources/job-types?tab=resources">נהל סוגי עבודה</Link>
                       </Button>
                     </Card>
 
@@ -675,7 +692,7 @@ export default function SettingsPage() {
                         ערוך את רשימת העגלות או הנגררים הזמינו.
                       </p>
                       <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
-                        <Link href="/settings/resources/shopping-carts">נהל עגלות/נגררים</Link>
+                        <Link href="/settings/resources/shopping-carts?tab=resources">נהל עגלות/נגררים</Link>
                       </Button>
                     </Card>
 
@@ -688,7 +705,7 @@ export default function SettingsPage() {
                         ערוך את רשימת כלי הרכב הזמינו ופרטיהם.
                       </p>
                       <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
-                        <Link href="/settings/resources/vehicles">נהל כלי רכב</Link>
+                        <Link href="/settings/resources/vehicles?tab=resources">נהל כלי רכב</Link>
                       </Button>
                     </Card>
                   </div>

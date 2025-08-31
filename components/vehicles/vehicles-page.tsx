@@ -42,6 +42,12 @@ export default function VehiclesPage() {
               license_plate: "123-45-678",
               details: "משאית להובלת ציוד כבד",
             },
+            {
+              id: "vehicle-3",
+              name: "רכב פרטי - הונדה סיוויק",
+              license_plate: "234-56-789",
+              details: "רכב קל",
+            },
           ]
           setVehicles(sampleVehicles)
           setFilteredVehicles(sampleVehicles)

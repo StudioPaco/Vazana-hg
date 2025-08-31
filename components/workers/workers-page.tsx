@@ -55,6 +55,16 @@ export default function WorkersPage() {
               availability: { wed: { day: true }, thu: { day: true }, fri: { day: true } },
               notes: "מתמחה בהתקנות",
             },
+            {
+              id: "worker-3",
+              name: "עובד 3 - צבע",
+              phone_number: "050-3456789",
+              address: "ירושלים",
+              shift_rate: 280,
+              payment_terms_days: 30,
+              availability: { sun: { day: true }, wed: { day: true }, fri: { day: true } },
+              notes: "מומחה צביעה",
+            },
           ]
           setWorkers(sampleWorkers)
           setFilteredWorkers(sampleWorkers)
