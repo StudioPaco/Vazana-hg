@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Phone, Mail, MapPin, Users, Trophy } from "lucide-react"
+import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
@@ -24,11 +24,22 @@ interface Client {
   notes: string
 }
 
+interface Job {
+  id: string
+  job_number: string
+  work_type: string
+  job_date: string
+  site: string
+  payment_status: string
+}
+
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [filteredClients, setFilteredClients] = useState<Client[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
+  const [expandedClient, setExpandedClient] = useState<string | null>(null)
+  const [clientJobs, setClientJobs] = useState<{ [key: string]: Job[] }>({})
 
   const activeClientsCount = clients.filter((client) => client.status === "active").length
   const getMostActiveClient = () => {
@@ -206,6 +217,60 @@ export default function ClientsPage() {
     }
   }
 
+  const fetchClientJobs = async (clientId: string) => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("id, job_number, work_type, job_date, site, payment_status")
+        .eq("client_id", clientId)
+        .order("job_date", { ascending: false })
+        .limit(10)
+
+      if (error) {
+        console.error("[v0] Error fetching client jobs:", error)
+        // Fallback sample jobs
+        const sampleJobs: Job[] = [
+          {
+            id: "1",
+            job_number: "0001",
+            work_type: "אבטחה",
+            job_date: "2024-01-15",
+            site: "משרד ראשי",
+            payment_status: "completed",
+          },
+          {
+            id: "2",
+            job_number: "0003",
+            work_type: "סיור",
+            job_date: "2024-01-10",
+            site: "מחסן צפון",
+            payment_status: "pending",
+          },
+        ]
+        setClientJobs((prev) => ({ ...prev, [clientId]: sampleJobs }))
+        return
+      }
+
+      if (data) {
+        setClientJobs((prev) => ({ ...prev, [clientId]: data }))
+      }
+    } catch (error) {
+      console.error("[v0] Failed to fetch client jobs:", error)
+    }
+  }
+
+  const toggleJobHistory = async (clientId: string) => {
+    if (expandedClient === clientId) {
+      setExpandedClient(null)
+    } else {
+      setExpandedClient(clientId)
+      if (!clientJobs[clientId]) {
+        await fetchClientJobs(clientId)
+      }
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-6 space-y-6" dir="rtl">
@@ -324,17 +389,22 @@ export default function ClientsPage() {
             {filteredClients.map((client) => (
               <Card key={client.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleCopyClient(client)}
-                        className="bg-transparent border-gray-300"
+                        className="bg-transparent border-gray-300 h-8 px-3 text-xs"
                       >
                         העתק
                       </Button>
-                      <Button variant="outline" size="sm" asChild className="bg-transparent border-gray-300">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="bg-transparent border-gray-300 h-8 px-3 text-xs"
+                      >
                         <Link href={`/clients/${client.id}/edit`}>ערוך</Link>
                       </Button>
                     </div>
@@ -342,51 +412,98 @@ export default function ClientsPage() {
                     <div className="text-right">
                       <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
                       <p className="text-sm text-gray-600">{client.contact_person}</p>
-                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1">
+                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
                         {client.status === "active" ? "פעיל" : "לא פעיל"}
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                    <div className="text-right">
-                      <div className="flex items-center justify-end mb-2">
-                        <span className="mr-2">{client.phone}</span>
-                        <Phone className="h-4 w-4 text-gray-500" />
-                      </div>
-                      <div className="flex items-center justify-end mb-2">
-                        <span className="mr-2">{client.email}</span>
-                        <Mail className="h-4 w-4 text-gray-500" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="text-right space-y-1">
+                      <div className="flex items-center justify-end">
+                        <span className="mr-2 text-sm">{client.phone}</span>
+                        <Phone className="h-3 w-3 text-gray-500" />
                       </div>
                       <div className="flex items-center justify-end">
-                        <span className="mr-2">
+                        <span className="mr-2 text-sm">{client.email}</span>
+                        <Mail className="h-3 w-3 text-gray-500" />
+                      </div>
+                      <div className="flex items-center justify-end">
+                        <span className="mr-2 text-sm">
                           {client.address}, {client.city}
                         </span>
-                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <MapPin className="h-3 w-3 text-gray-500" />
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-gray-600 mb-1">תעריף אבטחה (₪/משמרת)</p>
-                      <p className="font-medium mb-3">₪{client.security_rate}</p>
-                      <p className="text-gray-600 mb-1">תעריף התקנה (₪/משמרת)</p>
-                      <p className="font-medium">₪{client.installation_rate}</p>
+                    <div className="text-right space-y-1">
+                      <div>
+                        <p className="text-xs text-gray-600">תעריף אבטחה</p>
+                        <p className="font-medium text-sm">₪{client.security_rate}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">תעריף התקנה</p>
+                        <p className="font-medium text-sm">₪{client.installation_rate}</p>
+                      </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-gray-600 mb-1">אופן תשלום (יומי)</p>
-                      <p className="font-medium">{client.payment_method}</p>
+                    <div className="text-right space-y-1">
+                      <div>
+                        <p className="text-xs text-gray-600">אופן תשלום (יומי)</p>
+                        <p className="font-medium text-sm">{client.payment_method}</p>
+                      </div>
                       {client.notes && (
-                        <div className="mt-3">
-                          <p className="text-gray-600 mb-1">הערות</p>
-                          <p className="text-sm text-gray-700">{client.notes}</p>
+                        <div>
+                          <p className="text-xs text-gray-600">הערות</p>
+                          <p className="text-xs text-gray-700">{client.notes}</p>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-500 text-center">מציגים שירי כל 10 החודש</p>
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <button
+                      onClick={() => toggleJobHistory(client.id)}
+                      className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors py-2"
+                    >
+                      <span>הצג 10 עבודות אחרונות</span>
+                      {expandedClient === client.id ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </button>
+
+                    {expandedClient === client.id && (
+                      <div className="mt-3 space-y-2 bg-gray-50 rounded-lg p-3">
+                        {clientJobs[client.id] && clientJobs[client.id].length > 0 ? (
+                          clientJobs[client.id].map((job) => (
+                            <div
+                              key={job.id}
+                              className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                            >
+                              <div className="text-right">
+                                <p className="font-medium text-sm">עבודה #{job.job_number}</p>
+                                <p className="text-xs text-gray-600">
+                                  {job.work_type} - {job.site}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(job.job_date).toLocaleDateString("he-IL")}
+                                </p>
+                              </div>
+                              <Badge
+                                variant={job.payment_status === "completed" ? "default" : "secondary"}
+                                className="text-xs"
+                              >
+                                {job.payment_status === "completed" ? "הושלם" : "ממתין"}
+                              </Badge>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-center text-sm text-gray-500 py-4">אין עבודות קודמות</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

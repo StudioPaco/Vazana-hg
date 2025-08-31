@@ -17,7 +17,7 @@ export default function NewJobForm() {
   const router = useRouter()
   const [jobNumber, setJobNumber] = useState("0001")
   const [clients, setClients] = useState<any[]>([])
-  const [clientType, setClientType] = useState<"new" | "existing">("new")
+  const [clientType, setClientType] = useState<"new" | "existing">("existing")
   const [formData, setFormData] = useState({
     jobType: "",
     date: "",
