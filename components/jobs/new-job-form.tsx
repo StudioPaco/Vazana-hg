@@ -254,6 +254,38 @@ export default function NewJobForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    const requiredFields = [
+      { field: formData.jobType, name: "סוג עבודה" },
+      { field: formData.date, name: "תאריך" },
+      { field: formData.location, name: "אתר" },
+      { field: formData.shiftType, name: "סוג משמרת" },
+      { field: formData.city, name: "עיר" },
+      { field: formData.employee, name: "עובד" },
+      { field: formData.vehicle, name: "רכב" },
+      { field: formData.description, name: "תיאור העבודה" },
+    ]
+
+    // Validate client selection
+    if (clientType === "existing" && !formData.existingClientId) {
+      requiredFields.push({ field: formData.existingClientId, name: "לקוח קיים" })
+    }
+    if (clientType === "new") {
+      requiredFields.push(
+        { field: formData.clientName, name: "שם החברה" },
+        { field: formData.clientPhone, name: "איש קשר" },
+        { field: formData.clientEmail, name: 'דוא"ל' },
+        { field: formData.clientAddress, name: "כתובת" },
+      )
+    }
+
+    // Check for missing required fields
+    const missingFields = requiredFields.filter(({ field }) => !field || field.trim() === "")
+    if (missingFields.length > 0) {
+      const fieldNames = missingFields.map(({ name }) => name).join(", ")
+      alert(`שדות חובה חסרים: ${fieldNames}`)
+      return
+    }
+
     try {
       const supabase = createClient()
 
@@ -282,12 +314,13 @@ export default function NewJobForm() {
         service_description: formData.description,
         add_to_calendar: formData.calendarSync,
         payment_status: "pending",
-        created_by: "root",
+        created_by: "root", // TODO: Replace with actual user authentication
+        created_date: new Date().toISOString(), // Added missing created_date field
         total_amount: formData.totalAmount,
         job_specific_shift_rate: formData.jobSpecificShiftRate,
         notes: formData.notes,
         receipt_id: formData.receiptId,
-        is_sample: formData.isSample,
+        is_sample: false, // Set to false for real jobs
       }
 
       console.log("[v0] Submitting job data:", jobData)
@@ -296,7 +329,7 @@ export default function NewJobForm() {
 
       if (error) {
         console.error("[v0] Error creating job:", error)
-        alert("שגיאה ביצירת העבודה")
+        alert(`שגיאה ביצירת העבודה: ${error.message}`)
         return
       }
 
@@ -478,7 +511,7 @@ export default function NewJobForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="clientEmail" className="text-right block">
-                    דוא"ל *
+                    דוא\"ל *
                   </Label>
                   <Input
                     id="clientEmail"
