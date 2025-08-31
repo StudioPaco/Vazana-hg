@@ -306,6 +306,9 @@ export default function NewJobForm() {
       const selectedEmployee = employees.find((emp) => emp.id === formData.employee)
       const selectedVehicle = vehicles.find((veh) => veh.id === formData.vehicle)
       const selectedCart = carts.find((cart) => cart.id === formData.cart)
+      const selectedClient = clients.find((c) => c.id === formData.existingClientId)
+
+      const sampleUserId = "550e8400-e29b-41d4-a716-446655440000"
 
       const jobData = {
         job_number: jobNumber,
@@ -314,21 +317,19 @@ export default function NewJobForm() {
         site: formData.location,
         shift_type: formData.shiftType,
         city: formData.city,
-        client_name:
-          clientType === "new"
-            ? formData.clientName
-            : clients.find((c) => c.id === formData.existingClientId)?.company_name,
-        client_id: clientType === "existing" ? formData.existingClientId : null,
+        client_name: clientType === "new" ? formData.clientName : selectedClient?.company_name,
+        client_id: clientType === "existing" && selectedClient ? selectedClient.id : null,
         worker_name: selectedEmployee?.name || null,
-        worker_id: formData.employee || null,
+        worker_id: selectedEmployee ? selectedEmployee.id : null, // Use proper UUID
         vehicle_name: selectedVehicle ? `${selectedVehicle.license_plate} - ${selectedVehicle.name}` : null,
-        vehicle_id: formData.vehicle || null,
+        vehicle_id: selectedVehicle ? selectedVehicle.id : null, // Use proper UUID
         cart_name: selectedCart?.name || null,
-        cart_id: formData.cart || null,
-        service_description: formData.description || null, // Allow empty description
+        cart_id: selectedCart ? selectedCart.id : null, // Use proper UUID instead of string
+        service_description: formData.description || null,
         add_to_calendar: formData.calendarSync,
         payment_status: "pending",
         created_by: "root",
+        created_by_id: sampleUserId, // Add proper UUID for created_by_id
         created_date: new Date().toISOString(),
         total_amount: formData.totalAmount,
         job_specific_shift_rate: formData.jobSpecificShiftRate,
@@ -651,7 +652,7 @@ export default function NewJobForm() {
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="הכנס את העבודה לביצוע וכל פרט חשוב אחר... (אופציונלי)"
+              placeholder="הכנס את העבודה לביצוע وكل פרט חשוב אחר... (אופציונלי)"
               className="min-h-[100px] text-right"
             />
             <p className="text-gray-500 text-sm text-right mt-2">שדה זה אינו חובה</p>

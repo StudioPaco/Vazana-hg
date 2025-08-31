@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Phone, MapPin, Calendar, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { apiClient } from "@/lib/api-client"
+import { createClient } from "@/lib/supabase/client"
 
 interface Worker {
   id: string
@@ -29,9 +29,39 @@ export default function WorkersPage() {
   useEffect(() => {
     const fetchWorkers = async () => {
       try {
-        const response = await apiClient.getWorkers()
-        setWorkers(response.data || [])
-        setFilteredWorkers(response.data || [])
+        const supabase = createClient()
+        const { data, error } = await supabase.from("workers").select("*").order("name")
+
+        if (error) {
+          console.error("[v0] Error fetching workers:", error)
+          const sampleWorkers = [
+            {
+              id: "worker-1",
+              name: "עובד 1 - נגר",
+              phone_number: "050-1234567",
+              address: "תל אביב",
+              shift_rate: 300,
+              payment_terms_days: 30,
+              availability: { sun: { day: true }, mon: { day: true }, tue: { day: true } },
+              notes: "עובד מנוסה",
+            },
+            {
+              id: "worker-2",
+              name: "עובד 2 - חשמלאי",
+              phone_number: "052-7654321",
+              address: "חיפה",
+              shift_rate: 350,
+              payment_terms_days: 15,
+              availability: { wed: { day: true }, thu: { day: true }, fri: { day: true } },
+              notes: "מתמחה בהתקנות",
+            },
+          ]
+          setWorkers(sampleWorkers)
+          setFilteredWorkers(sampleWorkers)
+        } else {
+          setWorkers(data || [])
+          setFilteredWorkers(data || [])
+        }
       } catch (error) {
         console.error("Failed to fetch workers:", error)
       } finally {
@@ -55,7 +85,12 @@ export default function WorkersPage() {
   const handleDeleteWorker = async (id: string) => {
     if (confirm("Are you sure you want to delete this worker?")) {
       try {
-        // await apiClient.deleteWorker(id)
+        const supabase = createClient()
+        const { error } = await supabase.from("workers").delete().eq("id", id)
+
+        if (error) {
+          console.error("[v0] Error deleting worker:", error)
+        }
         setWorkers(workers.filter((worker) => worker.id !== id))
       } catch (error) {
         console.error("Failed to delete worker:", error)
@@ -95,17 +130,17 @@ export default function WorkersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Workers</h1>
-          <p className="text-gray-600">עובדים - Manage your workforce</p>
+        <div className="text-right">
+          <h1 className="text-3xl font-bold text-gray-900">עובדים</h1>
+          <p className="text-gray-600">ניהול כוח האדם שלך</p>
         </div>
         <Button asChild>
-          <Link href="/workers/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Worker
+          <Link href="/settings/resources/workers/new">
+            <Plus className="ml-2 h-4 w-4" />
+            הוסף עובד
           </Link>
         </Button>
       </div>

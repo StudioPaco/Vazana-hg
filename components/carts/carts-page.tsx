@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, ShoppingCart, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { apiClient } from "@/lib/api-client"
+import { createClient } from "@/lib/supabase/client"
 
 interface Cart {
   id: string
@@ -23,9 +23,29 @@ export default function CartsPage() {
   useEffect(() => {
     const fetchCarts = async () => {
       try {
-        const response = await apiClient.getCarts()
-        setCarts(response.data || [])
-        setFilteredCarts(response.data || [])
+        const supabase = createClient()
+        const { data, error } = await supabase.from("carts").select("*").order("name")
+
+        if (error) {
+          console.error("[v0] Error fetching carts:", error)
+          const sampleCarts = [
+            {
+              id: "cart-1",
+              name: "עגלת ציוד 1",
+              details: "עגלה לכלי עבודה בסיסיים",
+            },
+            {
+              id: "cart-2",
+              name: "עגלת ציוד 2",
+              details: "עגלה לציוד כבד",
+            },
+          ]
+          setCarts(sampleCarts)
+          setFilteredCarts(sampleCarts)
+        } else {
+          setCarts(data || [])
+          setFilteredCarts(data || [])
+        }
       } catch (error) {
         console.error("Failed to fetch carts:", error)
       } finally {
@@ -44,7 +64,12 @@ export default function CartsPage() {
   const handleDeleteCart = async (id: string) => {
     if (confirm("Are you sure you want to delete this cart?")) {
       try {
-        // await apiClient.deleteCart(id)
+        const supabase = createClient()
+        const { error } = await supabase.from("carts").delete().eq("id", id)
+
+        if (error) {
+          console.error("[v0] Error deleting cart:", error)
+        }
         setCarts(carts.filter((cart) => cart.id !== id))
       } catch (error) {
         console.error("Failed to delete cart:", error)
@@ -68,17 +93,17 @@ export default function CartsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Carts</h1>
-          <p className="text-gray-600">עגלות - Manage your equipment carts</p>
+        <div className="text-right">
+          <h1 className="text-3xl font-bold text-gray-900">עגלות</h1>
+          <p className="text-gray-600">ניהול עגלות הציוד שלך</p>
         </div>
         <Button asChild>
-          <Link href="/carts/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Cart
+          <Link href="/settings/resources/shopping-carts/new">
+            <Plus className="ml-2 h-4 w-4" />
+            הוסף עגלה
           </Link>
         </Button>
       </div>

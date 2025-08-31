@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Truck, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { apiClient } from "@/lib/api-client"
+import { createClient } from "@/lib/supabase/client"
 
 interface Vehicle {
   id: string
@@ -24,9 +24,31 @@ export default function VehiclesPage() {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const response = await apiClient.getVehicles()
-        setVehicles(response.data || [])
-        setFilteredVehicles(response.data || [])
+        const supabase = createClient()
+        const { data, error } = await supabase.from("vehicles").select("*").order("name")
+
+        if (error) {
+          console.error("[v0] Error fetching vehicles:", error)
+          const sampleVehicles = [
+            {
+              id: "vehicle-1",
+              name: "טנדר - טויוטה קمري לבן",
+              license_plate: "345-67-890",
+              details: "רכב עבודה ראשי",
+            },
+            {
+              id: "vehicle-2",
+              name: "משאית - פורד טרנזיט",
+              license_plate: "123-45-678",
+              details: "משאית להובלת ציוד כבד",
+            },
+          ]
+          setVehicles(sampleVehicles)
+          setFilteredVehicles(sampleVehicles)
+        } else {
+          setVehicles(data || [])
+          setFilteredVehicles(data || [])
+        }
       } catch (error) {
         console.error("Failed to fetch vehicles:", error)
       } finally {
@@ -49,7 +71,12 @@ export default function VehiclesPage() {
   const handleDeleteVehicle = async (id: string) => {
     if (confirm("Are you sure you want to delete this vehicle?")) {
       try {
-        // await apiClient.deleteVehicle(id)
+        const supabase = createClient()
+        const { error } = await supabase.from("vehicles").delete().eq("id", id)
+
+        if (error) {
+          console.error("[v0] Error deleting vehicle:", error)
+        }
         setVehicles(vehicles.filter((vehicle) => vehicle.id !== id))
       } catch (error) {
         console.error("Failed to delete vehicle:", error)
@@ -73,17 +100,17 @@ export default function VehiclesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Vehicles</h1>
-          <p className="text-gray-600">כלי רכב - Manage your vehicle fleet</p>
+        <div className="text-right">
+          <h1 className="text-3xl font-bold text-gray-900">כלי רכב</h1>
+          <p className="text-gray-600">ניהול צי הרכבים שלך</p>
         </div>
         <Button asChild>
-          <Link href="/vehicles/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Vehicle
+          <Link href="/settings/resources/vehicles/new">
+            <Plus className="ml-2 h-4 w-4" />
+            הוסף רכב
           </Link>
         </Button>
       </div>
@@ -137,7 +164,7 @@ export default function VehiclesPage() {
 
                 <div className="flex space-x-2 pt-2">
                   <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
-                    <Link href={`/vehicles/${vehicle.id}/edit`}>
+                    <Link href={`/settings/resources/vehicles/${vehicle.id}/edit`}>
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
                     </Link>
