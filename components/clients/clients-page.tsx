@@ -389,8 +389,18 @@ export default function ClientsPage() {
             {filteredClients.map((client) => (
               <Card key={client.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex gap-2">
+                  <div className="relative mb-4">
+                    {/* Client name and info - positioned at top-right */}
+                    <div className="absolute top-0 right-0 text-right">
+                      <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
+                      <p className="text-sm text-gray-600">{client.contact_person}</p>
+                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
+                        {client.status === "active" ? "פעיל" : "לא פעיל"}
+                      </Badge>
+                    </div>
+
+                    {/* Action buttons - positioned at top-left */}
+                    <div className="absolute top-0 left-0 flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
@@ -409,13 +419,8 @@ export default function ClientsPage() {
                       </Button>
                     </div>
 
-                    <div className="text-right">
-                      <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
-                      <p className="text-sm text-gray-600">{client.contact_person}</p>
-                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
-                        {client.status === "active" ? "פעיל" : "לא פעיל"}
-                      </Badge>
-                    </div>
+                    {/* Spacer to ensure content doesn't overlap */}
+                    <div className="h-16"></div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
