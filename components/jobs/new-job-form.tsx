@@ -21,6 +21,7 @@ export default function NewJobForm() {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [carts, setCarts] = useState<any[]>([])
   const [clientType, setClientType] = useState<"new" | "existing">("existing")
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState({
     jobType: "",
     date: "",
@@ -254,33 +255,46 @@ export default function NewJobForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    setValidationErrors({})
+
     const requiredFields = [
-      { field: formData.jobType, name: "סוג עבודה" },
-      { field: formData.date, name: "תאריך" },
-      { field: formData.location, name: "אתר" },
-      { field: formData.shiftType, name: "סוג משמרת" },
-      { field: formData.city, name: "עיר" },
-      { field: formData.employee, name: "עובד" },
-      { field: formData.vehicle, name: "רכב" },
-      { field: formData.description, name: "תיאור העבודה" },
+      { field: formData.jobType, name: "סוג עבודה", key: "jobType", message: "בחר סוג עבודה מהרשימה" },
+      { field: formData.date, name: "תאריך", key: "date", message: "בחר תאריך לעבודה" },
+      { field: formData.location, name: "אתר", key: "location", message: "הכנס שם האתר או המיקום" },
+      { field: formData.shiftType, name: "סוג משמרת", key: "shiftType", message: "בחר סוג משמרת" },
+      { field: formData.city, name: "עיר", key: "city", message: "הכנס שם העיר" },
+      { field: formData.employee, name: "עובד", key: "employee", message: "בחר עובד לעבודה" },
+      { field: formData.vehicle, name: "רכב", key: "vehicle", message: "בחר רכב לעבודה" },
     ]
 
-    // Validate client selection
     if (clientType === "existing" && !formData.existingClientId) {
-      requiredFields.push({ field: formData.existingClientId, name: "לקוח קיים" })
+      requiredFields.push({
+        field: formData.existingClientId,
+        name: "לקוח קיים",
+        key: "existingClientId",
+        message: "בחר לקוח מהרשימה",
+      })
     }
     if (clientType === "new") {
       requiredFields.push(
-        { field: formData.clientName, name: "שם החברה" },
-        { field: formData.clientPhone, name: "איש קשר" },
-        { field: formData.clientEmail, name: 'דוא"ל' },
-        { field: formData.clientAddress, name: "כתובת" },
+        { field: formData.clientName, name: "שם החברה", key: "clientName", message: "הכנס שם החברה" },
+        { field: formData.clientPhone, name: "איש קשר", key: "clientPhone", message: "הכנס שם איש הקשר" },
+        { field: formData.clientEmail, name: 'דוא"ל', key: "clientEmail", message: 'הכנס כתובת דוא"ל תקינה' },
+        { field: formData.clientAddress, name: "כתובת", key: "clientAddress", message: "הכנס כתובת החברה" },
       )
     }
 
-    // Check for missing required fields
-    const missingFields = requiredFields.filter(({ field }) => !field || field.trim() === "")
+    const errors: Record<string, string> = {}
+    const missingFields = requiredFields.filter(({ field, key, message }) => {
+      if (!field || field.trim() === "") {
+        errors[key] = message
+        return true
+      }
+      return false
+    })
+
     if (missingFields.length > 0) {
+      setValidationErrors(errors)
       const fieldNames = missingFields.map(({ name }) => name).join(", ")
       alert(`שדות חובה חסרים: ${fieldNames}`)
       return
@@ -311,16 +325,16 @@ export default function NewJobForm() {
         vehicle_id: formData.vehicle || null,
         cart_name: selectedCart?.name || null,
         cart_id: formData.cart || null,
-        service_description: formData.description,
+        service_description: formData.description || null, // Allow empty description
         add_to_calendar: formData.calendarSync,
         payment_status: "pending",
-        created_by: "root", // TODO: Replace with actual user authentication
-        created_date: new Date().toISOString(), // Added missing created_date field
+        created_by: "root",
+        created_date: new Date().toISOString(),
         total_amount: formData.totalAmount,
         job_specific_shift_rate: formData.jobSpecificShiftRate,
         notes: formData.notes,
         receipt_id: formData.receiptId,
-        is_sample: false, // Set to false for real jobs
+        is_sample: false,
       }
 
       console.log("[v0] Submitting job data:", jobData)
@@ -370,7 +384,7 @@ export default function NewJobForm() {
                 סוג עבודה *
               </Label>
               <Select onValueChange={(value) => setFormData({ ...formData, jobType: value })}>
-                <SelectTrigger className="text-right">
+                <SelectTrigger className={`text-right ${validationErrors.jobType ? "border-red-500" : ""}`}>
                   <SelectValue placeholder="בחר סוג עבודה" />
                 </SelectTrigger>
                 <SelectContent>
@@ -379,6 +393,9 @@ export default function NewJobForm() {
                   <SelectItem value="event">אירוע</SelectItem>
                 </SelectContent>
               </Select>
+              {validationErrors.jobType && (
+                <p className="text-red-500 text-sm text-right">{validationErrors.jobType}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="date" className="text-right block">
@@ -389,9 +406,9 @@ export default function NewJobForm() {
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="text-right"
-                required
+                className={`text-right ${validationErrors.date ? "border-red-500" : ""}`}
               />
+              {validationErrors.date && <p className="text-red-500 text-sm text-right">{validationErrors.date}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="location" className="text-right block">
@@ -402,16 +419,18 @@ export default function NewJobForm() {
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="דוגמה: משרד ראשי, בניין א'"
-                className="text-right"
-                required
+                className={`text-right ${validationErrors.location ? "border-red-500" : ""}`}
               />
+              {validationErrors.location && (
+                <p className="text-red-500 text-sm text-right">{validationErrors.location}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="shiftType" className="text-right block">
                 סוג משמרת *
               </Label>
               <Select onValueChange={(value) => setFormData({ ...formData, shiftType: value })}>
-                <SelectTrigger className="text-right">
+                <SelectTrigger className={`text-right ${validationErrors.shiftType ? "border-red-500" : ""}`}>
                   <SelectValue placeholder="בחר סוג משמרת" />
                 </SelectTrigger>
                 <SelectContent>
@@ -420,6 +439,9 @@ export default function NewJobForm() {
                   <SelectItem value="full">מלא</SelectItem>
                 </SelectContent>
               </Select>
+              {validationErrors.shiftType && (
+                <p className="text-red-500 text-sm text-right">{validationErrors.shiftType}</p>
+              )}
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="city" className="text-right block">
@@ -430,9 +452,9 @@ export default function NewJobForm() {
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 placeholder="דוגמה: תל אביב, לוהמן"
-                className="text-right"
-                required
+                className={`text-right ${validationErrors.city ? "border-red-500" : ""}`}
               />
+              {validationErrors.city && <p className="text-red-500 text-sm text-right">{validationErrors.city}</p>}
             </div>
           </CardContent>
         </Card>
@@ -470,7 +492,7 @@ export default function NewJobForm() {
                   בחר לקוח *
                 </Label>
                 <Select onValueChange={(value) => setFormData({ ...formData, existingClientId: value })}>
-                  <SelectTrigger className="text-right">
+                  <SelectTrigger className={`text-right ${validationErrors.existingClientId ? "border-red-500" : ""}`}>
                     <SelectValue placeholder="בחר לקוח" />
                   </SelectTrigger>
                   <SelectContent>
@@ -481,6 +503,9 @@ export default function NewJobForm() {
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.existingClientId && (
+                  <p className="text-red-500 text-sm text-right">{validationErrors.existingClientId}</p>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -492,9 +517,11 @@ export default function NewJobForm() {
                     id="clientName"
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                    className="text-right"
-                    required={clientType === "new"}
+                    className={`text-right ${validationErrors.clientName ? "border-red-500" : ""}`}
                   />
+                  {validationErrors.clientName && (
+                    <p className="text-red-500 text-sm text-right">{validationErrors.clientName}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="clientPhone" className="text-right block">
@@ -505,9 +532,11 @@ export default function NewJobForm() {
                     value={formData.clientPhone}
                     onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
                     placeholder="דוגמה: משרד ראשי, בניין א'"
-                    className="text-right"
-                    required={clientType === "new"}
+                    className={`text-right ${validationErrors.clientPhone ? "border-red-500" : ""}`}
                   />
+                  {validationErrors.clientPhone && (
+                    <p className="text-red-500 text-sm text-right">{validationErrors.clientPhone}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="clientEmail" className="text-right block">
@@ -518,9 +547,11 @@ export default function NewJobForm() {
                     type="email"
                     value={formData.clientEmail}
                     onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
-                    className="text-right"
-                    required={clientType === "new"}
+                    className={`text-right ${validationErrors.clientEmail ? "border-red-500" : ""}`}
                   />
+                  {validationErrors.clientEmail && (
+                    <p className="text-red-500 text-sm text-right">{validationErrors.clientEmail}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="clientAddress" className="text-right block">
@@ -530,9 +561,11 @@ export default function NewJobForm() {
                     id="clientAddress"
                     value={formData.clientAddress}
                     onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
-                    className="text-right"
-                    required={clientType === "new"}
+                    className={`text-right ${validationErrors.clientAddress ? "border-red-500" : ""}`}
                   />
+                  {validationErrors.clientAddress && (
+                    <p className="text-red-500 text-sm text-right">{validationErrors.clientAddress}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -552,7 +585,7 @@ export default function NewJobForm() {
                 עובד *
               </Label>
               <Select onValueChange={(value) => setFormData({ ...formData, employee: value })}>
-                <SelectTrigger className="text-right">
+                <SelectTrigger className={`text-right ${validationErrors.employee ? "border-red-500" : ""}`}>
                   <SelectValue placeholder="בחר עובד" />
                 </SelectTrigger>
                 <SelectContent>
@@ -563,13 +596,16 @@ export default function NewJobForm() {
                   ))}
                 </SelectContent>
               </Select>
+              {validationErrors.employee && (
+                <p className="text-red-500 text-sm text-right">{validationErrors.employee}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="vehicle" className="text-right block">
                 רכב *
               </Label>
               <Select onValueChange={(value) => setFormData({ ...formData, vehicle: value })}>
-                <SelectTrigger className="text-right">
+                <SelectTrigger className={`text-right ${validationErrors.vehicle ? "border-red-500" : ""}`}>
                   <SelectValue placeholder="בחר רכב" />
                 </SelectTrigger>
                 <SelectContent>
@@ -580,6 +616,9 @@ export default function NewJobForm() {
                   ))}
                 </SelectContent>
               </Select>
+              {validationErrors.vehicle && (
+                <p className="text-red-500 text-sm text-right">{validationErrors.vehicle}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="cart" className="text-right block">
@@ -601,7 +640,6 @@ export default function NewJobForm() {
           </CardContent>
         </Card>
 
-        {/* Description Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -613,13 +651,13 @@ export default function NewJobForm() {
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="הכנס את העבודה לביצוע וכל פרט חשוב אחר..."
+              placeholder="הכנס את העבודה לביצוע וכל פרט חשוב אחר... (אופציונלי)"
               className="min-h-[100px] text-right"
             />
+            <p className="text-gray-500 text-sm text-right mt-2">שדה זה אינו חובה</p>
           </CardContent>
         </Card>
 
-        {/* Calendar Sync Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -629,7 +667,7 @@ export default function NewJobForm() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">צור אירוע ביומן עבור עבודה זו</span>
+              <span className="text-sm text-gray-600">צור אירוע ביומן עבור עבודה זו (אופציונלי)</span>
               <div className="flex items-center space-x-2">
                 <span className="text-sm">הוסף ליומן גוגל</span>
                 <Switch
