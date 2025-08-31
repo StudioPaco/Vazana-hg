@@ -1,9 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Home,
   Users,
@@ -49,12 +47,18 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
 export default function SidebarNavigation() {
   const pathname = usePathname()
+  const router = useRouter()
   const { isMinimized, setIsMinimized } = useSidebar()
 
   const handleLogout = () => {
     localStorage.removeItem("vazana_logged_in")
     localStorage.removeItem("vazana_user")
     window.location.href = "/auth/login"
+  }
+
+  const handleNavigation = (href: string) => {
+    router.prefetch(href)
+    router.push(href)
   }
 
   return (
@@ -95,10 +99,10 @@ export default function SidebarNavigation() {
         {navigationItems.map((item) => {
           const isActive = pathname === item.href
           return (
-            <Link
+            <button
               key={item.href}
-              href={item.href}
-              className={`group relative flex items-center ${
+              onClick={() => handleNavigation(item.href)}
+              className={`group relative flex items-center w-full ${
                 isMinimized ? "justify-center p-4" : "justify-end gap-3 px-4 py-3"
               } rounded-lg transition-colors font-hebrew ${
                 isActive ? "bg-vazana-yellow text-vazana-dark font-semibold" : "text-gray-700 hover:bg-gray-100"
@@ -114,7 +118,7 @@ export default function SidebarNavigation() {
                   <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
                 </div>
               )}
-            </Link>
+            </button>
           )
         })}
       </nav>
