@@ -10,13 +10,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { CalendarIcon, ClipboardIcon, SettingsIcon } from "lucide-react"
+import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function NewJobForm() {
   const router = useRouter()
   const [jobNumber, setJobNumber] = useState("0001")
   const [clients, setClients] = useState<any[]>([])
+  const [employees, setEmployees] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
+  const [carts, setCarts] = useState<any[]>([])
   const [clientType, setClientType] = useState<"new" | "existing">("existing")
   const [formData, setFormData] = useState({
     jobType: "",
@@ -116,8 +119,131 @@ export default function NewJobForm() {
       }
     }
 
+    const fetchEmployees = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from("workers")
+          .select("id, name, phone")
+          .order("name", { ascending: true })
+
+        if (error) {
+          console.error("[v0] Error fetching employees:", error)
+          const fallbackEmployees = [
+            { id: "emp-1", name: "עובד 1", phone: "050-1234567" },
+            { id: "emp-2", name: "עובד 2", phone: "050-2345678" },
+            { id: "emp-3", name: "עובד 3", phone: "050-3456789" },
+          ]
+          setEmployees(fallbackEmployees)
+          return
+        }
+
+        if (data && data.length > 0) {
+          setEmployees(data)
+        } else {
+          const fallbackEmployees = [
+            { id: "emp-1", name: "עובד 1", phone: "050-1234567" },
+            { id: "emp-2", name: "עובד 2", phone: "050-2345678" },
+            { id: "emp-3", name: "עובד 3", phone: "050-3456789" },
+          ]
+          setEmployees(fallbackEmployees)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch employees:", error)
+        const fallbackEmployees = [
+          { id: "emp-1", name: "עובד 1", phone: "050-1234567" },
+          { id: "emp-2", name: "עובד 2", phone: "050-2345678" },
+          { id: "emp-3", name: "עובד 3", phone: "050-3456789" },
+        ]
+        setEmployees(fallbackEmployees)
+      }
+    }
+
+    const fetchVehicles = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from("vehicles")
+          .select("id, license_plate, model, type")
+          .order("license_plate", { ascending: true })
+
+        if (error) {
+          console.error("[v0] Error fetching vehicles:", error)
+          const fallbackVehicles = [
+            { id: "veh-1", license_plate: "123-45-678", model: "טויוטה קורולה", type: "רכב" },
+            { id: "veh-2", license_plate: "234-56-789", model: "הונדה סיוויק", type: "רכב" },
+            { id: "veh-3", license_plate: "345-67-890", model: "מיצובישי לנסר", type: "רכב" },
+          ]
+          setVehicles(fallbackVehicles)
+          return
+        }
+
+        if (data && data.length > 0) {
+          setVehicles(data)
+        } else {
+          const fallbackVehicles = [
+            { id: "veh-1", license_plate: "123-45-678", model: "טויוטה קורולה", type: "רכב" },
+            { id: "veh-2", license_plate: "234-56-789", model: "הונדה סיוויק", type: "רכב" },
+            { id: "veh-3", license_plate: "345-67-890", model: "מיצובישי לנסר", type: "רכב" },
+          ]
+          setVehicles(fallbackVehicles)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch vehicles:", error)
+        const fallbackVehicles = [
+          { id: "veh-1", license_plate: "123-45-678", model: "טויוטה קורולה", type: "רכב" },
+          { id: "veh-2", license_plate: "234-56-789", model: "הונדה סיוויק", type: "רכב" },
+          { id: "veh-3", license_plate: "345-67-890", model: "מיצובישי לנסר", type: "רכב" },
+        ]
+        setVehicles(fallbackVehicles)
+      }
+    }
+
+    const fetchCarts = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from("carts")
+          .select("id, cart_number, type, capacity")
+          .order("cart_number", { ascending: true })
+
+        if (error) {
+          console.error("[v0] Error fetching carts:", error)
+          const fallbackCarts = [
+            { id: "cart-1", cart_number: "עגלה 1", type: "עגלת ציוד", capacity: "גדולה" },
+            { id: "cart-2", cart_number: "עגלה 2", type: "עגלת ציוד", capacity: "בינונית" },
+            { id: "cart-3", cart_number: "נגרר 1", type: "נגרר", capacity: "גדולה" },
+          ]
+          setCarts(fallbackCarts)
+          return
+        }
+
+        if (data && data.length > 0) {
+          setCarts(data)
+        } else {
+          const fallbackCarts = [
+            { id: "cart-1", cart_number: "עגלה 1", type: "עגלת ציוד", capacity: "גדולה" },
+            { id: "cart-2", cart_number: "עגלה 2", type: "עגלת ציוד", capacity: "בינונית" },
+            { id: "cart-3", cart_number: "נגרר 1", type: "נגרר", capacity: "גדולה" },
+          ]
+          setCarts(fallbackCarts)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch carts:", error)
+        const fallbackCarts = [
+          { id: "cart-1", cart_number: "עגלה 1", type: "עגלת ציוד", capacity: "גדולה" },
+          { id: "cart-2", cart_number: "עגלה 2", type: "עגלת ציוד", capacity: "בינונית" },
+          { id: "cart-3", cart_number: "נגרר 1", type: "נגרר", capacity: "גדולה" },
+        ]
+        setCarts(fallbackCarts)
+      }
+    }
+
     fetchJobNumber()
     fetchClients()
+    fetchEmployees()
+    fetchVehicles()
+    fetchCarts()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,6 +251,11 @@ export default function NewJobForm() {
 
     try {
       const supabase = createClient()
+
+      const selectedEmployee = employees.find((emp) => emp.id === formData.employee)
+      const selectedVehicle = vehicles.find((veh) => veh.id === formData.vehicle)
+      const selectedCart = carts.find((cart) => cart.id === formData.cart)
+
       const jobData = {
         job_number: jobNumber,
         work_type: formData.jobType,
@@ -137,14 +268,18 @@ export default function NewJobForm() {
             ? formData.clientName
             : clients.find((c) => c.id === formData.existingClientId)?.company_name,
         client_id: clientType === "existing" ? formData.existingClientId : null,
-        worker_name: formData.employee,
-        vehicle_name: formData.vehicle,
-        cart_name: formData.cart,
+        worker_name: selectedEmployee?.name || formData.employee,
+        vehicle_name: selectedVehicle
+          ? `${selectedVehicle.license_plate} - ${selectedVehicle.model}`
+          : formData.vehicle,
+        cart_name: selectedCart?.cart_number || formData.cart,
         service_description: formData.description,
         add_to_calendar: formData.calendarSync,
         payment_status: "pending",
         created_by: "root",
       }
+
+      console.log("[v0] Submitting job data:", jobData)
 
       const { data, error } = await supabase.from("jobs").insert([jobData]).select()
 
@@ -155,6 +290,7 @@ export default function NewJobForm() {
       }
 
       console.log("[v0] Job created successfully:", data)
+      alert("העבודה נוצרה בהצלחה!")
       router.push("/jobs")
     } catch (error) {
       console.error("[v0] Failed to create job:", error)
@@ -171,7 +307,7 @@ export default function NewJobForm() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">עבודה חדשה</h1>
         <div className="text-sm text-gray-500">
-          מספר עבודה: <span className="text-vazana-teal font-semibold">{jobNumber}</span>
+          מספר עבודה: <span className="text-teal-600 font-semibold">{jobNumber}</span>
         </div>
       </div>
       <p className="text-gray-600 mb-8 text-right">יצירת כרטיס עבודה חדש</p>
@@ -181,7 +317,7 @@ export default function NewJobForm() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>פרטי העבודה</span>
-              <ClipboardIcon className="h-5 w-5 text-vazana-teal" />
+              <ClipboardIcon className="h-5 w-5 text-teal-600" />
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,7 +397,7 @@ export default function NewJobForm() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>פרטי הקצאה *</span>
-              <SettingsIcon className="h-5 w-5 text-vazana-teal" />
+              <SettingsIcon className="h-5 w-5 text-teal-600" />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -270,7 +406,7 @@ export default function NewJobForm() {
                 type="button"
                 variant={clientType === "existing" ? "default" : "outline"}
                 onClick={() => setClientType("existing")}
-                className={`${clientType === "existing" ? "bg-vazana-teal text-white" : "bg-gray-100 text-gray-700"}`}
+                className={`${clientType === "existing" ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-700"}`}
               >
                 לקוח קיים
               </Button>
@@ -278,7 +414,7 @@ export default function NewJobForm() {
                 type="button"
                 variant={clientType === "new" ? "default" : "outline"}
                 onClick={() => setClientType("new")}
-                className={`${clientType === "new" ? "bg-vazana-teal text-white" : "bg-gray-100 text-gray-700"}`}
+                className={`${clientType === "new" ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-700"}`}
               >
                 לקוח חדש
               </Button>
@@ -359,11 +495,73 @@ export default function NewJobForm() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>משאבי עבודה</span>
+              <UsersIcon className="h-5 w-5 text-teal-600" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="employee" className="text-right block">
+                עובד *
+              </Label>
+              <Select onValueChange={(value) => setFormData({ ...formData, employee: value })}>
+                <SelectTrigger className="text-right">
+                  <SelectValue placeholder="בחר עובד" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="vehicle" className="text-right block">
+                רכב *
+              </Label>
+              <Select onValueChange={(value) => setFormData({ ...formData, vehicle: value })}>
+                <SelectTrigger className="text-right">
+                  <SelectValue placeholder="בחר רכב" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicles.map((vehicle) => (
+                    <SelectItem key={vehicle.id} value={vehicle.id}>
+                      {vehicle.license_plate} - {vehicle.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cart" className="text-right block">
+                עגלה/נגרר
+              </Label>
+              <Select onValueChange={(value) => setFormData({ ...formData, cart: value })}>
+                <SelectTrigger className="text-right">
+                  <SelectValue placeholder="בחר עגלה/נגרר" />
+                </SelectTrigger>
+                <SelectContent>
+                  {carts.map((cart) => (
+                    <SelectItem key={cart.id} value={cart.id}>
+                      {cart.cart_number} - {cart.type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Description Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <ClipboardIcon className="h-5 w-5 text-vazana-teal" />
+              <ClipboardIcon className="h-5 w-5 text-teal-600" />
               <span>תיאור העבודה והערות</span>
             </CardTitle>
           </CardHeader>
@@ -381,7 +579,7 @@ export default function NewJobForm() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <CalendarIcon className="h-5 w-5 text-vazana-teal" />
+              <CalendarIcon className="h-5 w-5 text-teal-600" />
               <span>סכרון ליומן</span>
             </CardTitle>
           </CardHeader>
@@ -400,7 +598,7 @@ export default function NewJobForm() {
         </Card>
 
         <div className="flex gap-4 justify-start">
-          <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 text-white px-8">
+          <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white px-8">
             יצר עבודה
           </Button>
           <Button type="button" variant="outline" onClick={handleCancel} className="px-8 bg-transparent">

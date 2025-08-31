@@ -482,6 +482,12 @@ export default function ClientsPage() {
                               key={job.id}
                               className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
                             >
+                              <Badge
+                                variant={job.payment_status === "completed" ? "default" : "secondary"}
+                                className="text-xs"
+                              >
+                                {job.payment_status === "completed" ? "הושלם" : "ממתין"}
+                              </Badge>
                               <div className="text-right">
                                 <p className="font-medium text-sm">עבודה #{job.job_number}</p>
                                 <p className="text-xs text-gray-600">
@@ -491,12 +497,6 @@ export default function ClientsPage() {
                                   {new Date(job.job_date).toLocaleDateString("he-IL")}
                                 </p>
                               </div>
-                              <Badge
-                                variant={job.payment_status === "completed" ? "default" : "secondary"}
-                                className="text-xs"
-                              >
-                                {job.payment_status === "completed" ? "הושלם" : "ממתין"}
-                              </Badge>
                             </div>
                           ))
                         ) : (
