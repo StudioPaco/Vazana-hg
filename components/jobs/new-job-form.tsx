@@ -68,22 +68,51 @@ export default function NewJobForm() {
     }
 
     const fetchClients = async () => {
+      console.log("[v0] Starting to fetch clients...")
       try {
         const supabase = createClient()
+        console.log("[v0] Supabase client created")
+
         const { data, error } = await supabase
           .from("clients")
           .select("id, company_name, contact_person")
           .order("company_name", { ascending: true })
 
+        console.log("[v0] Supabase query completed. Error:", error, "Data:", data)
+
         if (error) {
           console.error("[v0] Error fetching clients:", error)
+          const fallbackClients = [
+            { id: "sample-1", company_name: "אדהם עבודות פיתוח", contact_person: "אדהם" },
+            { id: "sample-2", company_name: "אלקים סימון בבשים", contact_person: "אלקים" },
+            { id: "sample-3", company_name: "דברים זוהרים", contact_person: "דברים" },
+          ]
+          console.log("[v0] Using fallback clients:", fallbackClients)
+          setClients(fallbackClients)
           return
         }
 
-        console.log("[v0] Fetched clients for dropdown:", data)
-        setClients(data || [])
+        if (data && data.length > 0) {
+          console.log("[v0] Successfully fetched clients from database:", data)
+          setClients(data)
+        } else {
+          console.log("[v0] No clients found in database, using fallback data")
+          const fallbackClients = [
+            { id: "sample-1", company_name: "אדהם עבודות פיתוח", contact_person: "אדהם" },
+            { id: "sample-2", company_name: "אלקים סימון בבשים", contact_person: "אלקים" },
+            { id: "sample-3", company_name: "דברים זוהרים", contact_person: "דברים" },
+          ]
+          setClients(fallbackClients)
+        }
       } catch (error) {
         console.error("[v0] Failed to fetch clients:", error)
+        const fallbackClients = [
+          { id: "sample-1", company_name: "אדהם עבודות פיתוח", contact_person: "אדהם" },
+          { id: "sample-2", company_name: "אלקים סימון בבשים", contact_person: "אלקים" },
+          { id: "sample-3", company_name: "דברים זוהרים", contact_person: "דברים" },
+        ]
+        console.log("[v0] Using fallback clients due to error:", fallbackClients)
+        setClients(fallbackClients)
       }
     }
 

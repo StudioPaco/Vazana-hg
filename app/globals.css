@@ -257,35 +257,34 @@
   background-color: var(--color-accent);
 }
 
-/* Button press animations */
-.btn-animate {
-  transition: all 0.15s ease-in-out;
+/* Rounded containers theme */
+.rounded-theme .rounded-lg,
+.rounded-theme .rounded-md,
+.rounded-theme .rounded,
+.rounded-theme [class*="rounded"] {
+  border-radius: 1rem !important;
 }
 
-.btn-animate:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.rounded-theme .rounded-xl {
+  border-radius: 1.5rem !important;
 }
 
-.btn-animate:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.rounded-theme .rounded-2xl {
+  border-radius: 2rem !important;
 }
 
-button,
-.btn,
-[role="button"] {
-  @apply btn-animate;
+/* Apply dynamic colors to components */
+.bg-primary {
+  background-color: var(--theme-primary) !important;
 }
-
-/* Primary button specific animations */
-.bg-vazana-teal:active,
-.bg-primary:active {
-  transform: translateY(1px) scale(0.98);
+.bg-secondary {
+  background-color: var(--theme-secondary) !important;
 }
-
-.bg-vazana-yellow:active {
-  transform: translateY(1px) scale(0.98);
+.text-primary {
+  color: var(--theme-primary) !important;
+}
+.text-secondary {
+  color: var(--theme-secondary) !important;
 }
 
 @layer base {
