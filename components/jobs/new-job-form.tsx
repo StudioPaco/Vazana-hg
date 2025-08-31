@@ -91,13 +91,7 @@ export default function NewJobForm() {
 
         if (error) {
           console.error("[v0] Error fetching clients:", error)
-          const fallbackClients = [
-            { id: "sample-1", company_name: "אדהם עבודות פיתוח", contact_person: "אדהם" },
-            { id: "sample-2", company_name: "אלקים סימון בבשים", contact_person: "אלקים" },
-            { id: "sample-3", company_name: "דברים זוהרים", contact_person: "דברים" },
-          ]
-          console.log("[v0] Using fallback clients:", fallbackClients)
-          setClients(fallbackClients)
+          setClients([])
           return
         }
 
@@ -105,23 +99,12 @@ export default function NewJobForm() {
           console.log("[v0] Successfully fetched clients from database:", data)
           setClients(data)
         } else {
-          console.log("[v0] No clients found in database, using fallback data")
-          const fallbackClients = [
-            { id: "sample-1", company_name: "אדהם עבודות פיתוח", contact_person: "אדהם" },
-            { id: "sample-2", company_name: "אלקים סימון בבשים", contact_person: "אלקים" },
-            { id: "sample-3", company_name: "דברים זוהרים", contact_person: "דברים" },
-          ]
-          setClients(fallbackClients)
+          console.log("[v0] No clients found in database")
+          setClients([])
         }
       } catch (error) {
         console.error("[v0] Failed to fetch clients:", error)
-        const fallbackClients = [
-          { id: "sample-1", company_name: "אדהם עבודות פיתוח", contact_person: "אדהם" },
-          { id: "sample-2", company_name: "אלקים סימון בבשים", contact_person: "אלקים" },
-          { id: "sample-3", company_name: "דברים זוהרים", contact_person: "דברים" },
-        ]
-        console.log("[v0] Using fallback clients due to error:", fallbackClients)
-        setClients(fallbackClients)
+        setClients([])
       }
     }
 
@@ -135,33 +118,18 @@ export default function NewJobForm() {
 
         if (error) {
           console.error("[v0] Error fetching employees:", error)
-          const fallbackEmployees = [
-            { id: "worker-1", name: "עובד 1 - נגר", phone_number: "050-1234567" },
-            { id: "worker-2", name: "עובד 2 - חשמלאל", phone_number: "052-7654321" },
-            { id: "worker-3", name: "עובד 3 - צבע", phone_number: "050-3456789" },
-          ]
-          setEmployees(fallbackEmployees)
+          setEmployees([])
           return
         }
 
         if (data && data.length > 0) {
           setEmployees(data)
         } else {
-          const fallbackEmployees = [
-            { id: "worker-1", name: "עובד 1 - נגר", phone_number: "050-1234567" },
-            { id: "worker-2", name: "עובד 2 - חשמלאל", phone_number: "052-7654321" },
-            { id: "worker-3", name: "עובד 3 - צבע", phone_number: "050-3456789" },
-          ]
-          setEmployees(fallbackEmployees)
+          setEmployees([])
         }
       } catch (error) {
         console.error("[v0] Failed to fetch employees:", error)
-        const fallbackEmployees = [
-          { id: "worker-1", name: "עובד 1 - נגר", phone_number: "050-1234567" },
-          { id: "worker-2", name: "עובד 2 - חשמלאל", phone_number: "052-7654321" },
-          { id: "worker-3", name: "עובד 3 - צבע", phone_number: "050-3456789" },
-        ]
-        setEmployees(fallbackEmployees)
+        setEmployees([])
       }
     }
 
@@ -175,48 +143,18 @@ export default function NewJobForm() {
 
         if (error) {
           console.error("[v0] Error fetching vehicles:", error)
-          const fallbackVehicles = [
-            { id: "vehicle-1", name: "טנדר - טויוטה קمري לבן", license_plate: "345-67-890", details: "רכב עבודה ראשי" },
-            {
-              id: "vehicle-2",
-              name: "משאית - פורד טרנזיט",
-              license_plate: "123-45-678",
-              details: "משאית להובלת ציוד כבד",
-            },
-            { id: "vehicle-3", name: "רכב פרטי - הונדה סיוויק", license_plate: "234-56-789", details: "רכב קל" },
-          ]
-          setVehicles(fallbackVehicles)
+          setVehicles([])
           return
         }
 
         if (data && data.length > 0) {
           setVehicles(data)
         } else {
-          const fallbackVehicles = [
-            { id: "vehicle-1", name: "טנדר - טויוטה קمري לבן", license_plate: "345-67-890", details: "רכב עבודה ראשי" },
-            {
-              id: "vehicle-2",
-              name: "משאית - פורד טרנזיט",
-              license_plate: "123-45-678",
-              details: "משאית להובלת ציוד כבד",
-            },
-            { id: "vehicle-3", name: "רכב פרטי - הונדה סיוויק", license_plate: "234-56-789", details: "רכב קל" },
-          ]
-          setVehicles(fallbackVehicles)
+          setVehicles([])
         }
       } catch (error) {
         console.error("[v0] Failed to fetch vehicles:", error)
-        const fallbackVehicles = [
-          { id: "vehicle-1", name: "טנדר - טויוטה קمري לבן", license_plate: "345-67-890", details: "רכב עבודה ראשי" },
-          {
-            id: "vehicle-2",
-            name: "משאית - פורד טרנזיט",
-            license_plate: "123-45-678",
-            details: "משאית להובלת ציוד כבד",
-          },
-          { id: "vehicle-3", name: "רכב פרטי - הונדה סיוויק", license_plate: "234-56-789", details: "רכב קל" },
-        ]
-        setVehicles(fallbackVehicles)
+        setVehicles([])
       }
     }
 
@@ -230,33 +168,18 @@ export default function NewJobForm() {
 
         if (error) {
           console.error("[v0] Error fetching carts:", error)
-          const fallbackCarts = [
-            { id: "cart-1", name: "עגלת ציוד 1", details: "עגלה לכלי עבודה בסיסיים" },
-            { id: "cart-2", name: "עגלת ציוד 2", details: "עגלה לציוד כבד" },
-            { id: "cart-3", name: "נגרר גדול", details: "נגרר להובלת ציוד כבד" },
-          ]
-          setCarts(fallbackCarts)
+          setCarts([])
           return
         }
 
         if (data && data.length > 0) {
           setCarts(data)
         } else {
-          const fallbackCarts = [
-            { id: "cart-1", name: "עגלת ציוד 1", details: "עגלה לכלי עבודה בסיסיים" },
-            { id: "cart-2", name: "עגלת ציוד 2", details: "עגלה לציוד כבד" },
-            { id: "cart-3", name: "נגרר גדול", details: "נגרר להובלת ציוד כבד" },
-          ]
-          setCarts(fallbackCarts)
+          setCarts([])
         }
       } catch (error) {
         console.error("[v0] Failed to fetch carts:", error)
-        const fallbackCarts = [
-          { id: "cart-1", name: "עגלת ציוד 1", details: "עגלה לכלי עבודה בסיסיים" },
-          { id: "cart-2", name: "עגלת ציוד 2", details: "עגלה לציוד כבד" },
-          { id: "cart-3", name: "נגרר גדול", details: "נגרר להובלת ציוד כבד" },
-        ]
-        setCarts(fallbackCarts)
+        setCarts([])
       }
     }
 
@@ -509,14 +432,20 @@ export default function NewJobForm() {
                 </Label>
                 <Select onValueChange={(value) => setFormData({ ...formData, existingClientId: value })}>
                   <SelectTrigger className={`text-right ${validationErrors.existingClientId ? "border-red-500" : ""}`}>
-                    <SelectValue placeholder="בחר לקוח" />
+                    <SelectValue placeholder={clients.length === 0 ? "ריק - אין לקוחות" : "בחר לקוח"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.company_name} - {client.contact_person}
+                    {clients.length === 0 ? (
+                      <SelectItem value="" disabled>
+                        אין לקוחות זמינים
                       </SelectItem>
-                    ))}
+                    ) : (
+                      clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.company_name} - {client.contact_person}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 {validationErrors.existingClientId && (
@@ -602,14 +531,20 @@ export default function NewJobForm() {
               </Label>
               <Select onValueChange={(value) => setFormData({ ...formData, employee: value })}>
                 <SelectTrigger className={`text-right ${validationErrors.employee ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder="בחר עובד" />
+                  <SelectValue placeholder={employees.length === 0 ? "ריק - אין עובדים" : "בחר עובד"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.name}
+                  {employees.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      אין עובדים זמינו
                     </SelectItem>
-                  ))}
+                  ) : (
+                    employees.map((employee) => (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        {employee.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {validationErrors.employee && (
@@ -622,14 +557,20 @@ export default function NewJobForm() {
               </Label>
               <Select onValueChange={(value) => setFormData({ ...formData, vehicle: value })}>
                 <SelectTrigger className={`text-right ${validationErrors.vehicle ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder="בחר רכב" />
+                  <SelectValue placeholder={vehicles.length === 0 ? "ריק - אין רכבים" : "בחר רכב"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {vehicles.map((vehicle) => (
-                    <SelectItem key={vehicle.id} value={vehicle.id}>
-                      {vehicle.license_plate} - {vehicle.name}
+                  {vehicles.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      אין רכבים זמינו
                     </SelectItem>
-                  ))}
+                  ) : (
+                    vehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.license_plate} - {vehicle.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {validationErrors.vehicle && (
@@ -642,14 +583,20 @@ export default function NewJobForm() {
               </Label>
               <Select onValueChange={(value) => setFormData({ ...formData, cart: value })}>
                 <SelectTrigger className="text-right">
-                  <SelectValue placeholder="בחר עגלה/נגרר" />
+                  <SelectValue placeholder={carts.length === 0 ? "ריק - אין עגלות" : "בחר עגלה/נגרר"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {carts.map((cart) => (
-                    <SelectItem key={cart.id} value={cart.id}>
-                      {cart.name} - {cart.details}
+                  {carts.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      אין עגלות זמינות
                     </SelectItem>
-                  ))}
+                  ) : (
+                    carts.map((cart) => (
+                      <SelectItem key={cart.id} value={cart.id}>
+                        {cart.name} - {cart.details}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
