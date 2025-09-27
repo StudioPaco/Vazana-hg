@@ -20,6 +20,7 @@ export default function NewJobForm() {
   const [employees, setEmployees] = useState<any[]>([])
   const [vehicles, setVehicles] = useState<any[]>([])
   const [carts, setCarts] = useState<any[]>([])
+  const [workTypes, setWorkTypes] = useState<any[]>([])
   const [clientType, setClientType] = useState<"new" | "existing">("existing")
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState({
@@ -183,11 +184,37 @@ export default function NewJobForm() {
       }
     }
 
+    const fetchWorkTypes = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from("work_types")
+          .select("id, name_he, name_en")
+          .order("name_he", { ascending: true })
+
+        if (error) {
+          console.error("[v0] Error fetching work types:", error)
+          setWorkTypes([])
+          return
+        }
+
+        if (data && data.length > 0) {
+          setWorkTypes(data)
+        } else {
+          setWorkTypes([])
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch work types:", error)
+        setWorkTypes([])
+      }
+    }
+
     fetchJobNumber()
     fetchClients()
     fetchEmployees()
     fetchVehicles()
     fetchCarts()
+    fetchWorkTypes()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -245,12 +272,13 @@ export default function NewJobForm() {
       const selectedVehicle = vehicles.find((veh) => veh.id === formData.vehicle)
       const selectedCart = carts.find((cart) => cart.id === formData.cart)
       const selectedClient = clients.find((c) => c.id === formData.existingClientId)
+      const selectedWorkType = workTypes.find((wt) => wt.id === formData.jobType)
 
       const sampleUserId = "550e8400-e29b-41d4-a716-446655440000"
 
       const jobData = {
         job_number: jobNumber,
-        work_type: formData.jobType,
+        work_type: selectedWorkType ? selectedWorkType.name_he : "",
         job_date: formData.date,
         site: formData.location,
         shift_type: formData.shiftType,
@@ -324,12 +352,20 @@ export default function NewJobForm() {
               </Label>
               <Select onValueChange={(value) => setFormData({ ...formData, jobType: value })}>
                 <SelectTrigger className={`text-right ${validationErrors.jobType ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder="בחר סוג עבודה" />
+                  <SelectValue placeholder={workTypes.length === 0 ? "ריק - אין סוגי עבודה" : "בחר סוג עבודה"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="security">אבטחה</SelectItem>
-                  <SelectItem value="patrol">סיור</SelectItem>
-                  <SelectItem value="event">אירוע</SelectItem>
+                  {workTypes.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      אין סוגי עבודה זמינו
+                    </SelectItem>
+                  ) : (
+                    workTypes.map((workType) => (
+                      <SelectItem key={workType.id} value={workType.id}>
+                        {workType.name_he} - {workType.name_en}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {validationErrors.jobType && (
