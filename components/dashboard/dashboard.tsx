@@ -18,6 +18,18 @@ interface DashboardStats {
   monthlyRevenue: number
 }
 
+interface JobData {
+  id: string
+  job_number: string
+  client_name: string
+  site: string
+  work_type: string
+  worker_name: string
+  total_amount: string
+  payment_status: "pending" | "paid" | "overdue"
+  job_date: string
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
@@ -28,7 +40,7 @@ export default function Dashboard() {
     completedJobs: 0,
     monthlyRevenue: 0,
   })
-  const [recentJobs, setRecentJobs] = useState<any[]>([])
+  const [recentJobs, setRecentJobs] = useState<JobData[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -42,11 +54,11 @@ export default function Dashboard() {
         ])
 
         const jobs = jobsRes.data || []
-        const pendingJobs = jobs.filter((job: any) => job.payment_status === "pending").length
-        const completedJobs = jobs.filter((job: any) => job.payment_status === "paid").length
+        const pendingJobs = jobs.filter((job: JobData) => job.payment_status === "pending").length
+        const completedJobs = jobs.filter((job: JobData) => job.payment_status === "paid").length
         const monthlyRevenue = jobs
-          .filter((job: any) => job.payment_status === "paid")
-          .reduce((sum: number, job: any) => sum + (Number.parseFloat(job.total_amount) || 0), 0)
+          .filter((job: JobData) => job.payment_status === "paid")
+          .reduce((sum: number, job: JobData) => sum + (Number.parseFloat(job.total_amount) || 0), 0)
 
         setStats({
           totalClients: clientsRes.data?.length || 0,
@@ -58,7 +70,7 @@ export default function Dashboard() {
           monthlyRevenue,
         })
 
-        setRecentJobs(jobs.slice(0, 5))
+        setRecentJobs(jobs.slice(0, 5) as JobData[])
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
       } finally {

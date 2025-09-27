@@ -3,7 +3,12 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
-export async function signIn(prevState: any, formData: FormData) {
+interface SignInState {
+  error?: string
+  success?: boolean
+}
+
+export async function signIn(prevState: SignInState | null, formData: FormData): Promise<SignInState> {
   if (!formData) {
     return { error: "Form data is missing" }
   }

@@ -7,7 +7,7 @@ export interface User {
   full_name: string
   role: string
   is_active: boolean
-  permissions: any
+  permissions: Record<string, any>
 }
 
 export interface Session {

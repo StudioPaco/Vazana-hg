@@ -3,32 +3,78 @@ import { createClient } from "@/lib/supabase/client"
 
 const supabase = createClient()
 
+interface ClientData {
+  company_name: string
+  contact_name?: string
+  email?: string
+  phone?: string
+  address?: string
+  vat_id?: string
+}
+
+interface JobData {
+  client_id: string
+  job_number: string
+  job_date: string
+  site: string
+  work_type: string
+  worker_name?: string
+  total_amount: number
+  payment_status: "pending" | "paid" | "overdue"
+}
+
+interface WorkerData {
+  name: string
+  phone?: string
+  email?: string
+  availability?: Record<string, any>
+}
+
+interface VehicleData {
+  license_plate: string
+  type: string
+  model?: string
+  year?: number
+}
+
+interface CartData {
+  name: string
+  type?: string
+  capacity?: string
+}
+
+interface WorkTypeData {
+  name_he: string
+  name_en: string
+  description?: string
+}
+
 // Base Entity class with common CRUD operations
 class BaseEntity {
   static tableName = ""
 
-  static async list() {
+  static async list<T = Record<string, any>>() {
     const { data, error } = await supabase.from(this.tableName).select("*").order("created_at", { ascending: false })
 
     if (error) throw error
     return data || []
   }
 
-  static async get(id: string) {
+  static async get<T = Record<string, any>>(id: string) {
     const { data, error } = await supabase.from(this.tableName).select("*").eq("id", id).single()
 
     if (error) throw error
     return data
   }
 
-  static async create(data: any) {
+  static async create<T = Record<string, any>>(data: T) {
     const { data: result, error } = await supabase.from(this.tableName).insert(data).select().single()
 
     if (error) throw error
     return result
   }
 
-  static async update(id: string, data: any) {
+  static async update<T = Record<string, any>>(id: string, data: T) {
     const { data: result, error } = await supabase.from(this.tableName).update(data).eq("id", id).select().single()
 
     if (error) throw error
