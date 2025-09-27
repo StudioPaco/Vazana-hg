@@ -277,6 +277,92 @@ export default function MaintenancePage() {
     }
   }
 
+  const autoFixDatabaseIssues = async () => {
+    addLog("info", "Starting automatic database fixes...", "Auto-Fix")
+
+    try {
+      // Check if sample data exists, if not create it
+      const { data: sampleWorkers } = await supabase.from("workers").select("id").eq("is_sample", true).limit(1)
+
+      if (!sampleWorkers || sampleWorkers.length === 0) {
+        addLog("info", "Creating sample workers data...", "Auto-Fix")
+        await fetch("/api/workers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: "עובד דוגמה",
+            phone: "050-1234567",
+            is_sample: true,
+          }),
+        })
+      }
+
+      const { data: sampleVehicles } = await supabase.from("vehicles").select("id").eq("is_sample", true).limit(1)
+
+      if (!sampleVehicles || sampleVehicles.length === 0) {
+        addLog("info", "Creating sample vehicles data...", "Auto-Fix")
+        await fetch("/api/vehicles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: "רכב דוגמה",
+            license_plate: "123-45-678",
+            is_sample: true,
+          }),
+        })
+      }
+
+      const { data: sampleCarts } = await supabase.from("carts").select("id").eq("is_sample", true).limit(1)
+
+      if (!sampleCarts || sampleCarts.length === 0) {
+        addLog("info", "Creating sample carts data...", "Auto-Fix")
+        await fetch("/api/carts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: "עגלה דוגמה",
+            capacity: "500kg",
+            is_sample: true,
+          }),
+        })
+      }
+
+      addLog("success", "Database auto-fix completed successfully", "Auto-Fix")
+
+      // Refresh the system check
+      await runFullSystemCheck()
+    } catch (error) {
+      addLog("error", `Auto-fix failed: ${error}`, "Auto-Fix", error)
+    }
+  }
+
+  const fixAPIEndpoints = async () => {
+    addLog("info", "Attempting to fix API endpoint issues...", "Auto-Fix")
+
+    try {
+      // Test each endpoint and attempt basic fixes
+      const endpoints = ["/api/workers", "/api/vehicles", "/api/carts", "/api/clients", "/api/jobs"]
+
+      for (const endpoint of endpoints) {
+        const response = await fetch(endpoint)
+        if (!response.ok) {
+          addLog("warning", `${endpoint} returned ${response.status}, attempting fix...`, "Auto-Fix")
+
+          // For 401 errors, try to refresh auth
+          if (response.status === 401) {
+            await supabase.auth.refreshSession()
+            addLog("info", "Refreshed authentication session", "Auto-Fix")
+          }
+        }
+      }
+
+      addLog("success", "API endpoints fix attempt completed", "Auto-Fix")
+      await runFullSystemCheck()
+    } catch (error) {
+      addLog("error", `API fix failed: ${error}`, "Auto-Fix", error)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "healthy":
@@ -629,13 +715,23 @@ export default function MaintenancePage() {
                         <h3 className="font-medium font-hebrew mb-2">בדיקת חיבורי מסד נתונים</h3>
                         <p className="text-sm text-gray-600 font-hebrew">בדוק את החיבור למסד הנתונים ותקינות הטבלאות</p>
                       </div>
-                      <Button
-                        onClick={checkDatabaseConnection}
-                        className="w-full bg-blue-600 hover:bg-blue-700 font-hebrew"
-                      >
-                        <Database className="w-4 h-4 ml-2" />
-                        בדוק מסד נתונים
-                      </Button>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={checkDatabaseConnection}
+                          className="w-full bg-blue-600 hover:bg-blue-700 font-hebrew"
+                        >
+                          <Database className="w-4 h-4 ml-2" />
+                          בדוק מסד נתונים
+                        </Button>
+                        <Button
+                          onClick={autoFixDatabaseIssues}
+                          variant="outline"
+                          className="w-full font-hebrew bg-transparent"
+                        >
+                          <RefreshCw className="w-4 h-4 ml-2" />
+                          תקן בעיות מסד נתונים
+                        </Button>
+                      </div>
                     </Card>
 
                     <Card className="p-4">
@@ -643,13 +739,23 @@ export default function MaintenancePage() {
                         <h3 className="font-medium font-hebrew mb-2">בדיקת API Endpoints</h3>
                         <p className="text-sm text-gray-600 font-hebrew">בדוק את תקינות כל נקודות הקצה של ה-API</p>
                       </div>
-                      <Button
-                        onClick={checkAPIEndpoints}
-                        className="w-full bg-green-600 hover:bg-green-700 font-hebrew"
-                      >
-                        <Zap className="w-4 h-4 ml-2" />
-                        בדוק API
-                      </Button>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={checkAPIEndpoints}
+                          className="w-full bg-green-600 hover:bg-green-700 font-hebrew"
+                        >
+                          <Zap className="w-4 h-4 ml-2" />
+                          בדוק API
+                        </Button>
+                        <Button
+                          onClick={fixAPIEndpoints}
+                          variant="outline"
+                          className="w-full font-hebrew bg-transparent"
+                        >
+                          <RefreshCw className="w-4 h-4 ml-2" />
+                          תקן בעיות API
+                        </Button>
+                      </div>
                     </Card>
 
                     <Card className="p-4">

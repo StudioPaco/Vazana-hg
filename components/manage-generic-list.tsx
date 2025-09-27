@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,6 +9,35 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Edit2, Trash2, Save, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+
+interface Field {
+  name: string
+  type?: string
+  labelEn: string
+  labelHe: string
+  placeholderEn?: string
+  placeholderHe?: string
+  required?: boolean
+  defaultValue?: string
+}
+
+interface EntityType {
+  list: () => Promise<any[]>
+  create: (data: any) => Promise<any>
+  update: (id: string, data: any) => Promise<any>
+  delete: (id: string) => Promise<void>
+  tableName?: string
+}
+
+interface ManageGenericListProps {
+  Entity: EntityType
+  entityName: string
+  entityNamePlural: string
+  fields: Field[]
+  displayField?: string
+  language?: "he" | "en"
+  textOverrides?: Record<string, string>
+}
 
 export default function ManageGenericList({
   Entity,
@@ -16,18 +47,18 @@ export default function ManageGenericList({
   displayField = "name_en",
   language = "he",
   textOverrides = {},
-}) {
-  const [items, setItems] = useState([])
+}: ManageGenericListProps) {
+  const [items, setItems] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [editingItem, setEditingItem] = useState(null)
+  const [editingItem, setEditingItem] = useState<any>(null)
 
   const initialFormState = useMemo(() => {
     return fields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue || "" }), {})
   }, [fields])
 
-  const [formData, setFormData] = useState(initialFormState)
+  const [formData, setFormData] = useState<Record<string, string>>(initialFormState)
 
   const isHebrew = language === "he"
 
@@ -81,23 +112,23 @@ export default function ManageGenericList({
     setIsLoading(true)
     try {
       const data = await Entity.list()
-      setItems(data)
+      setItems(data || [])
     } catch (error) {
       console.error(`Error loading ${entityNamePlural}:`, error)
+      setItems([])
     }
     setIsLoading(false)
   }
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log("[v0] Form data before validation:", formData)
-
+    // Validate required fields
     for (const field of fields) {
       if (field.required && !formData[field.name]?.trim()) {
         alert(`${isHebrew ? field.labelHe : field.labelEn} ${t.fieldRequired}`)
@@ -107,45 +138,32 @@ export default function ManageGenericList({
 
     setIsSubmitting(true)
     try {
-      console.log("[v0] Submitting data:", formData)
-      console.log("[v0] Entity:", Entity)
-      console.log("[v0] Entity table name:", Entity.tableName)
-
       if (editingItem) {
-        console.log("[v0] Updating item:", editingItem.id, formData)
         await Entity.update(editingItem.id, formData)
       } else {
-        console.log("[v0] Creating new item with data:", formData)
-        const result = await Entity.create(formData)
-        console.log("[v0] Create result:", result)
+        await Entity.create(formData)
       }
       setShowForm(false)
       setEditingItem(null)
-      loadItems()
-    } catch (error) {
+      await loadItems()
+    } catch (error: any) {
       console.error(`Error saving ${entityName}:`, error)
-      console.error("[v0] Full error details:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      })
-      alert(`שגיאה בשמירת ${entityName}: ${error.message}`)
+      alert(`שגיאה בשמירת ${entityName}: ${error.message || "שגיאה לא ידועה"}`)
     }
     setIsSubmitting(false)
   }
 
-  const handleEdit = (item) => {
+  const handleEdit = (item: any) => {
     setEditingItem(item)
     setShowForm(true)
   }
 
-  const handleDelete = async (itemId) => {
+  const handleDelete = async (itemId: string) => {
     if (window.confirm(t.deleteConfirm)) {
       setIsLoading(true)
       try {
         await Entity.delete(itemId)
-        loadItems()
+        await loadItems()
         if (editingItem && editingItem.id === itemId) {
           setShowForm(false)
           setEditingItem(null)
