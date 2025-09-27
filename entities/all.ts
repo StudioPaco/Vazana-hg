@@ -53,11 +53,42 @@ interface WorkTypeData {
 class BaseEntity {
   static tableName = ""
 
-  static async list<T = Record<string, any>>() {
-    const { data, error } = await supabase.from(this.tableName).select("*").order("created_at", { ascending: false })
+  static async list<T = Record<string, any>>(orderBy?: string) {
+    try {
+      let query = supabase.from(this.tableName).select("*")
 
-    if (error) throw error
-    return data || []
+      // Use provided orderBy or try common date columns
+      if (orderBy) {
+        query = query.order(orderBy, { ascending: false })
+      } else {
+        // Try created_date first, then created_at
+        const { data: testData } = await supabase.from(this.tableName).select("*").limit(1)
+        if (testData && testData.length > 0) {
+          const firstRow = testData[0]
+          if ("created_date" in firstRow) {
+            query = query.order("created_date", { ascending: false })
+          } else if ("created_at" in firstRow) {
+            query = query.order("created_at", { ascending: false })
+          } else {
+            // Fallback to name if available
+            if ("name" in firstRow) {
+              query = query.order("name", { ascending: true })
+            }
+          }
+        }
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error(`Error listing ${this.tableName}:`, error)
+        throw error
+      }
+      return data || []
+    } catch (error) {
+      console.error(`Error in ${this.tableName}.list():`, error)
+      return []
+    }
   }
 
   static async get<T = Record<string, any>>(id: string) {
@@ -136,6 +167,24 @@ export class Job extends BaseEntity {
 export class Worker extends BaseEntity {
   static tableName = "workers"
 
+  static async list<T = Record<string, any>>(orderBy?: string) {
+    try {
+      const { data, error } = await supabase
+        .from(this.tableName)
+        .select("*")
+        .order(orderBy || "name", { ascending: true })
+
+      if (error) {
+        console.error("Error listing workers:", error)
+        throw error
+      }
+      return data || []
+    } catch (error) {
+      console.error("Error in Worker.list():", error)
+      return []
+    }
+  }
+
   static async getAvailable(date: string, shiftType: "day" | "night") {
     // This would need more complex logic to check availability JSON
     const { data, error } = await supabase.from(this.tableName).select("*").order("name")
@@ -148,11 +197,47 @@ export class Worker extends BaseEntity {
 // Vehicle entity
 export class Vehicle extends BaseEntity {
   static tableName = "vehicles"
+
+  static async list<T = Record<string, any>>(orderBy?: string) {
+    try {
+      const { data, error } = await supabase
+        .from(this.tableName)
+        .select("*")
+        .order(orderBy || "name", { ascending: true })
+
+      if (error) {
+        console.error("Error listing vehicles:", error)
+        throw error
+      }
+      return data || []
+    } catch (error) {
+      console.error("Error in Vehicle.list():", error)
+      return []
+    }
+  }
 }
 
 // Cart entity
 export class Cart extends BaseEntity {
   static tableName = "carts"
+
+  static async list<T = Record<string, any>>(orderBy?: string) {
+    try {
+      const { data, error } = await supabase
+        .from(this.tableName)
+        .select("*")
+        .order(orderBy || "name", { ascending: true })
+
+      if (error) {
+        console.error("Error listing carts:", error)
+        throw error
+      }
+      return data || []
+    } catch (error) {
+      console.error("Error in Cart.list():", error)
+      return []
+    }
+  }
 }
 
 // WorkType entity

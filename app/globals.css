@@ -1,63 +1,273 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
-/* Custom Font Declarations */
-@font-face {
-  font-family: "Alef";
-  src: url("/fonts/Alef-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+/* Basic styling */
+* {
+  box-sizing: border-box;
 }
 
-@font-face {
-  font-family: "Alef";
-  src: url("/fonts/Alef-Bold.ttf") format("truetype");
+body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: #f9fafb;
+  color: #1f2937;
+}
+
+/* Hebrew font support */
+.font-hebrew {
+  font-family: "Alef", system-ui, sans-serif;
+}
+
+/* RTL support */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Basic utility classes */
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.bg-white {
+  background-color: white;
+}
+
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+.text-gray-900 {
+  color: #111827;
+}
+
+.text-gray-600 {
+  color: #4b5563;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+}
+
+.border {
+  border: 1px solid #e5e7eb;
+}
+
+.border-gray-200 {
+  border-color: #e5e7eb;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
+
+.p-8 {
+  padding: 2rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-8 {
+  margin-bottom: 2rem;
+}
+
+.grid {
+  display: grid;
+}
+
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.max-w-4xl {
+  max-width: 56rem;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.font-bold {
   font-weight: 700;
-  font-style: normal;
-  font-display: swap;
 }
 
-@font-face {
-  font-family: "Futura";
-  src: url("/fonts/Futura-Light.ttf") format("truetype");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
+.font-semibold {
+  font-weight: 600;
 }
 
-@font-face {
-  font-family: "Futura";
-  src: url("/fonts/Futura-Book.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+/* Color utilities */
+.bg-teal-500 {
+  background-color: #14b8a6;
 }
 
-@font-face {
-  font-family: "Futura";
-  src: url("/fonts/Futura-Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
+.bg-teal-600 {
+  background-color: #0d9488;
 }
 
-@font-face {
-  font-family: "Futura";
-  src: url("/fonts/Futura-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+.bg-teal-700 {
+  background-color: #0f766e;
 }
 
-@font-face {
-  font-family: "Futura";
-  src: url("/fonts/Futura-XBlack.ttf") format("truetype");
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
+.bg-yellow-500 {
+  background-color: #eab308;
+}
+
+.bg-yellow-600 {
+  background-color: #ca8a04;
+}
+
+.bg-blue-500 {
+  background-color: #3b82f6;
+}
+
+.bg-blue-600 {
+  background-color: #2563eb;
+}
+
+.bg-purple-500 {
+  background-color: #8b5cf6;
+}
+
+.bg-purple-600 {
+  background-color: #7c3aed;
+}
+
+.text-white {
+  color: white;
+}
+
+.hover\:bg-teal-600:hover {
+  background-color: #0d9488;
+}
+
+.hover\:bg-yellow-600:hover {
+  background-color: #ca8a04;
+}
+
+.hover\:bg-blue-600:hover {
+  background-color: #2563eb;
+}
+
+.hover\:bg-purple-600:hover {
+  background-color: #7c3aed;
+}
+
+.hover\:bg-teal-700:hover {
+  background-color: #0f766e;
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.py-8 {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
+/* Responsive utilities */
+@media (min-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 :root {
@@ -94,16 +304,6 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-
-  /* Custom Vazana Studio colors */
-  --color-vazana-yellow: #ffcc00;
-  --color-vazana-teal: #00dac0;
-  --color-vazana-dark: #1a1a1a;
-
-  /* Dynamic color variables that can be updated by theme system */
-  --theme-primary: var(--color-vazana-yellow);
-  --theme-secondary: var(--color-vazana-teal);
-  --theme-accent: #ffffff;
 }
 
 .dark {
@@ -142,22 +342,17 @@
 }
 
 @theme inline {
-  --font-hebrew: "Alef", sans-serif;
-  --font-english: "Futura", sans-serif;
-  --font-sans: var(--font-english);
-  --font-mono: var(--font-roboto-mono);
-
-  /* Updated color palette to match user specifications */
+  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--color-vazana-yellow);
-  --color-primary-foreground: var(--color-vazana-dark);
-  --color-secondary: var(--color-vazana-teal);
-  --color-secondary-foreground: var(--color-vazana-dark);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -186,162 +381,13 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Hebrew text direction support */
-[dir="rtl"] {
-  direction: rtl;
-}
-
-/* Custom font utility classes for Hebrew and English text */
-.font-hebrew {
-  font-family: var(--font-hebrew);
-}
-
-.font-english {
-  font-family: var(--font-english);
-}
-
-/* Language-specific text styling */
-[lang="he"],
-.hebrew-text {
-  font-family: var(--font-hebrew);
-  direction: rtl;
-  text-align: right;
-}
-
-[lang="en"],
-.english-text {
-  font-family: var(--font-english);
-  direction: ltr;
-  text-align: left;
-}
-
-/* Custom utility classes for Vazana Studio color scheme */
-.bg-vazana-yellow {
-  background-color: var(--color-vazana-yellow);
-}
-.text-vazana-yellow {
-  color: var(--color-vazana-yellow);
-}
-.border-vazana-yellow {
-  border-color: var(--color-vazana-yellow);
-}
-
-.bg-vazana-teal {
-  background-color: var(--color-vazana-teal);
-}
-.text-vazana-teal {
-  color: var(--color-vazana-teal);
-}
-.border-vazana-teal {
-  border-color: var(--color-vazana-teal);
-}
-
-.bg-vazana-dark {
-  background-color: var(--color-vazana-dark);
-}
-.text-vazana-dark {
-  color: var(--color-vazana-dark);
-}
-.border-vazana-dark {
-  border-color: var(--color-vazana-dark);
-}
-
-/* Dynamic theme color support */
-.theme-primary {
-  background-color: var(--color-primary);
-}
-.theme-secondary {
-  background-color: var(--color-secondary);
-}
-.theme-accent {
-  background-color: var(--color-accent);
-}
-
-/* Rounded containers theme */
-.rounded-theme .rounded-lg,
-.rounded-theme .rounded-md,
-.rounded-theme .rounded,
-.rounded-theme [class*="rounded"] {
-  border-radius: 1rem !important;
-}
-
-.rounded-theme .rounded-xl {
-  border-radius: 1.5rem !important;
-}
-
-.rounded-theme .rounded-2xl {
-  border-radius: 2rem !important;
-}
-
-/* Apply dynamic colors to components */
-.bg-primary {
-  background-color: var(--theme-primary) !important;
-}
-.bg-secondary {
-  background-color: var(--theme-secondary) !important;
-}
-.text-primary {
-  color: var(--theme-primary) !important;
-}
-.text-secondary {
-  color: var(--theme-secondary) !important;
-}
-
-/* RTL Dropdown Menu Styles */
-[dir="rtl"] select,
-[dir="rtl"] .dropdown-menu,
-[dir="rtl"] [role="listbox"],
-[dir="rtl"] [role="combobox"] {
-  text-align: right;
-  direction: rtl;
-}
-
-[dir="rtl"] .dropdown-content {
-  right: 0;
-  left: auto;
-}
-
-/* Hebrew dropdown text alignment */
-select[dir="rtl"],
-.select-trigger[dir="rtl"] {
-  text-align: right;
-  padding-right: 12px;
-  padding-left: 32px;
-}
-
-/* Button Press Animations */
-button,
-.btn,
-[role="button"] {
-  transition: all 0.15s ease-in-out;
-}
-
-button:hover,
-.btn:hover,
-[role="button"]:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-button:active,
-.btn:active,
-[role="button"]:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Primary button specific animations */
-button.bg-primary:active,
-button[class*="bg-teal"]:active,
-button[class*="bg-yellow"]:active {
-  transform: translateY(1px) scale(0.98);
-}
-
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border: 1px solid #e5e7eb;
+    outline: 1px solid rgba(59, 130, 246, 0.5);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: #f9fafb;
+    color: #1f2937;
   }
 }

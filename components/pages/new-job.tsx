@@ -3,14 +3,10 @@
 import { useState, useEffect } from "react"
 import { Job, Client, WorkType, Worker, Vehicle, Cart } from "@/entities/all"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarDays, Save, Building2, Briefcase, Cog, FileText, X } from "lucide-react"
+import { Briefcase } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { createPageUrl } from "@/utils"
 import { format } from "date-fns"
@@ -312,14 +308,43 @@ export default function NewJob() {
   const loadInitialData = async () => {
     setIsLoading(true)
     try {
+      console.log("[v0] Starting to load initial data...")
+      
       const [clientsData, workTypesRawData, workersData, vehiclesData, cartsData, allJobsData] = await Promise.all([
-        Client.list("company_name").then((data) => data.filter((c) => c.status === "active")),
-        WorkType.list(), // Fetches from WorkType entity (managed in settings)
-        Worker.list(),
-        Vehicle.list(),
-        Cart.list(),
-        Job.list("-created_date"),
+        Client.list("company_name").then((data) => {
+          console.log("[v0] Loaded clients:", data?.length || 0, "items")
+          return data.filter((c) => c.status === "active")
+        }),
+        WorkType.list().then((data) => {
+          console.log("[v0] Loaded work types:", data?.length || 0, "items")
+          return data
+        }),
+        Worker.list().then((data) => {
+          console.log("[v0] Loaded workers:", data?.length || 0, "items")
+          return data
+        }),
+        Vehicle.list().then((data) => {
+          console.log("[v0] Loaded vehicles:", data?.length || 0, "items")
+          return data
+        }),
+        Cart.list().then((data) => {
+          console.log("[v0] Loaded carts:", data?.length || 0, "items")
+          return data
+        }),
+        Job.list("-created_date").then((data) => {
+          console.log("[v0] Loaded jobs:", data?.length || 0, "items")
+          return data
+        }),
       ])
+
+      console.log("[v0] Raw data loaded:", {
+        clients: clientsData?.length || 0,
+        workTypes: workTypesRawData?.length || 0,
+        workers: workersData?.length || 0,
+        vehicles: vehiclesData?.length || 0,
+        carts: cartsData?.length || 0,
+        jobs: allJobsData?.length || 0
+      })
 
       const validWorkTypesRaw = (Array.isArray(workTypesRawData) ? workTypesRawData : []).filter((wt) => {
         const hasId = wt && typeof wt === "object" && wt.id
@@ -360,6 +385,14 @@ export default function NewJob() {
       setAllVehicles(vehiclesData)
       setAllCarts(cartsData)
 
+      console.log("[v0] State updated with data:", {
+        clients: clientsData?.length || 0,
+        workTypes: processedWorkTypes?.length || 0,
+        workers: workersData?.length || 0,
+        vehicles: vehiclesData?.length || 0,
+        carts: cartsData?.length || 0
+      })
+
       generateJobNumber(allJobsData)
 
       const lastJob = allJobsData.length > 0 ? allJobsData[0] : null
@@ -368,7 +401,7 @@ export default function NewJob() {
         add_to_calendar: lastJob ? lastJob.add_to_calendar : false,
       }))
     } catch (error) {
-      console.error("Error loading initial data:", error)
+      console.error("[v0] Error loading initial data:", error)
       setErrors((prev) => ({ ...prev, load: "Failed to load initial data. " + (error.message || "") }))
     }
     setIsLoading(false)
@@ -678,491 +711,4 @@ export default function NewJob() {
                   {workTypes.length === 0 && !isLoading && (
                     <p className="text-xs text-orange-500 mt-1">
                       {isHebrew
-                        ? "לא הוגדרו סוגי עבודה. אנא הוסף אותם בהגדרות."
-                        : "No work types defined. Please add them in Settings."}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="shift_type" className="font-medium text-neutral-700">
-                    {t.shiftType} <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.shift_type} onValueChange={(value) => handleChange("shift_type", value)}>
-                    <SelectTrigger
-                      className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 ${errors.shift_type ? "border-red-500" : ""}`}
-                      dir={isHebrew ? "rtl" : "ltr"}
-                    >
-                      <SelectValue placeholder={t.selectShiftType} />
-                    </SelectTrigger>
-                    <SelectContent dir={isHebrew ? "rtl" : "ltr"}>
-                      <SelectItem value="day">{t.day}</SelectItem>
-                      <SelectItem value="night">{t.night}</SelectItem>
-                      <SelectItem value="double">{t.double}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.shift_type && <p className="text-xs text-red-500 mt-1">{errors.shift_type}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="site" className="font-medium text-neutral-700">
-                    {t.site} <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="site"
-                    value={formData.site}
-                    onChange={(e) => handleChange("site", e.target.value)}
-                    placeholder={t.sitePlaceholder}
-                    className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 ${errors.site ? "border-red-500" : ""}`}
-                  />
-                  {errors.site && <p className="text-xs text-red-500 mt-1">{errors.site}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="city" className="font-medium text-neutral-700">
-                    {t.city} <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => handleChange("city", e.target.value)}
-                    placeholder={t.cityPlaceholder}
-                    className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 ${errors.city ? "border-red-500" : ""}`}
-                  />
-                  {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Client Info Card */}
-            <Card className="shadow-lg overflow-hidden bg-white border-neutral-200">
-              <CardHeader className="bg-neutral-50 border-b border-neutral-200">
-                <CardTitle className="flex items-center gap-2 text-neutral-900">
-                  <Building2 className="w-5 h-5 text-primary" />
-                  {t.clientInfo} <span className="text-red-500">*</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <Tabs
-                  value={useExistingClient ? "existing" : "new"}
-                  onValueChange={(val) => setUseExistingClient(val === "existing")}
-                  className="w-full"
-                >
-                  <TabsList className="grid w-full grid-cols-2 mb-6 bg-neutral-100 rounded-lg">
-                    <TabsTrigger
-                      value="existing"
-                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm rounded-md py-2 text-neutral-700"
-                    >
-                      {t.existingClient}
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="new"
-                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm rounded-md py-2 text-neutral-700"
-                    >
-                      {t.newClient}
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="existing" className="space-y-4">
-                    <div>
-                      <Label htmlFor="client_select" className="font-medium text-neutral-700">
-                        {t.selectClient} <span className="text-red-500">*</span>
-                      </Label>
-                      <Select
-                        value={formData.client_id}
-                        onValueChange={handleClientSelect}
-                        disabled={!useExistingClient}
-                        dir={isHebrew ? "rtl" : "ltr"}
-                      >
-                        <SelectTrigger
-                          className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 ${errors.client_id && useExistingClient ? "border-red-500" : ""}`}
-                        >
-                          <SelectValue placeholder={t.selectClient} />
-                        </SelectTrigger>
-                        <SelectContent dir={isHebrew ? "rtl" : "ltr"}>
-                          {clients.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.company_name} ({c.contact_person})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.client_id && useExistingClient && (
-                        <p className="text-xs text-red-500 mt-1">{errors.client_id}</p>
-                      )}
-                    </div>
-
-                    {selectedClient && useExistingClient && (
-                      <div>
-                        <Label htmlFor="job_specific_shift_rate_existing" className="font-medium text-neutral-700">
-                          {t.jobSpecificShiftRate}
-                        </Label>
-                        <Input
-                          id="job_specific_shift_rate_existing"
-                          type="text"
-                          value={formData.job_specific_shift_rate}
-                          onChange={(e) => handleNumericInputChange("job_specific_shift_rate", e.target.value)}
-                          placeholder={t.jobSpecificShiftRatePlaceholder}
-                          className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 ${errors.job_specific_shift_rate ? "border-red-500" : ""}`}
-                        />
-                        {errors.job_specific_shift_rate && (
-                          <p className="text-xs text-red-500 mt-1">{errors.job_specific_shift_rate}</p>
-                        )}
-                      </div>
-                    )}
-
-                    {selectedClient && useExistingClient && (
-                      <div className="mt-6 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <strong>{t.companyName}:</strong> {selectedClient.company_name}
-                          </div>
-                          <div>
-                            <strong>{t.contactPerson}:</strong> {selectedClient.contact_person}
-                          </div>
-                          <div>
-                            <strong>{t.phone}:</strong> {selectedClient.phone}
-                          </div>
-                          {selectedClient.address && (
-                            <div>
-                              <strong>{t.address}:</strong> {selectedClient.address}
-                            </div>
-                          )}
-                          {selectedClient.city && (
-                            <div>
-                              <strong>{t.clientCity}:</strong> {selectedClient.city}
-                            </div>
-                          )}
-                          {selectedClient.po_box && (
-                            <div>
-                              <strong>{t.poBox}:</strong> {selectedClient.po_box}
-                            </div>
-                          )}
-                          <div>
-                            <strong>{t.email}:</strong> {selectedClient.email}
-                          </div>
-                          {selectedClient.payment_method != null && (
-                            <div>
-                              <strong>{t.paymentMethod}:</strong> {selectedClient.payment_method}{" "}
-                              {isHebrew ? "ימים" : "days"}
-                            </div>
-                          )}
-                          {selectedClient.security_rate != null && (
-                            <div>
-                              <strong>{t.securityRate}:</strong> ₪{selectedClient.security_rate}/shift
-                            </div>
-                          )}
-                          {selectedClient.installation_rate != null && (
-                            <div>
-                              <strong>{t.installationRate}:</strong> ₪{selectedClient.installation_rate}/shift
-                            </div>
-                          )}
-
-                          {formData.work_type &&
-                            (((isHebrew
-                              ? (workTypes.find((wt) => wt.id === formData.work_type)?.name_he ??
-                                workTypes.find((wt) => wt.id === formData.work_type)?.name_en)
-                              : (workTypes.find((wt) => wt.id === formData.work_type)?.name_en ??
-                                workTypes.find((wt) => wt.id === formData.work_type)?.name_he)) ===
-                              (isHebrew ? "אבטחה" : "Security") &&
-                              selectedClient.security_rate != null) ||
-                              ((isHebrew
-                                ? (workTypes.find((wt) => wt.id === formData.work_type)?.name_he ??
-                                  workTypes.find((wt) => wt.id === formData.work_type)?.name_en)
-                                : (workTypes.find((wt) => wt.id === formData.work_type)?.name_en ??
-                                  workTypes.find((wt) => wt.id === formData.work_type)?.name_he)) ===
-                                (isHebrew ? "התקנות" : "Installations") &&
-                                selectedClient.installation_rate != null)) && (
-                              <div className="font-semibold text-primary">
-                                <strong>
-                                  {isHebrew ? "תעריף סטנדרטי למשמרת זו:" : "Standard Rate for this Shift:"}
-                                </strong>{" "}
-                                ₪
-                                {(isHebrew
-                                  ? (workTypes.find((wt) => wt.id === formData.work_type)?.name_he ??
-                                    workTypes.find((wt) => wt.id === formData.work_type)?.name_en)
-                                  : (workTypes.find((wt) => wt.id === formData.work_type)?.name_en ??
-                                    workTypes.find((wt) => wt.id === formData.work_type)?.name_he)) ===
-                                (isHebrew ? "אבטחה" : "Security")
-                                  ? selectedClient.security_rate
-                                  : selectedClient.installation_rate}
-                                /shift
-                              </div>
-                            )}
-                        </div>
-                      </div>
-                    )}
-                  </TabsContent>
-                  <TabsContent value="new" className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                    {[
-                      { id: "new_company_name", label: t.companyName, error: errors.new_company_name, required: true },
-                      {
-                        id: "new_contact_person",
-                        label: t.contactPerson,
-                        error: errors.new_contact_person,
-                        required: true,
-                      },
-                      { id: "new_phone", label: t.phone, error: errors.new_phone, required: true },
-                      { id: "new_email", label: t.email, type: "email", error: errors.new_email, required: true },
-                      { id: "new_address", label: t.address, error: errors.new_address, required: true },
-                      { id: "new_city", label: t.clientCity, error: errors.new_city, required: true },
-                      { id: "new_po_box", label: t.poBox, error: errors.new_po_box },
-                      {
-                        id: "new_payment_method",
-                        label: t.paymentMethod,
-                        type: "text",
-                        error: errors.new_payment_method,
-                        required: true,
-                        numeric: true,
-                      },
-                      {
-                        id: "new_security_rate",
-                        label: t.securityRate,
-                        type: "text",
-                        error: errors.new_security_rate,
-                        required: true,
-                        numeric: true,
-                      },
-                      {
-                        id: "new_installation_rate",
-                        label: t.installationRate,
-                        type: "text",
-                        error: errors.new_installation_rate,
-                        required: true,
-                        numeric: true,
-                      },
-                    ].map((field) => (
-                      <div key={field.id} className={`${field.colSpan || ""}`}>
-                        <Label htmlFor={field.id} className="font-medium text-neutral-700">
-                          {field.label} {field.required && <span className="text-red-500">*</span>}
-                        </Label>
-                        <Input
-                          id={field.id}
-                          type={field.type || "text"}
-                          value={formData[field.id]}
-                          onChange={(e) =>
-                            field.numeric
-                              ? handleNumericInputChange(field.id, e.target.value)
-                              : handleChange(field.id, e.target.value)
-                          }
-                          className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 ${field.error && !useExistingClient ? "border-red-500" : ""}`}
-                          disabled={useExistingClient}
-                        />
-                        {field.error && !useExistingClient && (
-                          <p className="text-xs text-red-500 mt-1">{field.error}</p>
-                        )}
-                      </div>
-                    ))}
-                    {!useExistingClient && formData.work_type && formData.new_derived_job_rate && (
-                      <div className="md:col-span-2 mt-2 p-3 bg-primary-light rounded-md border border-primary">
-                        <Label className="font-medium text-primary">{t.derivedNewClientRate}</Label>
-                        <p className="text-primary font-semibold">
-                          ₪{formData.new_derived_job_rate}/shift ({formData.work_type_name_display})
-                        </p>
-                      </div>
-                    )}
-                    {!useExistingClient && (
-                      <div className="md:col-span-2">
-                        <Label htmlFor="job_specific_shift_rate_new" className="font-medium text-neutral-700">
-                          {t.jobSpecificShiftRate}
-                        </Label>
-                        <Input
-                          id="job_specific_shift_rate_new"
-                          type="text"
-                          value={formData.job_specific_shift_rate}
-                          onChange={(e) => handleNumericInputChange("job_specific_shift_rate", e.target.value)}
-                          placeholder={t.jobSpecificShiftRatePlaceholder}
-                          className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 ${errors.job_specific_shift_rate ? "border-red-500" : ""}`}
-                        />
-                        {errors.job_specific_shift_rate && (
-                          <p className="text-xs text-red-500 mt-1">{errors.job_specific_shift_rate}</p>
-                        )}
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-
-            {/* Work Resources Card */}
-            <Card className="shadow-lg overflow-hidden bg-white border-neutral-200">
-              <CardHeader className="bg-neutral-50 border-b border-neutral-200">
-                <CardTitle className="flex items-center gap-2 text-neutral-900">
-                  <Cog className="w-5 h-5 text-primary" />
-                  {t.workResources}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                {/* Worker Selection */}
-                <div>
-                  <Label htmlFor="worker_id" className="font-medium text-neutral-700 mb-2 block">
-                    {t.worker} <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.worker_id}
-                    onValueChange={(value) => handleSelectChange("worker_id", value, displayWorkers, "worker_name")}
-                    dir={isHebrew ? "rtl" : "ltr"}
-                    disabled={!formData.job_date || !formData.shift_type || displayWorkers.length === 0}
-                  >
-                    <SelectTrigger
-                      className={`border-neutral-300 focus:border-primary text-neutral-900 ${errors.worker_id ? "border-red-500" : ""}`}
-                    >
-                      <SelectValue
-                        placeholder={
-                          !formData.job_date || !formData.shift_type
-                            ? isHebrew
-                              ? "בחר תאריך ומשמרת תחילה"
-                              : "Select date & shift first"
-                            : t.selectWorker
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent dir={isHebrew ? "rtl" : "ltr"}>
-                      {displayWorkers.length > 0
-                        ? displayWorkers.map((w) => (
-                            <SelectItem key={w.id} value={w.id}>
-                              {w.name} {w.shift_rate ? `(₪${w.shift_rate})` : ""}
-                            </SelectItem>
-                          ))
-                        : formData.job_date &&
-                          formData.shift_type && (
-                            <div className="p-2 text-sm text-neutral-500">{t.noAvailableWorkers}</div>
-                          )}
-                    </SelectContent>
-                  </Select>
-                  {errors.worker_id && <p className="text-xs text-red-500 mt-1">{errors.worker_id}</p>}
-                  {formData.job_date && formData.shift_type && displayWorkers.length === 0 && !isLoading && (
-                    <p className="text-xs text-orange-600 mt-1 bg-orange-50 p-2 rounded-md">{t.noAvailableWorkers}</p>
-                  )}
-                </div>
-
-                {/* Vehicle Selection */}
-                <div>
-                  <Label htmlFor="vehicle_id" className="font-medium text-neutral-700 mb-2 block">
-                    {t.vehicle} <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.vehicle_id}
-                    onValueChange={(value) => handleSelectChange("vehicle_id", value, displayVehicles, "vehicle_name")}
-                    dir={isHebrew ? "rtl" : "ltr"}
-                  >
-                    <SelectTrigger
-                      className={`border-neutral-300 focus:border-primary text-neutral-900 ${errors.vehicle_id ? "border-red-500" : ""}`}
-                    >
-                      <SelectValue placeholder={t.selectVehicle} />
-                    </SelectTrigger>
-                    <SelectContent dir={isHebrew ? "rtl" : "ltr"}>
-                      {displayVehicles.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {v.name} {v.license_plate && `(${v.license_plate})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.vehicle_id && <p className="text-xs text-red-500 mt-1">{errors.vehicle_id}</p>}
-                </div>
-
-                {/* Cart Selection */}
-                <div>
-                  <Label htmlFor="cart_id" className="font-medium text-neutral-700 mb-2 block">
-                    {t.cart} <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.cart_id}
-                    onValueChange={(value) => handleSelectChange("cart_id", value, displayCarts, "cart_name")}
-                    dir={isHebrew ? "rtl" : "ltr"}
-                  >
-                    <SelectTrigger
-                      className={`border-neutral-300 focus:border-primary text-neutral-900 ${errors.cart_id ? "border-red-500" : ""}`}
-                    >
-                      <SelectValue placeholder={t.selectCart} />
-                    </SelectTrigger>
-                    <SelectContent dir={isHebrew ? "rtl" : "ltr"}>
-                      {displayCarts.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.cart_id && <p className="text-xs text-red-500 mt-1">{errors.cart_id}</p>}
-                </div>
-                <p className="text-xs text-neutral-500 mt-2 p-2 bg-neutral-100 rounded-md">
-                  {t.vehicleCartAvailabilityNote}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Notes Card */}
-            <Card className="shadow-lg overflow-hidden bg-white border-neutral-200">
-              <CardHeader className="bg-neutral-50 border-b border-neutral-200">
-                <CardTitle className="flex items-center gap-2 text-neutral-900">
-                  <FileText className="w-5 h-5 text-primary" />
-                  {t.notes}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => handleChange("notes", e.target.value)}
-                  rows={4}
-                  placeholder={t.additionalNotesPlaceholder}
-                  className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900`}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Calendar Card */}
-            <Card className="shadow-lg overflow-hidden bg-white border-neutral-200">
-              <CardHeader className="bg-neutral-50 border-b border-neutral-200">
-                <CardTitle className="flex items-center gap-2 text-neutral-900">
-                  <CalendarDays className="w-5 h-5 text-primary" /> {t.calendar}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <Label htmlFor="add_to_calendar" className="text-base font-medium text-neutral-700">
-                      {t.addToCalendar}
-                    </Label>
-                    <p className="text-sm text-neutral-600 mt-1">{t.calendarDesc}</p>
-                  </div>
-                  <Switch
-                    id="add_to_calendar"
-                    checked={formData.add_to_calendar}
-                    onCheckedChange={(checked) => handleChange("add_to_calendar", checked)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end gap-4 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate(createPageUrl("Jobs"))}
-                disabled={isSubmitting}
-                className="flex items-center gap-2 border-neutral-300 text-neutral-700 hover:bg-neutral-100"
-              >
-                <X className="w-4 h-4" /> {t.cancel}
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting || isLoading}
-                className="bg-primary hover:bg-primary-dark text-primary-foreground shadow-lg min-w-[120px] flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full me-2 rtl:ms-2 rtl:me-0"></div>
-                    <span>{t.creatingJob}</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" /> {t.createJob}
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  )
-}
+                        ? \"לא הוגדרו סוגי עבודה. אנ
