@@ -53,7 +53,9 @@ export async function POST(request: NextRequest) {
       ...body,
       created_by_id: userId,
       created_by: userEmail,
+      created_date: new Date().toISOString(),
       updated_date: new Date().toISOString(),
+      is_sample: !user, // Mark as sample if no authenticated user
     }
 
     console.log("[v0] Creating client with data:", clientData)

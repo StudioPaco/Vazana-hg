@@ -42,15 +42,15 @@ export default function NewClientPage() {
         },
         body: JSON.stringify({
           company_name: formData.companyName,
-          contact_name: formData.contactPerson, // Fixed: was contact_person
+          contact_person: formData.contactPerson, // Fixed: matches DB schema
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
-          po_box: formData.postalCode, // Fixed: was postal_code
-          payment_method: formData.paymentTerms, // Fixed: was payment_terms
-          hourly_rate: Number.parseFloat(formData.hourlyRate) || 0, // Fixed: was security_rate
-          estimate_rate: Number.parseFloat(formData.maintenanceRate) || 0, // Fixed: was installation_rate
+          po_box: formData.postalCode,
+          payment_method: formData.paymentTerms === "monthly" ? 1 : formData.paymentTerms === "immediate" ? 2 : 3, // Fixed: convert to integer
+          security_rate: Number.parseFloat(formData.hourlyRate) || 0, // Fixed: matches DB schema
+          installation_rate: Number.parseFloat(formData.maintenanceRate) || 0, // Fixed: matches DB schema
           notes: formData.notes,
           status: "active",
         }),
