@@ -3,61 +3,7 @@
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
-import { createClient } from "@/lib/supabase/client"
-
-// Cart entity for database operations
-const CartEntity = {
-  async list() {
-    const supabase = createClient()
-    const { data, error } = await supabase.from("carts").select("*").order("name", { ascending: true })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async create(cartData: any) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("carts")
-      .insert([
-        {
-          name: cartData.name,
-          details: cartData.details,
-          created_by: "root",
-          created_by_id: "550e8400-e29b-41d4-a716-446655440000",
-          created_date: new Date().toISOString(),
-          is_sample: false,
-        },
-      ])
-      .select()
-
-    if (error) throw error
-    return data[0]
-  },
-
-  async update(id: string, cartData: any) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("carts")
-      .update({
-        name: cartData.name,
-        details: cartData.details,
-        updated_date: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-
-    if (error) throw error
-    return data[0]
-  },
-
-  async delete(id: string) {
-    const supabase = createClient()
-    const { error } = await supabase.from("carts").delete().eq("id", id)
-
-    if (error) throw error
-  },
-}
+import { Cart } from "@/entities/all"
 
 const cartFields = [
   {
@@ -92,7 +38,7 @@ export default function CartsResourcePage() {
 
           <Suspense fallback={<div className="p-6">טוען...</div>}>
             <ManageGenericList
-              Entity={CartEntity}
+              Entity={Cart}
               entityName="עגלה/נגרר"
               entityNamePlural="עגלות/נגררים"
               fields={cartFields}

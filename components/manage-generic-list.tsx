@@ -95,6 +95,9 @@ export default function ManageGenericList({
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    console.log("[v0] Form data before validation:", formData)
+
     for (const field of fields) {
       if (field.required && !formData[field.name]?.trim()) {
         alert(`${isHebrew ? field.labelHe : field.labelEn} ${t.fieldRequired}`)
@@ -104,16 +107,30 @@ export default function ManageGenericList({
 
     setIsSubmitting(true)
     try {
+      console.log("[v0] Submitting data:", formData)
+      console.log("[v0] Entity:", Entity)
+      console.log("[v0] Entity table name:", Entity.tableName)
+
       if (editingItem) {
+        console.log("[v0] Updating item:", editingItem.id, formData)
         await Entity.update(editingItem.id, formData)
       } else {
-        await Entity.create(formData)
+        console.log("[v0] Creating new item with data:", formData)
+        const result = await Entity.create(formData)
+        console.log("[v0] Create result:", result)
       }
       setShowForm(false)
       setEditingItem(null)
       loadItems()
     } catch (error) {
       console.error(`Error saving ${entityName}:`, error)
+      console.error("[v0] Full error details:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      })
+      alert(`שגיאה בשמירת ${entityName}: ${error.message}`)
     }
     setIsSubmitting(false)
   }

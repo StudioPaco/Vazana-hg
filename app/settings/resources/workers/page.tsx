@@ -3,69 +3,7 @@
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
-import { createClient } from "@/lib/supabase/client"
-
-// Worker entity for database operations
-const WorkerEntity = {
-  async list() {
-    const supabase = createClient()
-    const { data, error } = await supabase.from("workers").select("*").order("name", { ascending: true })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async create(workerData: any) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("workers")
-      .insert([
-        {
-          name: workerData.name,
-          phone_number: workerData.phone_number,
-          address: workerData.address,
-          shift_rate: Number.parseFloat(workerData.shift_rate) || 0,
-          payment_terms_days: Number.parseInt(workerData.payment_terms_days) || 30,
-          notes: workerData.notes,
-          created_by: "root",
-          created_by_id: "550e8400-e29b-41d4-a716-446655440000",
-          created_date: new Date().toISOString(),
-          is_sample: false,
-        },
-      ])
-      .select()
-
-    if (error) throw error
-    return data[0]
-  },
-
-  async update(id: string, workerData: any) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("workers")
-      .update({
-        name: workerData.name,
-        phone_number: workerData.phone_number,
-        address: workerData.address,
-        shift_rate: Number.parseFloat(workerData.shift_rate) || 0,
-        payment_terms_days: Number.parseInt(workerData.payment_terms_days) || 30,
-        notes: workerData.notes,
-        updated_date: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-
-    if (error) throw error
-    return data[0]
-  },
-
-  async delete(id: string) {
-    const supabase = createClient()
-    const { error } = await supabase.from("workers").delete().eq("id", id)
-
-    if (error) throw error
-  },
-}
+import { Worker } from "@/entities/all"
 
 const workerFields = [
   {
@@ -137,7 +75,7 @@ export default function WorkersResourcePage() {
 
           <Suspense fallback={<div className="p-6">טוען...</div>}>
             <ManageGenericList
-              Entity={WorkerEntity}
+              Entity={Worker}
               entityName="עובד"
               entityNamePlural="עובדים"
               fields={workerFields}
