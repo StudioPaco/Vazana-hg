@@ -11,14 +11,14 @@ async function getAuthenticatedUser(request: NextRequest) {
   return await verifyToken(token)
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id } = params
     const supabase = createClient()
 
     // Get receipt with related data
@@ -98,7 +98,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       })
     }
 
-    return new NextResponse(pdfResult.pdfBuffer, {
+    if (!pdfResult.pdfBuffer) {
+      return NextResponse.json({ error: "PDF generation failed" }, { status: 500 })
+    }
+
+    return new NextResponse(pdfResult.pdfBuffer as BodyInit, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="invoice-${receipt.receipt_number}.pdf"`,
