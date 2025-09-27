@@ -356,7 +356,7 @@ export default function NewJobForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {workTypes.length === 0 ? (
-                    <SelectItem value="no-data" disabled>
+                    <SelectItem value="placeholder" disabled>
                       אין סוגי עבודה זמינו
                     </SelectItem>
                   ) : (
@@ -472,7 +472,7 @@ export default function NewJobForm() {
                   </SelectTrigger>
                   <SelectContent>
                     {clients.length === 0 ? (
-                      <SelectItem value="no-data" disabled>
+                      <SelectItem value="placeholder" disabled>
                         אין לקוחות זמינים
                       </SelectItem>
                     ) : (
@@ -571,7 +571,7 @@ export default function NewJobForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {employees.length === 0 ? (
-                    <SelectItem value="no-data" disabled>
+                    <SelectItem value="placeholder" disabled>
                       אין עובדים זמינו
                     </SelectItem>
                   ) : (
@@ -597,7 +597,7 @@ export default function NewJobForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {vehicles.length === 0 ? (
-                    <SelectItem value="no-data" disabled>
+                    <SelectItem value="placeholder" disabled>
                       אין רכבים זמינו
                     </SelectItem>
                   ) : (
@@ -623,7 +623,7 @@ export default function NewJobForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {carts.length === 0 ? (
-                    <SelectItem value="no-data" disabled>
+                    <SelectItem value="placeholder" disabled>
                       אין עגלות זמינות
                     </SelectItem>
                   ) : (

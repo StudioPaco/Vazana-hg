@@ -113,14 +113,37 @@ export class Cart extends BaseEntity {
 export class WorkType extends BaseEntity {
   static tableName = "work_types"
 
-  static async getByLanguage(language: "he" | "en") {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select("*")
-      .order(language === "he" ? "name_he" : "name_en")
+  static async list() {
+    try {
+      const { data, error } = await supabase.from(this.tableName).select("*").order("created_at", { ascending: false })
 
-    if (error) throw error
-    return data || []
+      if (error) {
+        console.error("Error listing work types:", error)
+        return []
+      }
+      return data || []
+    } catch (error) {
+      console.error("Error listing work types:", error)
+      return []
+    }
+  }
+
+  static async getByLanguage(language: "he" | "en") {
+    try {
+      const { data, error } = await supabase
+        .from(this.tableName)
+        .select("*")
+        .order(language === "he" ? "name_he" : "name_en")
+
+      if (error) {
+        console.error("Error getting work types by language:", error)
+        return []
+      }
+      return data || []
+    } catch (error) {
+      console.error("Error getting work types by language:", error)
+      return []
+    }
   }
 }
 

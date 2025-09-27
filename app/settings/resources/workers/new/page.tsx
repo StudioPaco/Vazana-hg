@@ -35,6 +35,9 @@ export default function NewWorkerPage() {
 
     try {
       const supabase = createClient()
+
+      console.log("[v0] Creating worker with data:", formData)
+
       const { data, error } = await supabase
         .from("workers")
         .insert([
@@ -47,16 +50,17 @@ export default function NewWorkerPage() {
         .select()
 
       if (error) {
-        console.error("Error creating worker:", error)
+        console.error("[v0] Error creating worker:", error)
         alert(`שגיאה ביצירת העובד: ${error.message}`)
         return
       }
 
+      console.log("[v0] Worker created successfully:", data)
       alert("העובד נוצר בהצלחה!")
       router.push("/settings/resources/workers")
     } catch (error) {
-      console.error("Failed to create worker:", error)
-      alert("שגיאה ביצירת העובד")
+      console.error("[v0] Failed to create worker:", error)
+      alert("שגיאת ביצוע הבקשה")
     }
   }
 

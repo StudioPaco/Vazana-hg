@@ -28,17 +28,19 @@ export default function WorkTypesPage() {
   const loadWorkTypes = async () => {
     setIsLoading(true)
     try {
+      console.log("[v0] Loading work types...")
       const supabase = createClient()
       const { data, error } = await supabase.from("work_types").select("*").order("created_at", { ascending: false })
 
       if (error) {
-        console.error("Error loading work types:", error)
+        console.error("[v0] Error loading work types:", error)
         setWorkTypes([])
       } else {
+        console.log("[v0] Successfully loaded work types:", data)
         setWorkTypes(data || [])
       }
     } catch (error) {
-      console.error("Failed to load work types:", error)
+      console.error("[v0] Failed to load work types:", error)
       setWorkTypes([])
     }
     setIsLoading(false)
@@ -59,16 +61,27 @@ export default function WorkTypesPage() {
 
     setIsSubmitting(true)
     try {
+      console.log("[v0] Submitting work type:", formData)
       const supabase = createClient()
 
       if (editingItem) {
+        console.log("[v0] Updating work type:", editingItem.id)
         const { error } = await supabase.from("work_types").update(formData).eq("id", editingItem.id)
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Error updating work type:", error)
+          throw error
+        }
+        console.log("[v0] Work type updated successfully")
       } else {
+        console.log("[v0] Creating new work type")
         const { error } = await supabase.from("work_types").insert([formData])
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Error creating work type:", error)
+          throw error
+        }
+        console.log("[v0] Work type created successfully")
       }
 
       setShowForm(false)
@@ -76,13 +89,14 @@ export default function WorkTypesPage() {
       setFormData({ name_he: "", name_en: "" })
       loadWorkTypes()
     } catch (error) {
-      console.error("Error saving work type:", error)
+      console.error("[v0] Error saving work type:", error)
       alert("שגיאה בשמירת סוג העבודה")
     }
     setIsSubmitting(false)
   }
 
   const handleEdit = (item: any) => {
+    console.log("[v0] Editing work type:", item)
     setEditingItem(item)
     setFormData({
       name_he: item.name_he || "",
@@ -94,24 +108,30 @@ export default function WorkTypesPage() {
   const handleDelete = async (itemId: string) => {
     if (window.confirm("האם אתה בטוח שברצונך למחוק סוג עבודה זה? פעולה זו אינה ניתנת לביטול.")) {
       try {
+        console.log("[v0] Deleting work type:", itemId)
         const supabase = createClient()
         const { error } = await supabase.from("work_types").delete().eq("id", itemId)
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Error deleting work type:", error)
+          throw error
+        }
 
+        console.log("[v0] Work type deleted successfully")
         loadWorkTypes()
         if (editingItem && editingItem.id === itemId) {
           setShowForm(false)
           setEditingItem(null)
         }
       } catch (error) {
-        console.error("Error deleting work type:", error)
+        console.error("[v0] Error deleting work type:", error)
         alert("שגיאה במחיקת סוג העבודה")
       }
     }
   }
 
   const openNewForm = () => {
+    console.log("[v0] Opening new work type form")
     setEditingItem(null)
     setFormData({ name_he: "", name_en: "" })
     setShowForm(true)

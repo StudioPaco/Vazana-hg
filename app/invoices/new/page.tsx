@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowRight, FileText, Calendar, User } from "lucide-react"
 import Link from "next/link"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 
 interface Client {
   id: string
@@ -100,150 +101,155 @@ export default function NewInvoicePage() {
   }
 
   return (
-    <div className="p-6 space-y-6" dir="rtl">
-      {/* Header with title in top-right corner */}
-      <div className="relative">
-        <div className="absolute top-0 right-0">
-          <h1 className="text-2xl font-bold text-gray-900">הפקת חשבונית</h1>
-          <p className="text-sm text-gray-600">צור חשבונית חדשה עבור לקוח ותקופת חיוב</p>
-        </div>
-        <div className="absolute top-0 left-0">
-          <FileText className="h-6 w-6 text-gray-400" />
-        </div>
-      </div>
-
-      <div className="pt-16 space-y-6">
-        {/* Back button */}
-        <div className="flex justify-start">
-          <Button variant="outline" asChild>
-            <Link href="/invoices">
-              <ArrowRight className="ml-2 h-4 w-4" />
-              חזור לחשבוניות
-            </Link>
-          </Button>
-        </div>
-
-        {/* Client and Period Selection */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="relative mb-4">
-              <div className="absolute top-0 right-0">
-                <h2 className="text-lg font-semibold">בחר לקוח</h2>
-              </div>
-              <div className="absolute top-0 left-0">
-                <User className="h-5 w-5 text-gray-400" />
-              </div>
+    <>
+      <SidebarNavigation />
+      <MainContent>
+        <div className="p-6 space-y-6" dir="rtl">
+          {/* Header with title in top-right corner */}
+          <div className="relative">
+            <div className="absolute top-0 right-0">
+              <h1 className="text-2xl font-bold text-gray-900">הפקת חשבונית</h1>
+              <p className="text-sm text-gray-600">צור חשבונית חדשה עבור לקוח ותקופת חיוב</p>
             </div>
+            <div className="absolute top-0 left-0">
+              <FileText className="h-6 w-6 text-gray-400" />
+            </div>
+          </div>
 
-            <div className="pt-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <Button
-                onClick={fetchJobs}
-                disabled={!selectedClient || !selectedMonth || loading}
-                className="bg-vazana-teal hover:bg-vazana-teal/90 text-white"
-              >
-                {loading ? "טוען..." : "הביא עבודות"}
+          <div className="pt-16 space-y-6">
+            {/* Back button */}
+            <div className="flex justify-start">
+              <Button variant="outline" asChild>
+                <Link href="/invoices">
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                  חזור לחשבוניות
+                </Link>
               </Button>
-
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="text-right">
-                  <SelectValue placeholder="תקופת חיוב (חודש)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map((month) => (
-                    <SelectItem key={month.value} value={month.value}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedClient} onValueChange={setSelectedClient}>
-                <SelectTrigger className="text-right">
-                  <SelectValue placeholder="בחר חברה..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.company_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Invoice Lines */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="relative mb-4">
-              <div className="absolute top-0 right-0">
-                <h2 className="text-lg font-semibold">שורות חשבונית</h2>
-              </div>
-              <div className="absolute top-0 left-0">
-                <Calendar className="h-5 w-5 text-gray-400" />
-              </div>
             </div>
 
-            <div className="pt-8">
-              {jobs.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <p>לא נמצאו פריטים לחשבונית. בחר לקוח ותקופה להביא עבודות או להוסיף פריט ידני.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-5 gap-4 text-sm font-medium text-gray-600 border-b pb-2">
-                    <div className="text-right">סכום (₪)</div>
-                    <div className="text-right">אתר</div>
-                    <div className="text-right">סוג עבודה (פריט ידני)</div>
-                    <div className="text-right">תאריך / תקופת</div>
-                    <div className="text-right">תיאור פריט</div>
+            {/* Client and Period Selection */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="relative mb-4">
+                  <div className="absolute top-0 right-0">
+                    <h2 className="text-lg font-semibold">בחר לקוח</h2>
                   </div>
-                  {jobs.map((job) => (
-                    <div key={job.id} className="grid grid-cols-5 gap-4 text-sm py-2 border-b">
-                      <div className="text-right font-medium">₪{job.price}</div>
-                      <div className="text-right">{job.location}</div>
-                      <div className="text-right">{job.work_type}</div>
-                      <div className="text-right">{job.date}</div>
-                      <div className="text-right">עבודה #{job.job_number}</div>
-                    </div>
-                  ))}
+                  <div className="absolute top-0 left-0">
+                    <User className="h-5 w-5 text-gray-400" />
+                  </div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Invoice Summary */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="relative mb-4">
-              <div className="absolute top-0 right-0">
-                <h2 className="text-lg font-semibold">סיכום חשבונית</h2>
-              </div>
-            </div>
+                <div className="pt-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <Button
+                    onClick={fetchJobs}
+                    disabled={!selectedClient || !selectedMonth || loading}
+                    className="bg-vazana-teal hover:bg-vazana-teal/90 text-white"
+                  >
+                    {loading ? "טוען..." : "הביא עבודות"}
+                  </Button>
 
-            <div className="pt-8 space-y-3">
-              <div className="flex justify-between text-sm">
-                <div>₪{summary.subtotal.toFixed(2)}</div>
-                <div>סכום ביניים:</div>
-              </div>
-              <div className="flex justify-between text-sm">
-                <div>₪{summary.vat.toFixed(2)}</div>
-                <div>מע"מ (18%):</div>
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <div>₪{summary.total.toFixed(2)}</div>
-                <div>סכום כולל:</div>
-              </div>
-              <div className="text-center text-sm text-gray-500 mt-4">
-                <p>הערות (אופציונלי)</p>
-                <p>הוסף הערות לחשבונית...</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger className="text-right">
+                      <SelectValue placeholder="תקופת חיוב (חודש)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map((month) => (
+                        <SelectItem key={month.value} value={month.value}>
+                          {month.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedClient} onValueChange={setSelectedClient}>
+                    <SelectTrigger className="text-right">
+                      <SelectValue placeholder="בחר חברה..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.company_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Invoice Lines */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="relative mb-4">
+                  <div className="absolute top-0 right-0">
+                    <h2 className="text-lg font-semibold">שורות חשבונית</h2>
+                  </div>
+                  <div className="absolute top-0 left-0">
+                    <Calendar className="h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+
+                <div className="pt-8">
+                  {jobs.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <p>לא נמצאו פריטים לחשבונית. בחר לקוח ותקופה להביא עבודות או להוסיף פריט ידני.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-5 gap-4 text-sm font-medium text-gray-600 border-b pb-2">
+                        <div className="text-right">סכום (₪)</div>
+                        <div className="text-right">אתר</div>
+                        <div className="text-right">סוג עבודה (פריט ידני)</div>
+                        <div className="text-right">תאריך / תקופת</div>
+                        <div className="text-right">תיאור פריט</div>
+                      </div>
+                      {jobs.map((job) => (
+                        <div key={job.id} className="grid grid-cols-5 gap-4 text-sm py-2 border-b">
+                          <div className="text-right font-medium">₪{job.price}</div>
+                          <div className="text-right">{job.location}</div>
+                          <div className="text-right">{job.work_type}</div>
+                          <div className="text-right">{job.date}</div>
+                          <div className="text-right">עבודה #{job.job_number}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Invoice Summary */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="relative mb-4">
+                  <div className="absolute top-0 right-0">
+                    <h2 className="text-lg font-semibold">סיכום חשבונית</h2>
+                  </div>
+                </div>
+
+                <div className="pt-8 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <div>₪{summary.subtotal.toFixed(2)}</div>
+                    <div>סכום ביניים:</div>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <div>₪{summary.vat.toFixed(2)}</div>
+                    <div>מע"מ (18%):</div>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold border-t pt-2">
+                    <div>₪{summary.total.toFixed(2)}</div>
+                    <div>סכום כולל:</div>
+                  </div>
+                  <div className="text-center text-sm text-gray-500 mt-4">
+                    <p>הערות (אופציונלי)</p>
+                    <p>הוסף הערות לחשבונית...</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </MainContent>
+    </>
   )
 }
