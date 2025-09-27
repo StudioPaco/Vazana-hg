@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserIcon } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import SidebarNavigation from "@/components/layout/sidebar-navigation"
 
 export default function NewClientPage() {
@@ -34,35 +33,40 @@ export default function NewClientPage() {
     e.preventDefault()
 
     try {
-      const supabase = createClient()
-      const clientData = {
-        company_name: formData.companyName,
-        contact_person: formData.contactPerson,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        postal_code: formData.postalCode,
-        payment_terms: formData.paymentTerms,
-        hourly_rate: Number.parseFloat(formData.hourlyRate) || 0,
-        maintenance_rate: Number.parseFloat(formData.maintenanceRate) || 0,
-        notes: formData.notes,
-        created_by: "root",
-      }
+      const response = await fetch("/api/clients", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          company_name: formData.companyName,
+          contact_person: formData.contactPerson,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          po_box: formData.postalCode,
+          payment_method: formData.paymentTerms,
+          security_rate: Number.parseFloat(formData.hourlyRate) || 0,
+          installation_rate: Number.parseFloat(formData.maintenanceRate) || 0,
+          notes: formData.notes,
+          status: "active",
+        }),
+      })
 
-      const { data, error } = await supabase.from("clients").insert([clientData]).select()
-
-      if (error) {
-        console.error("Error creating client:", error)
-        alert("שגיאה ביצירת הלקוח")
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("Error creating client:", errorData)
+        alert("שגיאה ביצירת הלקוח: " + (errorData.error || "שגיאה לא ידועה"))
         return
       }
 
-      console.log("Client created successfully:", data)
+      const result = await response.json()
+      console.log("Client created successfully:", result)
       router.push("/clients")
     } catch (error) {
       console.error("Failed to create client:", error)
-      alert("שגיאה ביצירת הלקוח")
+      alert("שגיאה ביצירת הלקוח: בעיית רשת או שרת")
     }
   }
 
@@ -222,13 +226,13 @@ export default function NewClientPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="notes" className="text-right block">
-                    תעריף אחזקה (₪/משמרת)
+                    הערות
                   </Label>
                   <Input
                     id="notes"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="תעריף שעתי סטנדרטי לאחזקה"
+                    placeholder="הערות נוספות על לקוח זה..."
                     className="text-right"
                   />
                 </div>
