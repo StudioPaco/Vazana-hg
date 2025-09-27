@@ -536,11 +536,11 @@ export default function MaintenancePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {features.map((feature, index) => (
-                      <Card key={index} className="p-4">
+                    {features.map((feature) => (
+                      <Card key={feature.name} className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <Badge className={getStatusColor(feature.status)}>{getStatusIcon(feature.status)}</Badge>
-                          <feature.icon className="w-5 h-5 text-vazana-teal" />
+                          {feature.icon && <feature.icon className="w-5 h-5 text-vazana-teal" />}
                         </div>
                         <div className="text-right">
                           <h3 className="font-medium font-hebrew">{feature.name}</h3>

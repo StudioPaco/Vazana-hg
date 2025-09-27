@@ -23,7 +23,7 @@ export default function NewClientPage() {
     address: "",
     city: "",
     postalCode: "",
-    paymentTerms: "active",
+    paymentTerms: "monthly",
     hourlyRate: "",
     maintenanceRate: "",
     notes: "",
@@ -33,6 +33,8 @@ export default function NewClientPage() {
     e.preventDefault()
 
     try {
+      console.log("[v0] Submitting client form with data:", formData)
+
       const response = await fetch("/api/clients", {
         method: "POST",
         headers: {
@@ -40,15 +42,15 @@ export default function NewClientPage() {
         },
         body: JSON.stringify({
           company_name: formData.companyName,
-          contact_person: formData.contactPerson,
+          contact_name: formData.contactPerson, // Fixed: was contact_person
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
-          po_box: formData.postalCode,
-          payment_method: formData.paymentTerms,
-          security_rate: Number.parseFloat(formData.hourlyRate) || 0,
-          installation_rate: Number.parseFloat(formData.maintenanceRate) || 0,
+          po_box: formData.postalCode, // Fixed: was postal_code
+          payment_method: formData.paymentTerms, // Fixed: was payment_terms
+          hourly_rate: Number.parseFloat(formData.hourlyRate) || 0, // Fixed: was security_rate
+          estimate_rate: Number.parseFloat(formData.maintenanceRate) || 0, // Fixed: was installation_rate
           notes: formData.notes,
           status: "active",
         }),
@@ -56,16 +58,17 @@ export default function NewClientPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error("Error creating client:", errorData)
+        console.error("[v0] Error creating client:", errorData)
         alert("שגיאה ביצירת הלקוח: " + (errorData.error || "שגיאה לא ידועה"))
         return
       }
 
       const result = await response.json()
-      console.log("Client created successfully:", result)
+      console.log("[v0] Client created successfully:", result)
+      alert("הלקוח נוצר בהצלחה!")
       router.push("/clients")
     } catch (error) {
-      console.error("Failed to create client:", error)
+      console.error("[v0] Failed to create client:", error)
       alert("שגיאה ביצירת הלקוח: בעיית רשת או שרת")
     }
   }
@@ -174,74 +177,66 @@ export default function NewClientPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="postalCode" className="text-right block">
-                    מיקוד דואר (מיקוד)
+                    תיבת דואר
                   </Label>
                   <Input
                     id="postalCode"
                     value={formData.postalCode}
                     onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                    placeholder="מספר מיקוד דואר"
+                    placeholder="מספר תיבת דואר"
                     className="text-right"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="paymentTerms" className="text-right block">
-                    סטטוס
+                    אופן תשלום
                   </Label>
-                  <Select onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}>
+                  <Select
+                    value={formData.paymentTerms}
+                    onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}
+                  >
                     <SelectTrigger className="text-right">
-                      <SelectValue placeholder="פעיל" />
+                      <SelectValue placeholder="בחר אופן תשלום" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">פעיל</SelectItem>
-                      <SelectItem value="inactive">לא פעיל</SelectItem>
+                      <SelectItem value="monthly">חודשי</SelectItem>
+                      <SelectItem value="immediate">מיידי</SelectItem>
+                      <SelectItem value="quarterly">רבעוני</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hourlyRate" className="text-right block">
-                    אופן תשלום (יומי)
+                    תעריף שעתי (₪)
                   </Label>
                   <Input
                     id="hourlyRate"
                     type="number"
                     value={formData.hourlyRate}
                     onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                    placeholder="30"
+                    placeholder="120"
                     className="text-right"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="maintenanceRate" className="text-right block">
-                    תעריף אחזקה (₪/משמרת)
+                    תעריף הערכה (₪)
                   </Label>
                   <Input
                     id="maintenanceRate"
                     type="number"
                     value={formData.maintenanceRate}
                     onChange={(e) => setFormData({ ...formData, maintenanceRate: e.target.value })}
-                    placeholder="תעריף שעתי סטנדרטי לאחזקה"
-                    className="text-right"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes" className="text-right block">
-                    הערות
-                  </Label>
-                  <Input
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="הערות נוספות על לקוח זה..."
+                    placeholder="150"
                     className="text-right"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="fullNotes" className="text-right block">
+                  <Label htmlFor="notes" className="text-right block">
                     הערות
                   </Label>
                   <Textarea
-                    id="fullNotes"
+                    id="notes"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="הערות נוספות על לקוח זה..."

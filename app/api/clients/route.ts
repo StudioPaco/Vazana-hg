@@ -9,22 +9,28 @@ export async function GET(request: NextRequest) {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    let userId = user?.id
+
+    if (!userId) {
+      userId = "sample-user"
     }
 
     const { data: clients, error } = await supabase
       .from("clients")
       .select("*")
-      .eq("created_by_id", user.id)
+      .or(`created_by_id.eq.${userId},is_sample.eq.true`)
       .order("created_date", { ascending: false })
 
     if (error) {
+      console.error("[v0] Error fetching clients:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ data: clients })
+    console.log("[v0] Clients fetched successfully:", clients?.length || 0, "records")
+    return NextResponse.json({ data: clients || [] })
   } catch (error) {
+    console.error("[v0] Internal error fetching clients:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -37,27 +43,32 @@ export async function POST(request: NextRequest) {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+
+    const userId = user?.id || "sample-user"
+    const userEmail = user?.email || "demo@example.com"
 
     const body = await request.json()
 
     const clientData = {
       ...body,
-      created_by_id: user.id,
-      created_by: user.email,
+      created_by_id: userId,
+      created_by: userEmail,
       updated_date: new Date().toISOString(),
     }
+
+    console.log("[v0] Creating client with data:", clientData)
 
     const { data: client, error } = await supabase.from("clients").insert([clientData]).select().single()
 
     if (error) {
+      console.error("[v0] Error creating client:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    console.log("[v0] Client created successfully:", client)
     return NextResponse.json({ data: client }, { status: 201 })
   } catch (error) {
+    console.error("[v0] Internal error creating client:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -12,9 +12,8 @@ export async function GET(request: NextRequest) {
 
     let userId = user?.id
 
-    // If no authenticated user, use the sample user ID for development
     if (!userId) {
-      userId = "550e8400-e29b-41d4-a716-446655440000" // Sample user ID
+      userId = "sample-user" // Sample user ID that matches our sample data
     }
 
     const { data: carts, error } = await supabase
