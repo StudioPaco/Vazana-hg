@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Activity,
 } from "lucide-react"
 import Image from "next/image"
 import { useState, createContext, useContext } from "react"
@@ -37,6 +38,7 @@ const navigationItems = [
   { name: "הפקת חשבוניות", href: "/invoices", icon: Calculator },
   { name: "ארכיון חשבוניות", href: "/invoices/archive", icon: Archive },
   { name: "ארכיון מסמכים", href: "/documents", icon: FileText },
+  { name: "מרכז תחזוקה", href: "/maintenance", icon: Activity },
   { name: "הגדרות", href: "/settings", icon: Settings },
 ]
 
