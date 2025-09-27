@@ -11,8 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
-import { MainContent } from "@/components/layout/main-content"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 
 export default function NewWorkerPage() {
   const router = useRouter()
@@ -29,6 +28,11 @@ export default function NewWorkerPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!formData.name.trim() || !formData.phone_number.trim()) {
+      alert("שם העובד ומספר הטלפון הם שדות חובה")
+      return
+    }
+
     try {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -44,7 +48,7 @@ export default function NewWorkerPage() {
 
       if (error) {
         console.error("Error creating worker:", error)
-        alert("שגיאה ביצירת העובד")
+        alert(`שגיאה ביצירת העובד: ${error.message}`)
         return
       }
 

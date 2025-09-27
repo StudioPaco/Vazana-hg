@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
-import { MainContent } from "@/components/layout/main-content"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 
 export default function NewVehiclePage() {
   const router = useRouter()
@@ -24,13 +23,18 @@ export default function NewVehiclePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!formData.name.trim() || !formData.license_plate.trim()) {
+      alert("שם הרכב ומספר הרכב הם שדות חובה")
+      return
+    }
+
     try {
       const supabase = createClient()
       const { data, error } = await supabase.from("vehicles").insert([formData]).select()
 
       if (error) {
         console.error("Error creating vehicle:", error)
-        alert("שגיאה ביצירת הרכב")
+        alert(`שגיאה ביצירת הרכב: ${error.message}`)
         return
       }
 

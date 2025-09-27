@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
-import { MainContent } from "@/components/layout/main-content"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 
 export default function NewCartPage() {
   const router = useRouter()
@@ -23,13 +22,18 @@ export default function NewCartPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!formData.name.trim()) {
+      alert("שם העגלה/נגרר הוא שדה חובה")
+      return
+    }
+
     try {
       const supabase = createClient()
       const { data, error } = await supabase.from("carts").insert([formData]).select()
 
       if (error) {
         console.error("Error creating cart:", error)
-        alert("שגיאה ביצירת העגלה")
+        alert(`שגיאה ביצירת העגלה: ${error.message}`)
         return
       }
 
