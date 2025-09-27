@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,35 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Edit2, Trash2, Save, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-
-interface Field {
-  name: string
-  type?: string
-  labelEn: string
-  labelHe: string
-  placeholderEn?: string
-  placeholderHe?: string
-  required?: boolean
-  defaultValue?: string
-}
-
-interface Entity {
-  list: () => Promise<any[]>
-  create: (data: any) => Promise<any>
-  update: (id: string, data: any) => Promise<any>
-  delete: (id: string) => Promise<void>
-  tableName?: string
-}
-
-interface ManageGenericListProps {
-  Entity: Entity
-  entityName: string
-  entityNamePlural: string
-  fields: Field[]
-  displayField?: string
-  language?: "en" | "he"
-  textOverrides?: Record<string, string>
-}
 
 export default function ManageGenericList({
   Entity,
@@ -47,21 +16,18 @@ export default function ManageGenericList({
   displayField = "name_en",
   language = "he",
   textOverrides = {},
-}: ManageGenericListProps) {
-  const [items, setItems] = useState<any[]>([])
+}) {
+  const [items, setItems] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [editingItem, setEditingItem] = useState<any>(null)
+  const [editingItem, setEditingItem] = useState(null)
 
   const initialFormState = useMemo(() => {
-    return fields.reduce(
-      (acc, field) => ({ ...acc, [field.name]: field.defaultValue || "" }),
-      {} as Record<string, string>,
-    )
+    return fields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue || "" }), {})
   }, [fields])
 
-  const [formData, setFormData] = useState<Record<string, string>>(initialFormState)
+  const [formData, setFormData] = useState(initialFormState)
 
   const isHebrew = language === "he"
 
@@ -102,14 +68,11 @@ export default function ManageGenericList({
     if (editingItem) {
       const currentItemData = fields.reduce(
         (acc, field) => ({ ...acc, [field.name]: editingItem[field.name] || "" }),
-        {} as Record<string, string>,
+        {},
       )
       setFormData(currentItemData)
     } else {
-      const freshInitialState = fields.reduce(
-        (acc, field) => ({ ...acc, [field.name]: field.defaultValue || "" }),
-        {} as Record<string, string>,
-      )
+      const freshInitialState = fields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue || "" }), {})
       setFormData(freshInitialState)
     }
   }, [editingItem, fields])
@@ -125,12 +88,12 @@ export default function ManageGenericList({
     setIsLoading(false)
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     console.log("[v0] Form data before validation:", formData)
@@ -159,7 +122,7 @@ export default function ManageGenericList({
       setShowForm(false)
       setEditingItem(null)
       loadItems()
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error saving ${entityName}:`, error)
       console.error("[v0] Full error details:", {
         message: error.message,
@@ -172,12 +135,12 @@ export default function ManageGenericList({
     setIsSubmitting(false)
   }
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item) => {
     setEditingItem(item)
     setShowForm(true)
   }
 
-  const handleDelete = async (itemId: string) => {
+  const handleDelete = async (itemId) => {
     if (window.confirm(t.deleteConfirm)) {
       setIsLoading(true)
       try {

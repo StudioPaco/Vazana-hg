@@ -5,19 +5,6 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  Building2,
-  Users,
-  Briefcase,
-  Truck,
-  ShoppingCart,
-  FileText,
-  Calendar,
-  LogOut,
-  Menu,
-  X,
-  Settings,
-} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface NavigationProps {
@@ -29,16 +16,16 @@ interface NavigationProps {
 }
 
 const navigationItems = [
-  { name: "Dashboard", href: "/", icon: Building2, nameHe: "לוח בקרה" },
-  { name: "Clients", href: "/clients", icon: Users, nameHe: "לקוחות" },
-  { name: "Jobs", href: "/jobs", icon: Briefcase, nameHe: "עבודות" },
-  { name: "Workers", href: "/workers", icon: Users, nameHe: "עובדים" },
-  { name: "Vehicles", href: "/vehicles", icon: Truck, nameHe: "כלי רכב" },
-  { name: "Carts", href: "/carts", icon: ShoppingCart, nameHe: "עגלות" },
-  { name: "Invoices", href: "/invoices", icon: FileText, nameHe: "חשבוניות" },
-  { name: "Documents", href: "/documents", icon: FileText, nameHe: "מסמכים" },
-  { name: "Users", href: "/users", icon: Settings, nameHe: "משתמשים" },
-  { name: "Calendar", href: "/calendar", icon: Calendar, nameHe: "יומן" },
+  { name: "Dashboard", href: "/", icon: "🏠", nameHe: "לוח בקרה" },
+  { name: "Clients", href: "/clients", icon: "👥", nameHe: "לקוחות" },
+  { name: "Jobs", href: "/jobs", icon: "💼", nameHe: "עבודות" },
+  { name: "Workers", href: "/workers", icon: "👷", nameHe: "עובדים" },
+  { name: "Vehicles", href: "/vehicles", icon: "🚛", nameHe: "כלי רכב" },
+  { name: "Carts", href: "/carts", icon: "🛒", nameHe: "עגלות" },
+  { name: "Invoices", href: "/invoices", icon: "📄", nameHe: "חשבוניות" },
+  { name: "Documents", href: "/documents", icon: "📁", nameHe: "מסמכים" },
+  { name: "Users", href: "/users", icon: "⚙️", nameHe: "משתמשים" },
+  { name: "Calendar", href: "/calendar", icon: "📅", nameHe: "יומן" },
 ]
 
 export default function Navigation({ user: propUser }: NavigationProps) {
@@ -69,7 +56,7 @@ export default function Navigation({ user: propUser }: NavigationProps) {
       {/* Mobile menu button */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <Button variant="outline" size="icon" onClick={() => setIsOpen(!isOpen)} className="bg-white shadow-md">
-          {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          {isOpen ? <span>✕</span> : <span>☰</span>}
         </Button>
       </div>
 
@@ -84,7 +71,7 @@ export default function Navigation({ user: propUser }: NavigationProps) {
           {/* Header - Updated with Vazana colors */}
           <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200 bg-vazana-yellow">
             <div className="flex items-center space-x-2">
-              <Building2 className="h-8 w-8 text-vazana-dark" />
+              <span className="text-2xl text-vazana-dark">🏢</span>
               <div className="text-center">
                 <h1 className="text-lg font-bold text-vazana-dark">Vazana Studio</h1>
                 <p className="text-xs text-vazana-dark opacity-80">וזאנה אבטחת כבישים</p>
@@ -108,7 +95,7 @@ export default function Navigation({ user: propUser }: NavigationProps) {
                       : "text-gray-600 hover:bg-vazana-yellow hover:bg-opacity-20 hover:text-vazana-dark",
                   )}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
+                  <span className="mr-3 text-lg">{item.icon}</span>
                   <div className="flex-1">
                     <div>{item.name}</div>
                     <div className="text-xs text-gray-400">{item.nameHe}</div>
@@ -139,7 +126,7 @@ export default function Navigation({ user: propUser }: NavigationProps) {
               size="sm"
               className="w-full bg-transparent border-vazana-dark text-vazana-dark hover:bg-vazana-dark hover:text-white"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <span className="mr-2">🚪</span>
               Sign Out
             </Button>
           </div>

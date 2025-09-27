@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Briefcase, Truck, Plus, TrendingUp, Clock, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { apiClient } from "@/lib/api-client"
 
@@ -86,7 +85,7 @@ export default function Dashboard() {
       title: "Total Clients",
       titleHe: "סה״כ לקוחות",
       value: stats.totalClients,
-      icon: Users,
+      icon: "👥",
       color: "text-vazana-teal",
       bgColor: "bg-vazana-teal bg-opacity-20",
     },
@@ -94,7 +93,7 @@ export default function Dashboard() {
       title: "Active Jobs",
       titleHe: "עבודות פעילות",
       value: stats.totalJobs,
-      icon: Briefcase,
+      icon: "💼",
       color: "text-vazana-yellow",
       bgColor: "bg-vazana-yellow bg-opacity-30",
     },
@@ -102,7 +101,7 @@ export default function Dashboard() {
       title: "Workers",
       titleHe: "עובדים",
       value: stats.totalWorkers,
-      icon: Users,
+      icon: "👷",
       color: "text-vazana-dark",
       bgColor: "bg-vazana-dark bg-opacity-10",
     },
@@ -110,7 +109,7 @@ export default function Dashboard() {
       title: "Vehicles",
       titleHe: "כלי רכב",
       value: stats.totalVehicles,
-      icon: Truck,
+      icon: "🚛",
       color: "text-vazana-teal",
       bgColor: "bg-vazana-teal bg-opacity-20",
     },
@@ -142,7 +141,7 @@ export default function Dashboard() {
         <div className="mt-4 sm:mt-0 flex space-x-2">
           <Button asChild className="bg-vazana-yellow text-vazana-dark hover:bg-vazana-yellow/90">
             <Link href="/jobs/new">
-              <Plus className="mr-2 h-4 w-4" />
+              <span className="mr-2">+</span>
               New Job
             </Link>
           </Button>
@@ -152,7 +151,7 @@ export default function Dashboard() {
             className="border-vazana-teal text-vazana-teal hover:bg-vazana-teal hover:text-white bg-transparent"
           >
             <Link href="/clients/new">
-              <Plus className="mr-2 h-4 w-4" />
+              <span className="mr-2">+</span>
               New Client
             </Link>
           </Button>
@@ -169,7 +168,7 @@ export default function Dashboard() {
                 <p className="text-xs text-gray-400">{stat.titleHe}</p>
               </div>
               <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <span className={`text-xl ${stat.color}`}>{stat.icon}</span>
               </div>
             </CardHeader>
             <CardContent>
@@ -187,7 +186,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium text-vazana-dark">Monthly Revenue</CardTitle>
               <p className="text-xs text-gray-400">הכנסות חודשיות</p>
             </div>
-            <TrendingUp className="h-5 w-5 text-vazana-teal" />
+            <span className="text-xl text-vazana-teal">📈</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-vazana-dark">₪{stats.monthlyRevenue.toLocaleString()}</div>
@@ -200,7 +199,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium text-vazana-dark">Pending Jobs</CardTitle>
               <p className="text-xs text-gray-400">עבודות ממתינות</p>
             </div>
-            <Clock className="h-5 w-5 text-vazana-yellow" />
+            <span className="text-xl text-vazana-yellow">⏰</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-vazana-dark">{stats.pendingJobs}</div>
@@ -213,7 +212,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium text-vazana-dark">Completed Jobs</CardTitle>
               <p className="text-xs text-gray-400">עבודות שהושלמו</p>
             </div>
-            <CheckCircle className="h-5 w-5 text-vazana-teal" />
+            <span className="text-xl text-vazana-teal">✅</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-vazana-dark">{stats.completedJobs}</div>
@@ -242,7 +241,7 @@ export default function Dashboard() {
         <CardContent>
           {recentJobs.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <Briefcase className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <div className="text-6xl text-gray-300 mb-4">💼</div>
               <p>No jobs yet. Create your first job to get started.</p>
             </div>
           ) : (

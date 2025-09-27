@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function NewJobForm() {
@@ -110,12 +109,15 @@ export default function NewJobForm() {
     }
 
     const fetchEmployees = async () => {
+      console.log("[v0] Starting to fetch employees...")
       try {
         const supabase = createClient()
         const { data, error } = await supabase
           .from("workers")
           .select("id, name, phone_number")
           .order("name", { ascending: true })
+
+        console.log("[v0] Workers query completed. Error:", error, "Data:", data)
 
         if (error) {
           console.error("[v0] Error fetching employees:", error)
@@ -124,8 +126,10 @@ export default function NewJobForm() {
         }
 
         if (data && data.length > 0) {
+          console.log("[v0] Successfully fetched workers from database:", data)
           setEmployees(data)
         } else {
+          console.log("[v0] No workers found in database")
           setEmployees([])
         }
       } catch (error) {
@@ -135,12 +139,15 @@ export default function NewJobForm() {
     }
 
     const fetchVehicles = async () => {
+      console.log("[v0] Starting to fetch vehicles...")
       try {
         const supabase = createClient()
         const { data, error } = await supabase
           .from("vehicles")
           .select("id, license_plate, name, details")
           .order("license_plate", { ascending: true })
+
+        console.log("[v0] Vehicles query completed. Error:", error, "Data:", data)
 
         if (error) {
           console.error("[v0] Error fetching vehicles:", error)
@@ -149,8 +156,10 @@ export default function NewJobForm() {
         }
 
         if (data && data.length > 0) {
+          console.log("[v0] Successfully fetched vehicles from database:", data)
           setVehicles(data)
         } else {
+          console.log("[v0] No vehicles found in database")
           setVehicles([])
         }
       } catch (error) {
@@ -160,12 +169,15 @@ export default function NewJobForm() {
     }
 
     const fetchCarts = async () => {
+      console.log("[v0] Starting to fetch carts...")
       try {
         const supabase = createClient()
         const { data, error } = await supabase
           .from("carts")
           .select("id, name, details")
           .order("name", { ascending: true })
+
+        console.log("[v0] Carts query completed. Error:", error, "Data:", data)
 
         if (error) {
           console.error("[v0] Error fetching carts:", error)
@@ -174,8 +186,10 @@ export default function NewJobForm() {
         }
 
         if (data && data.length > 0) {
+          console.log("[v0] Successfully fetched carts from database:", data)
           setCarts(data)
         } else {
+          console.log("[v0] No carts found in database")
           setCarts([])
         }
       } catch (error) {
@@ -185,12 +199,15 @@ export default function NewJobForm() {
     }
 
     const fetchWorkTypes = async () => {
+      console.log("[v0] Starting to fetch work types...")
       try {
         const supabase = createClient()
         const { data, error } = await supabase
           .from("work_types")
           .select("id, name_he, name_en")
           .order("name_he", { ascending: true })
+
+        console.log("[v0] Work types query completed. Error:", error, "Data:", data)
 
         if (error) {
           console.error("[v0] Error fetching work types:", error)
@@ -199,8 +216,10 @@ export default function NewJobForm() {
         }
 
         if (data && data.length > 0) {
+          console.log("[v0] Successfully fetched work types from database:", data)
           setWorkTypes(data)
         } else {
+          console.log("[v0] No work types found in database")
           setWorkTypes([])
         }
       } catch (error) {
@@ -342,7 +361,7 @@ export default function NewJobForm() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>פרטי העבודה</span>
-              <ClipboardIcon className="h-5 w-5 text-teal-600" />
+              <span className="text-teal-600">📋</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -438,7 +457,7 @@ export default function NewJobForm() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>פרטי הקצאה *</span>
-              <SettingsIcon className="h-5 w-5 text-teal-600" />
+              <span className="text-teal-600">⚙️</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -555,7 +574,7 @@ export default function NewJobForm() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>משאבי עבודה</span>
-              <UsersIcon className="h-5 w-5 text-teal-600" />
+              <span className="text-teal-600">👥</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -636,7 +655,7 @@ export default function NewJobForm() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <ClipboardIcon className="h-5 w-5 text-teal-600" />
+              <span className="text-teal-600">📋</span>
               <span>תיאור העבודה והערות</span>
             </CardTitle>
           </CardHeader>
@@ -654,7 +673,7 @@ export default function NewJobForm() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <CalendarIcon className="h-5 w-5 text-teal-600" />
+              <span className="text-teal-600">📅</span>
               <span>סכרון ליומן</span>
             </CardTitle>
           </CardHeader>

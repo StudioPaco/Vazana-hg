@@ -1,20 +1,14 @@
-import { updateSession } from "@/lib/supabase/middleware"
-import type { NextRequest } from "next/server"
+// Disabled middleware to prevent routing loop with localStorage auth
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/request"
 
-export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+export async function middleware(req: NextRequest) {
+  // Middleware disabled to prevent conflicts with localStorage-based authentication
+  // The client-side authentication in app/page.tsx handles all auth logic
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-     * Feel free to modify this pattern to include more paths.
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  // Empty matcher array means middleware won't run on any routes
+  matcher: [],
 }
