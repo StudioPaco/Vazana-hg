@@ -34,46 +34,16 @@ export default function WorkersPage() {
 
         if (error) {
           console.error("[v0] Error fetching workers:", error)
-          const sampleWorkers = [
-            {
-              id: "worker-1",
-              name: "עובד 1 - נגר",
-              phone_number: "050-1234567",
-              address: "תל אביב",
-              shift_rate: 300,
-              payment_terms_days: 30,
-              availability: { sun: { day: true }, mon: { day: true }, tue: { day: true } },
-              notes: "עובד מנוסה",
-            },
-            {
-              id: "worker-2",
-              name: "עובד 2 - חשמלאי",
-              phone_number: "052-7654321",
-              address: "חיפה",
-              shift_rate: 350,
-              payment_terms_days: 15,
-              availability: { wed: { day: true }, thu: { day: true }, fri: { day: true } },
-              notes: "מתמחה בהתקנות",
-            },
-            {
-              id: "worker-3",
-              name: "עובד 3 - צבע",
-              phone_number: "050-3456789",
-              address: "ירושלים",
-              shift_rate: 280,
-              payment_terms_days: 30,
-              availability: { sun: { day: true }, wed: { day: true }, fri: { day: true } },
-              notes: "מומחה צביעה",
-            },
-          ]
-          setWorkers(sampleWorkers)
-          setFilteredWorkers(sampleWorkers)
+          setWorkers([])
+          setFilteredWorkers([])
         } else {
           setWorkers(data || [])
           setFilteredWorkers(data || [])
         }
       } catch (error) {
         console.error("Failed to fetch workers:", error)
+        setWorkers([])
+        setFilteredWorkers([])
       } finally {
         setLoading(false)
       }

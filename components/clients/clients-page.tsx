@@ -85,104 +85,14 @@ export default function ClientsPage() {
           setClients(data)
           setFilteredClients(data)
         } else {
-          console.log("[v0] No clients found in database, using sample data")
-          // Fallback to sample data if no clients in database
-          const sampleClients: Client[] = [
-            {
-              id: "1",
-              company_name: "אדהם עבודות פיתוח",
-              contact_person: "אדהם כהן",
-              phone: "052-5110001",
-              email: "adam@example.com",
-              address: "רחוב הרצל 15",
-              city: "תל אביב",
-              security_rate: 150,
-              installation_rate: 200,
-              payment_method: 30,
-              status: "active",
-              notes: "לקוח VIP",
-            },
-            {
-              id: "2",
-              company_name: "אלקים סימון בבשים",
-              contact_person: "משה לוי",
-              phone: "054-7890123",
-              email: "moshe@example.com",
-              address: "שדרות רוטשילד 25",
-              city: "תל אביב",
-              security_rate: 140,
-              installation_rate: 180,
-              payment_method: 15,
-              status: "active",
-              notes: "",
-            },
-            {
-              id: "3",
-              company_name: "דברים זוהרים",
-              contact_person: "שרה כהן",
-              phone: "050-1234567",
-              email: "sarah@example.com",
-              address: "רחוב דיזנגוף 100",
-              city: "תל אביב",
-              security_rate: 160,
-              installation_rate: 220,
-              payment_method: 45,
-              status: "active",
-              notes: "לקוח חדש",
-            },
-          ]
-          setClients(sampleClients)
-          setFilteredClients(sampleClients)
+          console.log("[v0] No clients found in database")
+          setClients([])
+          setFilteredClients([])
         }
       } catch (error) {
         console.error("[v0] Failed to load clients:", error)
-        // Use sample data as fallback
-        const sampleClients: Client[] = [
-          {
-            id: "1",
-            company_name: "אדהם עבודות פיתוח",
-            contact_person: "אדהם כהן",
-            phone: "052-5110001",
-            email: "adam@example.com",
-            address: "רחוב הרצל 15",
-            city: "תל אביב",
-            security_rate: 150,
-            installation_rate: 200,
-            payment_method: 30,
-            status: "active",
-            notes: "לקוח VIP",
-          },
-          {
-            id: "2",
-            company_name: "אלקים סימון בבשים",
-            contact_person: "משה לוי",
-            phone: "054-7890123",
-            email: "moshe@example.com",
-            address: "שדרות רוטשילד 25",
-            city: "תל אביב",
-            security_rate: 140,
-            installation_rate: 180,
-            payment_method: 15,
-            status: "active",
-            notes: "",
-          },
-          {
-            id: "3",
-            company_name: "דברים זוהרים",
-            contact_person: "שרה כהן",
-            phone: "050-1234567",
-            email: "sarah@example.com",
-            address: "רחוב דיזנגוף 100",
-            city: "תל אביב",
-            security_rate: 160,
-            installation_rate: 220,
-            payment_method: 45,
-            status: "active",
-            notes: "לקוח חדש",
-          },
-        ]
-        setClients(sampleClients)
-        setFilteredClients(sampleClients)
+        setClients([])
+        setFilteredClients([])
       } finally {
         setLoading(false)
       }
@@ -229,7 +139,6 @@ export default function ClientsPage() {
 
       if (error) {
         console.error("[v0] Error fetching client jobs:", error)
-        // Fallback sample jobs
         const sampleJobs: Job[] = [
           {
             id: "1",

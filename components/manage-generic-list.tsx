@@ -8,53 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Edit2, Trash2, Save, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
-interface Field {
-  name: string
-  labelHe: string
-  labelEn: string
-  placeholderHe?: string
-  placeholderEn?: string
-  required?: boolean
-  type?: "text" | "textarea"
-  defaultValue?: string
-}
-
-interface EntityItem {
-  id: string
-  [key: string]: any
-}
-
-interface Entity {
-  list: () => Promise<EntityItem[]>
-  create: (data: Record<string, any>) => Promise<EntityItem>
-  update: (id: string, data: Record<string, any>) => Promise<EntityItem>
-  delete: (id: string) => Promise<boolean>
-}
-
-interface ManageGenericListProps {
-  Entity: Entity
-  entityName: string
-  entityNamePlural: string
-  fields: Field[]
-  displayField?: string
-  language?: "he" | "en"
-  textOverrides?: Record<string, string>
-}
-
-interface TextResource {
-  addNew: string
-  edit: string
-  save: string
-  cancel: string
-  deleteConfirm: string
-  loading: string
-  noItems: string
-  actions: string
-  fieldRequired: string
-}
-
-type FormInputEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-
 export default function ManageGenericList({
   Entity,
   entityName,
@@ -63,22 +16,22 @@ export default function ManageGenericList({
   displayField = "name_en",
   language = "he",
   textOverrides = {},
-}: ManageGenericListProps) {
-  const [items, setItems] = useState<EntityItem[]>([])
+}) {
+  const [items, setItems] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [editingItem, setEditingItem] = useState<EntityItem | null>(null)
+  const [editingItem, setEditingItem] = useState(null)
 
   const initialFormState = useMemo(() => {
-    return fields.reduce<Record<string, string>>((acc, field) => ({ ...acc, [field.name]: field.defaultValue || "" }), {})
+    return fields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue || "" }), {})
   }, [fields])
 
-  const [formData, setFormData] = useState<Record<string, string>>(initialFormState)
+  const [formData, setFormData] = useState(initialFormState)
 
   const isHebrew = language === "he"
 
-  const defaultTexts: Record<"en" | "he", TextResource> = {
+  const defaultTexts = {
     en: {
       addNew: `Add New ${entityName}`,
       edit: `Edit ${entityName}`,
@@ -113,40 +66,34 @@ export default function ManageGenericList({
 
   useEffect(() => {
     if (editingItem) {
-      const currentItemData = fields.reduce<Record<string, string>>(
+      const currentItemData = fields.reduce(
         (acc, field) => ({ ...acc, [field.name]: editingItem[field.name] || "" }),
         {},
       )
       setFormData(currentItemData)
     } else {
-      setFormData(initialFormState)
+      const freshInitialState = fields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue || "" }), {})
+      setFormData(freshInitialState)
     }
-  }, [editingItem, fields, initialFormState])
+  }, [editingItem, fields])
 
   const loadItems = async () => {
     setIsLoading(true)
     try {
       const data = await Entity.list()
-      if (Array.isArray(data)) {
-        setItems(data)
-      } else {
-        console.error(`Invalid data format for ${entityNamePlural}:`, data)
-        setItems([])
-      }
+      setItems(data)
     } catch (error) {
       console.error(`Error loading ${entityNamePlural}:`, error)
-      setItems([])
-    } finally {
-      setIsLoading(false)
     }
+    setIsLoading(false)
   }
 
-  const handleInputChange = (e: FormInputEvent) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     for (const field of fields) {
       if (field.required && !formData[field.name]?.trim()) {
@@ -164,24 +111,24 @@ export default function ManageGenericList({
       }
       setShowForm(false)
       setEditingItem(null)
-      await loadItems()
+      loadItems()
     } catch (error) {
       console.error(`Error saving ${entityName}:`, error)
     }
     setIsSubmitting(false)
   }
 
-  const handleEdit = (item: EntityItem) => {
+  const handleEdit = (item) => {
     setEditingItem(item)
     setShowForm(true)
   }
 
-  const handleDelete = async (itemId: string) => {
+  const handleDelete = async (itemId) => {
     if (window.confirm(t.deleteConfirm)) {
       setIsLoading(true)
       try {
         await Entity.delete(itemId)
-        await loadItems()
+        loadItems()
         if (editingItem && editingItem.id === itemId) {
           setShowForm(false)
           setEditingItem(null)
