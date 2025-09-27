@@ -356,9 +356,9 @@ export default function NewJobForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {workTypes.length === 0 ? (
-                    <SelectItem value="placeholder" disabled>
-                      אין סוגי עבודה זמינו
-                    </SelectItem>
+                    <div className="p-2 text-center text-gray-500 text-sm">
+                      אין סוגי עבודה זמינו - צור סוג עבודה חדש בהגדרות
+                    </div>
                   ) : (
                     workTypes.map((workType) => (
                       <SelectItem key={workType.id} value={workType.id}>
@@ -472,9 +472,7 @@ export default function NewJobForm() {
                   </SelectTrigger>
                   <SelectContent>
                     {clients.length === 0 ? (
-                      <SelectItem value="placeholder" disabled>
-                        אין לקוחות זמינים
-                      </SelectItem>
+                      <div className="p-2 text-center text-gray-500 text-sm">אין לקוחות זמינו - צור לקוח חדש</div>
                     ) : (
                       clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
@@ -571,9 +569,7 @@ export default function NewJobForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {employees.length === 0 ? (
-                    <SelectItem value="placeholder" disabled>
-                      אין עובדים זמינו
-                    </SelectItem>
+                    <div className="p-2 text-center text-gray-500 text-sm">אין עובדים זמינו - צור עובד חדש בהגדרות</div>
                   ) : (
                     employees.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
@@ -597,9 +593,7 @@ export default function NewJobForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {vehicles.length === 0 ? (
-                    <SelectItem value="placeholder" disabled>
-                      אין רכבים זמינו
-                    </SelectItem>
+                    <div className="p-2 text-center text-gray-500 text-sm">אין רכבים זמינו - צור רכב חדש בהגדרות</div>
                   ) : (
                     vehicles.map((vehicle) => (
                       <SelectItem key={vehicle.id} value={vehicle.id}>
@@ -623,9 +617,9 @@ export default function NewJobForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {carts.length === 0 ? (
-                    <SelectItem value="placeholder" disabled>
-                      אין עגלות זמינות
-                    </SelectItem>
+                    <div className="p-2 text-center text-gray-500 text-sm">
+                      אין עגלות זמינות - צור עגלה חדשה בהגדרות
+                    </div>
                   ) : (
                     carts.map((cart) => (
                       <SelectItem key={cart.id} value={cart.id}>

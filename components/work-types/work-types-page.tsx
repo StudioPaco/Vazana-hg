@@ -34,6 +34,7 @@ export default function WorkTypesPage() {
 
       if (error) {
         console.error("[v0] Error loading work types:", error)
+        alert(`שגיאה בטעינת סוגי עבודה: ${error.message}`)
         setWorkTypes([])
       } else {
         console.log("[v0] Successfully loaded work types:", data)
@@ -41,6 +42,7 @@ export default function WorkTypesPage() {
       }
     } catch (error) {
       console.error("[v0] Failed to load work types:", error)
+      alert("שגיאת חיבור - בדוק את החיבור לאינטרנט")
       setWorkTypes([])
     }
     setIsLoading(false)
