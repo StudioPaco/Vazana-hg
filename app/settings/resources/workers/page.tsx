@@ -3,7 +3,7 @@
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
-import { Worker } from "@/entities/all"
+import { Worker } from "@/lib/api-entities"
 
 const workerFields = [
   {

@@ -1,7 +1,64 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
+/* Custom Font Declarations */
+@font-face {
+  font-family: "Alef";
+  src: url("/fonts/Alef-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Alef";
+  src: url("/fonts/Alef-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Futura";
+  src: url("/fonts/Futura-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Futura";
+  src: url("/fonts/Futura-Book.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Futura";
+  src: url("/fonts/Futura-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Futura";
+  src: url("/fonts/Futura-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Futura";
+  src: url("/fonts/Futura-XBlack.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --background: oklch(1 0 0);
@@ -37,6 +94,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Custom Vazana Studio colors */
+  --color-vazana-yellow: #ffcc00;
+  --color-vazana-teal: #00dac0;
+  --color-vazana-dark: #1a1a1a;
+
+  /* Dynamic color variables that can be updated by theme system */
+  --theme-primary: var(--color-vazana-yellow);
+  --theme-secondary: var(--color-vazana-teal);
+  --theme-accent: #ffffff;
 }
 
 .dark {
@@ -75,16 +142,22 @@
 }
 
 @theme inline {
+  --font-hebrew: "Alef", sans-serif;
+  --font-english: "Futura", sans-serif;
+  --font-sans: var(--font-english);
+  --font-mono: var(--font-roboto-mono);
+
+  /* Updated color palette to match user specifications */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary: var(--color-vazana-yellow);
+  --color-primary-foreground: var(--color-vazana-dark);
+  --color-secondary: var(--color-vazana-teal);
+  --color-secondary-foreground: var(--color-vazana-dark);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -113,11 +186,16 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+/* Hebrew text direction support */
+[dir="rtl"] {
+  direction: rtl;
+}
+
+/* Custom font utility classes for Hebrew and English text */
+.font-hebrew {
+  font-family: var(--font-hebrew);
+}
+
+.font-english {
+  font-family: var(--font-english);
 }

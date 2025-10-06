@@ -41,12 +41,14 @@ import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navig
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useTheme } from "@/lib/theme-context"
+import { clientAuth } from "@/lib/client-auth"
 import { useSearchParams, useRouter } from "next/navigation"
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true)
   const [emailAlerts, setEmailAlerts] = useState(false)
   const [language, setLanguage] = useState("he")
+  const [sessionTimeout, setSessionTimeout] = useState(24) // hours
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [companyData, setCompanyData] = useState({
     name: "וזאנה אבטחת כבישים",
@@ -148,20 +150,83 @@ export default function SettingsPage() {
 
   const handleAddUser = async (userData: any) => {
     try {
+      // Basic validation
+      if (!userData.username || !userData.password || !userData.role) {
+        alert("אנא מלא את כל השדות")
+        return
+      }
+
+      // Validate username is email format (except for root)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (userData.username !== "root" && !emailRegex.test(userData.username)) {
+        alert("שם משתמש חייב להיות בפורמט אימייל")
+        return
+      }
+
+      // Prevent creating another root user
+      if (userData.username === "root") {
+        alert("לא ניתן ליצור משתמש root נוסף")
+        return
+      }
+
+      // Validate password complexity
+      if (userData.password.length < 8) {
+        alert("סיסמה חייבת להיות אורך 8 תווים לפחות")
+        return
+      }
+      
+      const hasLower = /[a-z]/.test(userData.password)
+      const hasUpper = /[A-Z]/.test(userData.password)
+      
+      if (!hasLower || !hasUpper) {
+        alert("סיסמה חייבת לכלול אותיות קטנות וגדולות")
+        return
+      }
+
+      // Check if username already exists
+      const { data: existingUser } = await supabase
+        .from("user_profiles")
+        .select("username")
+        .eq("username", userData.username)
+        .single()
+
+      if (existingUser) {
+        alert("שם משתמש כבר קיים במערכת")
+        return
+      }
+
+      // Hash the password before storing
+      const hashedPassword = await clientAuth.hashPassword(userData.password)
+      const currentUser = clientAuth.getCurrentUser()
+      
+      const userInsertData = {
+        username: userData.username,
+        full_name: userData.full_name || userData.username,
+        password_hash: hashedPassword,
+        role: userData.role,
+        is_active: true,
+        permissions: userData.role === "admin" ? 
+          { maintenance: true, delete_jobs: true, delete_invoices: true, user_management: true } : 
+          { maintenance: false, delete_jobs: false, delete_invoices: false, user_management: false },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      console.log("Attempting to insert user data:", userInsertData)
+
       const { data, error } = await supabase
         .from("user_profiles")
-        .insert({
-          username: userData.username,
-          full_name: userData.username,
-          role: userData.role,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        })
+        .insert(userInsertData)
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error("Supabase error creating user:", error)
+        alert(`שגיאה במסד הנתונים: ${error.message}`)
+        return
+      }
 
+      console.log("User created successfully:", data)
       const newUser = {
         id: data.id,
         username: data.username,
@@ -170,10 +235,10 @@ export default function SettingsPage() {
       }
       setUsers((prev) => [...prev, newUser])
       setIsAddUserOpen(false)
-      alert("משתמש חדש נוסף בהצלחה!")
+      alert("משתמש חדש נוסף בהצלחה! כעת הוא יכול להתחבר למערכת")
     } catch (error) {
       console.error("Error adding user:", error)
-      alert("שגיאה בהוספת משתמש")
+      alert(`שגיאה כללית בהוספת משתמש: ${error.message || error}`)
     }
   }
 
@@ -342,13 +407,48 @@ export default function SettingsPage() {
                     <span>אבטחה ופרטיות</span>
                   </CardTitle>
                   <CardDescription className="text-right font-hebrew">
-                    הגדרות אבטחה ופרטיות יהיו זמינות בקרוב.
+                    נהל הגדרות אבטחה וזמן פגישה
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-gray-500 font-hebrew">
-                    <Lock className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                    <p>הגדרות אבטחה ופרטיות יהיו זמינות בקרוב</p>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="font-hebrew text-right block">זמן פגישה (שעות)</Label>
+                    <div className="flex items-center gap-2">
+                      <Select 
+                        value={sessionTimeout.toString()} 
+                        onValueChange={(value) => setSessionTimeout(Number(value))}
+                        dir="rtl"
+                      >
+                        <SelectTrigger className="text-right font-hebrew w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1" className="font-hebrew">1 שעה</SelectItem>
+                          <SelectItem value="4" className="font-hebrew">4 שעות</SelectItem>
+                          <SelectItem value="8" className="font-hebrew">8 שעות</SelectItem>
+                          <SelectItem value="12" className="font-hebrew">12 שעות</SelectItem>
+                          <SelectItem value="24" className="font-hebrew">24 שעות</SelectItem>
+                          <SelectItem value="48" className="font-hebrew">48 שעות</SelectItem>
+                          <SelectItem value="168" className="font-hebrew">שבוע</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <p className="text-sm text-gray-600 font-hebrew text-right">
+                      משך הזמן שלפניו המשתמש יוצא אוטומטית מהמערכת
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-start pt-4">
+                    <Button 
+                      onClick={() => {
+                        clientAuth.updateSessionDuration(sessionTimeout)
+                        alert(`זמן הפגישה עודכן ל-${sessionTimeout} שעות`)
+                      }}
+                      className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
+                    >
+                      <Save className="ml-2 w-4 h-4" />
+                      שמור הגדרות אבטחה
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -558,6 +658,7 @@ export default function SettingsPage() {
                               const formData = new FormData(e.target as HTMLFormElement)
                               handleAddUser({
                                 username: formData.get("username"),
+                                full_name: formData.get("full_name"),
                                 password: formData.get("password"),
                                 role: formData.get("role"),
                               })
@@ -565,13 +666,26 @@ export default function SettingsPage() {
                           >
                             <div className="grid gap-4 py-4">
                               <div className="space-y-2">
-                                <Label className="font-hebrew text-right block">שם משתמש</Label>
+                                <Label className="font-hebrew text-right block">שם משתמש (אימייל)</Label>
                                 <Input
                                   name="username"
-                                  placeholder="הזן שם משתמש..."
+                                  type="email"
+                                  placeholder="user@company.com"
+                                  className="text-left font-hebrew"
+                                  dir="ltr"
+                                  required
+                                />
+                                <p className="text-xs text-gray-500 font-hebrew text-right">
+                                  שם המשתמש חייב להיות בפורמט אימייל
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="font-hebrew text-right block">שם מלא</Label>
+                                <Input
+                                  name="full_name"
+                                  placeholder="הזן שם מלא..."
                                   className="text-right font-hebrew"
                                   dir="rtl"
-                                  required
                                 />
                               </div>
                               <div className="space-y-2">
@@ -579,11 +693,15 @@ export default function SettingsPage() {
                                 <Input
                                   name="password"
                                   type="password"
-                                  placeholder="הזן סיסמה..."
+                                  placeholder="לפחות 8 תווים עם אותיות קטנות וגדולות"
                                   className="text-right font-hebrew"
                                   dir="rtl"
                                   required
+                                  minLength={8}
                                 />
+                                <p className="text-xs text-gray-500 font-hebrew text-right">
+                                  לפחות 8 תווים, אותיות קטנות וגדולות
+                                </p>
                               </div>
                               <div className="space-y-2">
                                 <Label className="font-hebrew text-right block">תפקיד</Label>

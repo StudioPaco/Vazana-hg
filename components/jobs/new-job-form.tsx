@@ -12,15 +12,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import DatabaseDropdown from "@/components/ui/database-dropdown"
+import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/hooks/use-job-form-data"
+import { useUserPreferences } from "@/hooks/useUserPreferences"
+
+// Standardized shift types - single source of truth
+const SHIFT_TYPES = [
+  { value: "יום", label: "יום" },
+  { value: "לילה", label: "לילה" },
+  { value: "כפול", label: "כפול" }
+]
 
 export default function NewJobForm() {
   const router = useRouter()
-  const [jobNumber, setJobNumber] = useState("0001")
-  const [clients, setClients] = useState<any[]>([])
-  const [employees, setEmployees] = useState<any[]>([])
-  const [vehicles, setVehicles] = useState<any[]>([])
-  const [carts, setCarts] = useState<any[]>([])
-  const [workTypes, setWorkTypes] = useState<any[]>([])
+  const [jobNumber, setJobNumber] = useState("")
+  const { preferences } = useUserPreferences()
+  const { clients, loading: clientsLoading, error: clientsError } = useClients()
+  const { workTypes, loading: workTypesLoading, error: workTypesError } = useWorkTypes()
+  const { workers: employees, loading: workersLoading, error: workersError } = useWorkers()
+  const { vehicles, loading: vehiclesLoading, error: vehiclesError } = useVehicles()
+  const { carts, loading: cartsLoading, error: cartsError } = useCarts()
   const [clientType, setClientType] = useState<"new" | "existing">("existing")
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState({
@@ -40,7 +51,7 @@ export default function NewJobForm() {
     vehicle: "",
     cart: "",
     description: "",
-    calendarSync: false,
+    calendarSync: preferences?.add_to_calendar_default ?? false,
     totalAmount: null,
     jobSpecificShiftRate: null,
     notes: null,
@@ -49,172 +60,60 @@ export default function NewJobForm() {
   })
 
   useEffect(() => {
+    if (preferences && formData.calendarSync !== preferences.add_to_calendar_default) {
+      setFormData(prev => ({
+        ...prev,
+        calendarSync: preferences.add_to_calendar_default
+      }))
+    }
+  }, [preferences])
+
+  useEffect(() => {
     const fetchJobNumber = async () => {
       try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from("jobs")
-          .select("job_number")
-          .order("created_date", { ascending: false })
-          .limit(1)
+        // Use API endpoint instead of direct Supabase query to avoid RLS issues
+        const response = await fetch('/api/jobs')
+        
+        if (!response.ok) {
+          console.error("[v0] API error fetching jobs for numbering:", response.status)
+          setJobNumber("0001")
+          return
+        }
+        
+        const result = await response.json()
+        const allJobs = result.data || []
 
-        if (error) {
-          console.error("[v0] Error fetching last job number:", error)
+        if (allJobs.length === 0) {
           setJobNumber("0001")
           return
         }
 
-        if (data && data.length > 0) {
-          const lastJobNumber = data[0].job_number
-          const nextNumber = Number.parseInt(lastJobNumber) + 1
-          setJobNumber(nextNumber.toString().padStart(4, "0"))
-        } else {
+        // Filter out deleted jobs - only consider active jobs for numbering
+        const activeJobs = allJobs.filter(job => !job.is_deleted)
+        
+        if (activeJobs.length === 0) {
           setJobNumber("0001")
+          return
         }
+
+        // Get the highest job number among ACTIVE jobs only
+        const highestActiveJobNumber = Math.max(
+          ...activeJobs.map(job => Number.parseInt(job.job_number) || 0)
+        )
+
+        // Always increment from the highest ACTIVE job number
+        const nextNumber = highestActiveJobNumber + 1
+        const formattedNumber = nextNumber.toString().padStart(4, "0")
+        console.log("[v0] Generated job number:", formattedNumber, "from highest:", highestActiveJobNumber)
+        setJobNumber(formattedNumber)
+
       } catch (error) {
         console.error("[v0] Failed to fetch job number:", error)
         setJobNumber("0001")
       }
     }
 
-    const fetchClients = async () => {
-      console.log("[v0] Starting to fetch clients...")
-      try {
-        const supabase = createClient()
-        console.log("[v0] Supabase client created")
-
-        const { data, error } = await supabase
-          .from("clients")
-          .select("id, company_name, contact_person")
-          .order("company_name", { ascending: true })
-
-        console.log("[v0] Supabase query completed. Error:", error, "Data:", data)
-
-        if (error) {
-          console.error("[v0] Error fetching clients:", error)
-          setClients([])
-          return
-        }
-
-        if (data && data.length > 0) {
-          console.log("[v0] Successfully fetched clients from database:", data)
-          setClients(data)
-        } else {
-          console.log("[v0] No clients found in database")
-          setClients([])
-        }
-      } catch (error) {
-        console.error("[v0] Failed to fetch clients:", error)
-        setClients([])
-      }
-    }
-
-    const fetchEmployees = async () => {
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from("workers")
-          .select("id, name, phone_number")
-          .order("name", { ascending: true })
-
-        if (error) {
-          console.error("[v0] Error fetching employees:", error)
-          setEmployees([])
-          return
-        }
-
-        if (data && data.length > 0) {
-          setEmployees(data)
-        } else {
-          setEmployees([])
-        }
-      } catch (error) {
-        console.error("[v0] Failed to fetch employees:", error)
-        setEmployees([])
-      }
-    }
-
-    const fetchVehicles = async () => {
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from("vehicles")
-          .select("id, license_plate, name, details")
-          .order("license_plate", { ascending: true })
-
-        if (error) {
-          console.error("[v0] Error fetching vehicles:", error)
-          setVehicles([])
-          return
-        }
-
-        if (data && data.length > 0) {
-          setVehicles(data)
-        } else {
-          setVehicles([])
-        }
-      } catch (error) {
-        console.error("[v0] Failed to fetch vehicles:", error)
-        setVehicles([])
-      }
-    }
-
-    const fetchCarts = async () => {
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from("carts")
-          .select("id, name, details")
-          .order("name", { ascending: true })
-
-        if (error) {
-          console.error("[v0] Error fetching carts:", error)
-          setCarts([])
-          return
-        }
-
-        if (data && data.length > 0) {
-          setCarts(data)
-        } else {
-          setCarts([])
-        }
-      } catch (error) {
-        console.error("[v0] Failed to fetch carts:", error)
-        setCarts([])
-      }
-    }
-
-    const fetchWorkTypes = async () => {
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from("work_types")
-          .select("id, name_he, name_en")
-          .order("name_he", { ascending: true })
-
-        if (error) {
-          console.error("[v0] Error fetching work types:", error)
-          setWorkTypes([])
-          return
-        }
-
-        if (data && data.length > 0) {
-          setWorkTypes(data)
-        } else {
-          setWorkTypes([])
-        }
-      } catch (error) {
-        console.error("[v0] Failed to fetch work types:", error)
-        setWorkTypes([])
-      }
-    }
-
     fetchJobNumber()
-    fetchClients()
-    fetchEmployees()
-    fetchVehicles()
-    fetchCarts()
-    fetchWorkTypes()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -274,7 +173,7 @@ export default function NewJobForm() {
       const selectedClient = clients.find((c) => c.id === formData.existingClientId)
       const selectedWorkType = workTypes.find((wt) => wt.id === formData.jobType)
 
-      const sampleUserId = "550e8400-e29b-41d4-a716-446655440000"
+      const sampleUserId = "00000000-0000-0000-0000-000000000001" // Must match the API route UUID
 
       const jobData = {
         job_number: jobNumber,
@@ -283,19 +182,19 @@ export default function NewJobForm() {
         site: formData.location,
         shift_type: formData.shiftType,
         city: formData.city,
-        client_name: clientType === "new" ? formData.clientName : selectedClient?.company_name,
+        client_name: clientType === "new" ? formData.clientName : (selectedClient?.company_name || ""),
         client_id: clientType === "existing" && selectedClient ? selectedClient.id : null,
-        worker_name: selectedEmployee?.name || null,
-        worker_id: selectedEmployee ? selectedEmployee.id : null, // Use proper UUID
-        vehicle_name: selectedVehicle ? `${selectedVehicle.license_plate} - ${selectedVehicle.name}` : null,
-        vehicle_id: selectedVehicle ? selectedVehicle.id : null, // Use proper UUID
+        worker_name: selectedEmployee?.name || "",
+        worker_id: selectedEmployee ? selectedEmployee.id : null,
+        vehicle_name: selectedVehicle ? `${selectedVehicle.license_plate} - ${selectedVehicle.name}` : "",
+        vehicle_id: selectedVehicle ? selectedVehicle.id : null,
         cart_name: selectedCart?.name || null,
         cart_id: selectedCart ? selectedCart.id : null, // Use proper UUID instead of string
         service_description: formData.description || null,
         add_to_calendar: formData.calendarSync,
-        payment_status: "pending",
+        payment_status: "ממתין",
         created_by: "root",
-        created_by_id: sampleUserId, // Add proper UUID for created_by_id
+        // created_by_id: sampleUserId, // Temporarily removed to avoid foreign key constraint
         created_date: new Date().toISOString(),
         total_amount: formData.totalAmount,
         job_specific_shift_rate: formData.jobSpecificShiftRate,
@@ -330,10 +229,10 @@ export default function NewJobForm() {
   return (
     <div className="p-6 max-w-4xl mx-auto" dir="rtl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">עבודה חדשה</h1>
         <div className="text-sm text-gray-500">
-          מספר עבודה: <span className="text-teal-600 font-semibold">{jobNumber}</span>
+          <span className="text-teal-600 font-semibold">{jobNumber}</span> :מספר עבודה
         </div>
+        <h1 className="text-2xl font-bold text-gray-900">עבודה חדשה</h1>
       </div>
       <p className="text-gray-600 mb-8 text-right">יצירת כרטיס עבודה חדש</p>
 
@@ -341,8 +240,8 @@ export default function NewJobForm() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>פרטי העבודה</span>
               <ClipboardIcon className="h-5 w-5 text-teal-600" />
+              <span>פרטי העבודה</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -350,24 +249,16 @@ export default function NewJobForm() {
               <Label htmlFor="jobType" className="text-right block">
                 סוג עבודה *
               </Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, jobType: value })}>
-                <SelectTrigger className={`text-right ${validationErrors.jobType ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder={workTypes.length === 0 ? "ריק - אין סוגי עבודה" : "בחר סוג עבודה"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {workTypes.length === 0 ? (
-                    <div className="p-2 text-center text-gray-500 text-sm">
-                      אין סוגי עבודה זמינו - צור סוג עבודה חדש בהגדרות
-                    </div>
-                  ) : (
-                    workTypes.map((workType) => (
-                      <SelectItem key={workType.id} value={workType.id}>
-                        {workType.name_he} - {workType.name_en}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <DatabaseDropdown
+                data={workTypes}
+                displayField="name_he"
+                valueField="id"
+                value={formData.jobType}
+                onValueChange={(value) => setFormData({ ...formData, jobType: value })}
+                placeholder="בחר סוג עבודה"
+                loading={workTypesLoading}
+                className={`w-full ${validationErrors.jobType ? "border-red-500" : ""}`}
+              />
               {validationErrors.jobType && (
                 <p className="text-red-500 text-sm text-right">{validationErrors.jobType}</p>
               )}
@@ -382,6 +273,7 @@ export default function NewJobForm() {
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className={`text-right ${validationErrors.date ? "border-red-500" : ""}`}
+                dir="rtl"
               />
               {validationErrors.date && <p className="text-red-500 text-sm text-right">{validationErrors.date}</p>}
             </div>
@@ -395,6 +287,7 @@ export default function NewJobForm() {
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="דוגמה: משרד ראשי, בניין א'"
                 className={`text-right ${validationErrors.location ? "border-red-500" : ""}`}
+                dir="rtl"
               />
               {validationErrors.location && (
                 <p className="text-red-500 text-sm text-right">{validationErrors.location}</p>
@@ -404,14 +297,16 @@ export default function NewJobForm() {
               <Label htmlFor="shiftType" className="text-right block">
                 סוג משמרת *
               </Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, shiftType: value })}>
+              <Select onValueChange={(value) => setFormData({ ...formData, shiftType: value })} dir="rtl">
                 <SelectTrigger className={`text-right ${validationErrors.shiftType ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder="בחר סוג משמרת" />
+                  <SelectValue placeholder="בחר סוג משמרת" className="text-right" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">יום</SelectItem>
-                  <SelectItem value="night">לילה</SelectItem>
-                  <SelectItem value="full">מלא</SelectItem>
+                <SelectContent className="text-right">
+                  {SHIFT_TYPES.map((shift) => (
+                    <SelectItem key={shift.value} value={shift.value} className="text-right">
+                      {shift.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {validationErrors.shiftType && (
@@ -428,6 +323,7 @@ export default function NewJobForm() {
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 placeholder="דוגמה: תל אביב, לוהמן"
                 className={`text-right ${validationErrors.city ? "border-red-500" : ""}`}
+                dir="rtl"
               />
               {validationErrors.city && <p className="text-red-500 text-sm text-right">{validationErrors.city}</p>}
             </div>
@@ -437,8 +333,8 @@ export default function NewJobForm() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>פרטי הקצאה *</span>
               <SettingsIcon className="h-5 w-5 text-teal-600" />
+              <span>פרטי הקצאה *</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -463,25 +359,19 @@ export default function NewJobForm() {
 
             {clientType === "existing" ? (
               <div className="space-y-2">
-                <Label htmlFor="existingClient" className="text-right block">
-                  בחר לקוח *
+                <Label htmlFor="existingClientId" className="text-right block">
+                  בחר לקוח קיים *
                 </Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, existingClientId: value })}>
-                  <SelectTrigger className={`text-right ${validationErrors.existingClientId ? "border-red-500" : ""}`}>
-                    <SelectValue placeholder={clients.length === 0 ? "ריק - אין לקוחות" : "בחר לקוח"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.length === 0 ? (
-                      <div className="p-2 text-center text-gray-500 text-sm">אין לקוחות זמינו - צור לקוח חדש</div>
-                    ) : (
-                      clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.company_name} - {client.contact_person}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                <DatabaseDropdown
+                  data={clients}
+                  displayField="company_name"
+                  valueField="id"
+                  value={formData.existingClientId}
+                  onValueChange={(value) => setFormData({ ...formData, existingClientId: value })}
+                  placeholder="בחר לקוח קיים"
+                  loading={clientsLoading}
+                  className={`w-full ${validationErrors.existingClientId ? "border-red-500" : ""}`}
+                />
                 {validationErrors.existingClientId && (
                   <p className="text-red-500 text-sm text-right">{validationErrors.existingClientId}</p>
                 )}
@@ -497,6 +387,7 @@ export default function NewJobForm() {
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                     className={`text-right ${validationErrors.clientName ? "border-red-500" : ""}`}
+                    dir="rtl"
                   />
                   {validationErrors.clientName && (
                     <p className="text-red-500 text-sm text-right">{validationErrors.clientName}</p>
@@ -512,6 +403,7 @@ export default function NewJobForm() {
                     onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
                     placeholder="דוגמה: משרד ראשי, בניין א'"
                     className={`text-right ${validationErrors.clientPhone ? "border-red-500" : ""}`}
+                    dir="rtl"
                   />
                   {validationErrors.clientPhone && (
                     <p className="text-red-500 text-sm text-right">{validationErrors.clientPhone}</p>
@@ -527,6 +419,7 @@ export default function NewJobForm() {
                     value={formData.clientEmail}
                     onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
                     className={`text-right ${validationErrors.clientEmail ? "border-red-500" : ""}`}
+                    dir="rtl"
                   />
                   {validationErrors.clientEmail && (
                     <p className="text-red-500 text-sm text-right">{validationErrors.clientEmail}</p>
@@ -541,6 +434,7 @@ export default function NewJobForm() {
                     value={formData.clientAddress}
                     onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
                     className={`text-right ${validationErrors.clientAddress ? "border-red-500" : ""}`}
+                    dir="rtl"
                   />
                   {validationErrors.clientAddress && (
                     <p className="text-red-500 text-sm text-right">{validationErrors.clientAddress}</p>
@@ -563,22 +457,16 @@ export default function NewJobForm() {
               <Label htmlFor="employee" className="text-right block">
                 עובד *
               </Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, employee: value })}>
-                <SelectTrigger className={`text-right ${validationErrors.employee ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder={employees.length === 0 ? "ריק - אין עובדים" : "בחר עובד"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.length === 0 ? (
-                    <div className="p-2 text-center text-gray-500 text-sm">אין עובדים זמינו - צור עובד חדש בהגדרות</div>
-                  ) : (
-                    employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        {employee.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <DatabaseDropdown
+                data={employees}
+                displayField="name"
+                valueField="id"
+                value={formData.employee}
+                onValueChange={(value) => setFormData({ ...formData, employee: value })}
+                placeholder="בחר עובד"
+                loading={workersLoading}
+                className={`w-full ${validationErrors.employee ? "border-red-500" : ""}`}
+              />
               {validationErrors.employee && (
                 <p className="text-red-500 text-sm text-right">{validationErrors.employee}</p>
               )}
@@ -587,48 +475,35 @@ export default function NewJobForm() {
               <Label htmlFor="vehicle" className="text-right block">
                 רכב *
               </Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, vehicle: value })}>
-                <SelectTrigger className={`text-right ${validationErrors.vehicle ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder={vehicles.length === 0 ? "ריק - אין רכבים" : "בחר רכב"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {vehicles.length === 0 ? (
-                    <div className="p-2 text-center text-gray-500 text-sm">אין רכבים זמינו - צור רכב חדש בהגדרות</div>
-                  ) : (
-                    vehicles.map((vehicle) => (
-                      <SelectItem key={vehicle.id} value={vehicle.id}>
-                        {vehicle.license_plate} - {vehicle.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <DatabaseDropdown
+                data={vehicles}
+                displayField={(vehicle) => `${vehicle.license_plate} - ${vehicle.name}`}
+                valueField="id"
+                value={formData.vehicle}
+                onValueChange={(value) => setFormData({ ...formData, vehicle: value })}
+                placeholder="בחר רכב"
+                loading={vehiclesLoading}
+                className={`w-full ${validationErrors.vehicle ? "border-red-500" : ""}`}
+              />
               {validationErrors.vehicle && (
                 <p className="text-red-500 text-sm text-right">{validationErrors.vehicle}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="cart" className="text-right block">
-                עגלה/נגרר
+                עגלה
               </Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, cart: value })}>
-                <SelectTrigger className="text-right">
-                  <SelectValue placeholder={carts.length === 0 ? "ריק - אין עגלות" : "בחר עגלה/נגרר"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {carts.length === 0 ? (
-                    <div className="p-2 text-center text-gray-500 text-sm">
-                      אין עגלות זמינות - צור עגלה חדשה בהגדרות
-                    </div>
-                  ) : (
-                    carts.map((cart) => (
-                      <SelectItem key={cart.id} value={cart.id}>
-                        {cart.name} - {cart.details}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <DatabaseDropdown
+                data={carts}
+                displayField="name"
+                valueField="id"
+                value={formData.cart}
+                onValueChange={(value) => setFormData({ ...formData, cart: value })}
+                placeholder="בחר עגלה (אופציונלי)"
+                loading={cartsLoading}
+                allowEmpty
+                className="w-full"
+              />
             </div>
           </CardContent>
         </Card>
@@ -644,8 +519,9 @@ export default function NewJobForm() {
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="הכנס את העבודה לביצוע وكل פרט חשוב אחר... (אופציונלי)"
+              placeholder="הכנס את העבודה לביצוע וכל פרט חשוב אחר... (אופציונלי)"
               className="min-h-[100px] text-right"
+              dir="rtl"
             />
             <p className="text-gray-500 text-sm text-right mt-2">שדה זה אינו חובה</p>
           </CardContent>

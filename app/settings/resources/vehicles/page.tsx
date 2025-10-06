@@ -3,7 +3,7 @@
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
-import { Vehicle } from "@/entities/all"
+import { Vehicle } from "@/lib/api-entities"
 
 const vehicleFields = [
   {

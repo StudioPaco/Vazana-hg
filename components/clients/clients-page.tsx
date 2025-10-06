@@ -70,25 +70,20 @@ export default function ClientsPage() {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const supabase = createClient()
-        console.log("[v0] Fetching clients from database...")
+        console.log("[v0] Fetching clients from API...")
 
-        const { data, error } = await supabase.from("clients").select("*").order("company_name")
-
-        if (error) {
-          console.error("[v0] Supabase error:", error)
-          throw error
+        const response = await fetch("/api/clients")
+        
+        if (!response.ok) {
+          throw new Error(`API responded with status: ${response.status}`)
         }
 
-        if (data && data.length > 0) {
-          console.log("[v0] Successfully fetched clients:", data)
-          setClients(data)
-          setFilteredClients(data)
-        } else {
-          console.log("[v0] No clients found in database")
-          setClients([])
-          setFilteredClients([])
-        }
+        const result = await response.json()
+        const data = result.data || []
+
+        console.log("[v0] Successfully fetched clients:", data)
+        setClients(data)
+        setFilteredClients(data)
       } catch (error) {
         console.error("[v0] Failed to load clients:", error)
         setClients([])

@@ -27,9 +27,12 @@ import {
   Play,
   Pause,
   Trash2,
+  Lock,
 } from "lucide-react"
 import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
 import { createClient } from "@/lib/supabase/client"
+import { clientAuth } from "@/lib/client-auth"
+import { useRouter } from "next/navigation"
 
 interface LogEntry {
   id: string
@@ -58,7 +61,9 @@ interface SystemHealth {
 
 export default function MaintenancePage() {
   const { isMinimized } = useSidebar()
+  const router = useRouter()
   const [logs, setLogs] = useState<LogEntry[]>([])
+  const [hasAccess, setHasAccess] = useState(false)
   const [isLogging, setIsLogging] = useState(true)
   const [features, setFeatures] = useState<FeatureStatus[]>([])
   const [systemHealth, setSystemHealth] = useState<SystemHealth>({
@@ -76,7 +81,7 @@ export default function MaintenancePage() {
     if (!isLogging) return
 
     const newLog: LogEntry = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique IDs
       timestamp: new Date(),
       level,
       message,
@@ -132,13 +137,25 @@ export default function MaintenancePage() {
       try {
         addLog("info", `Testing ${endpoint.name} API...`, "API")
 
-        const response = await fetch(endpoint.url)
+        const response = await fetch(endpoint.url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
 
-        if (response.ok) {
+        // Consider both 200 OK and 401 Unauthorized as "healthy" since 401 means the endpoint exists and responds
+        if (response.ok || response.status === 401) {
           addLog("success", `${endpoint.name} API is healthy`, "API")
           healthyCount++
+        } else if (response.status === 404) {
+          addLog("error", `${endpoint.name} API not found (404)`, "API")
         } else {
           addLog("warning", `${endpoint.name} API returned ${response.status}`, "API")
+          if (response.status < 500) {
+            // Client errors (4xx) except 404 still count as "working" endpoints
+            healthyCount++
+          }
         }
       } catch (error) {
         addLog("error", `${endpoint.name} API failed: ${error}`, "API", error)
@@ -253,6 +270,12 @@ export default function MaintenancePage() {
       // Check database
       const dbHealth = await checkDatabaseConnection()
 
+      // Check authentication system
+      const authHealth = await testAuthenticationSystem()
+      
+      // Check user management
+      const userMgmtHealth = await testUserCreationFlow()
+
       // Check API endpoints
       const apiHealth = await checkAPIEndpoints()
 
@@ -262,7 +285,7 @@ export default function MaintenancePage() {
       setSystemHealth({
         database: dbHealth,
         api: apiHealth,
-        auth: "healthy", // Simplified for now
+        auth: authHealth,
         integrations: "healthy", // Simplified for now
       })
 
@@ -340,26 +363,124 @@ export default function MaintenancePage() {
     addLog("info", "Attempting to fix API endpoint issues...", "Auto-Fix")
 
     try {
-      // Test each endpoint and attempt basic fixes
+      // Check each endpoint and provide detailed diagnostics
       const endpoints = ["/api/workers", "/api/vehicles", "/api/carts", "/api/clients", "/api/jobs"]
+      let fixedCount = 0
 
       for (const endpoint of endpoints) {
-        const response = await fetch(endpoint)
-        if (!response.ok) {
-          addLog("warning", `${endpoint} returned ${response.status}, attempting fix...`, "Auto-Fix")
+        try {
+          addLog("info", `Diagnosing ${endpoint}...`, "Auto-Fix")
+          const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
 
-          // For 401 errors, try to refresh auth
-          if (response.status === 401) {
-            await supabase.auth.refreshSession()
-            addLog("info", "Refreshed authentication session", "Auto-Fix")
+          if (response.ok) {
+            addLog("success", `${endpoint} is working correctly`, "Auto-Fix")
+            fixedCount++
+          } else if (response.status === 401) {
+            addLog("info", `${endpoint} requires authentication (this is normal)`, "Auto-Fix")
+            fixedCount++
+          } else if (response.status === 404) {
+            addLog("error", `${endpoint} not found - route may be missing`, "Auto-Fix")
+          } else {
+            addLog("warning", `${endpoint} returned ${response.status}`, "Auto-Fix")
           }
+        } catch (fetchError) {
+          addLog("error", `${endpoint} connection failed: ${fetchError}`, "Auto-Fix")
         }
       }
 
-      addLog("success", "API endpoints fix attempt completed", "Auto-Fix")
+      addLog("success", `API diagnostics completed: ${fixedCount}/${endpoints.length} endpoints functional`, "Auto-Fix")
+      
+      // Re-run the full system check to update status
       await runFullSystemCheck()
     } catch (error) {
       addLog("error", `API fix failed: ${error}`, "Auto-Fix", error)
+    }
+  }
+
+  const testAuthenticationSystem = async (): Promise<"healthy" | "warning" | "error"> => {
+    try {
+      addLog("info", "Testing authentication system...", "Authentication")
+      
+      // Test current user session
+      const currentUser = clientAuth.getCurrentUser()
+      if (!currentUser) {
+        addLog("error", "No authenticated user found", "Authentication")
+        return "error"
+      }
+      
+      addLog("success", `Current user: ${currentUser.username} (${currentUser.role})`, "Authentication")
+      
+      // Test session validity
+      const isSessionValid = clientAuth.isSessionValid()
+      if (!isSessionValid) {
+        addLog("warning", "Current session is expired", "Authentication")
+        return "warning"
+      }
+      
+      const timeRemaining = Math.floor(clientAuth.getSessionTimeRemaining())
+      addLog("info", `Session time remaining: ${timeRemaining} minutes`, "Authentication")
+      
+      // Test admin permissions
+      const isAdmin = clientAuth.isAdmin()
+      addLog("info", `Admin privileges: ${isAdmin ? 'Yes' : 'No'}`, "Authentication")
+      
+      // Test user database table
+      const { data: users, error: usersError } = await supabase
+        .from('user_profiles')
+        .select('username, role, is_active')
+        .limit(5)
+      
+      if (usersError) {
+        addLog("error", `User profiles table error: ${usersError.message}`, "Authentication")
+        return "error"
+      }
+      
+      addLog("success", `User database accessible: ${users?.length || 0} users found`, "Authentication")
+      
+      return "healthy"
+    } catch (error) {
+      addLog("error", `Authentication test failed: ${error}`, "Authentication", error)
+      return "error"
+    }
+  }
+
+  const testUserCreationFlow = async (): Promise<"healthy" | "warning" | "error"> => {
+    try {
+      addLog("info", "Testing user creation flow...", "User Management")
+      
+      // Check if we can hash passwords
+      const testPassword = "test123"
+      const hashedPassword = await clientAuth.hashPassword(testPassword)
+      
+      if (!hashedPassword || hashedPassword === testPassword) {
+        addLog("error", "Password hashing failed", "User Management")
+        return "error"
+      }
+      
+      addLog("success", "Password hashing working correctly", "User Management")
+      
+      // Test database table structure
+      const { data: tableInfo, error: tableError } = await supabase
+        .from('user_profiles')
+        .select('username, password_hash, full_name, role, is_active, permissions, created_by')
+        .limit(1)
+      
+      if (tableError) {
+        addLog("error", `User profiles table structure error: ${tableError.message}`, "User Management")
+        return "error"
+      }
+      
+      addLog("success", "User profiles table structure is correct", "User Management")
+      return "healthy"
+      
+    } catch (error) {
+      addLog("error", `User creation test failed: ${error}`, "User Management", error)
+      return "error"
     }
   }
 
@@ -403,13 +524,39 @@ export default function MaintenancePage() {
   }
 
   useEffect(() => {
+    // Check admin access first
+    if (!clientAuth.isAuthenticated()) {
+      router.push("/auth/login")
+      return
+    }
+
+    if (!clientAuth.isAdmin()) {
+      addLog("error", "Access denied - Admin privileges required", "Security")
+      setHasAccess(false)
+      return
+    }
+
+    setHasAccess(true)
     addLog("info", "Maintenance dashboard initialized", "System")
     runFullSystemCheck()
-  }, [])
+  }, [router])
 
   const healthyFeatures = features.filter((f) => f.status === "healthy").length
   const warningFeatures = features.filter((f) => f.status === "warning").length
   const errorFeatures = features.filter((f) => f.status === "error").length
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50" dir="rtl">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="font-hebrew text-right">אין לך הרשאות גישה</CardTitle>
+            <CardDescription className="font-hebrew text-right">דף התחזוקה זמין למנהלים בלבד</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
@@ -770,6 +917,42 @@ export default function MaintenancePage() {
                         <FileText className="w-4 h-4 ml-2" />
                         בדוק שלמות נתונים
                       </Button>
+                    </Card>
+
+                    <Card className="p-4">
+                      <div className="text-right mb-4">
+                        <h3 className="font-medium font-hebrew mb-2">בדיקת מערכת אימות</h3>
+                        <p className="text-sm text-gray-600 font-hebrew">בדוק התחברות, פגישות והרשאות משתמש</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={async () => {
+                            try {
+                              await testAuthenticationSystem()
+                            } catch (error) {
+                              addLog("error", `Test failed: ${error}`, "Authentication")
+                            }
+                          }}
+                          className="w-full bg-orange-600 hover:bg-orange-700 font-hebrew"
+                        >
+                          <Lock className="w-4 h-4 ml-2" />
+                          בדוק מערכת אימות
+                        </Button>
+                        <Button
+                          onClick={async () => {
+                            try {
+                              await testUserCreationFlow()
+                            } catch (error) {
+                              addLog("error", `Test failed: ${error}`, "User Management")
+                            }
+                          }}
+                          variant="outline"
+                          className="w-full font-hebrew bg-transparent"
+                        >
+                          <Users className="w-4 h-4 ml-2" />
+                          בדוק ניהול משתמשים
+                        </Button>
+                      </div>
                     </Card>
 
                     <Card className="p-4">

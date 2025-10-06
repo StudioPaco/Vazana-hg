@@ -3,61 +3,7 @@
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
-import { createClient } from "@/lib/supabase/client"
-
-// Work Type entity for database operations
-const WorkTypeEntity = {
-  async list() {
-    const supabase = createClient()
-    const { data, error } = await supabase.from("work_types").select("*").order("name_he", { ascending: true })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async create(workTypeData: any) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("work_types")
-      .insert([
-        {
-          name_he: workTypeData.name_he,
-          name_en: workTypeData.name_en,
-          created_by: "root",
-          created_by_id: "550e8400-e29b-41d4-a716-446655440000",
-          created_date: new Date().toISOString(),
-          is_sample: false,
-        },
-      ])
-      .select()
-
-    if (error) throw error
-    return data[0]
-  },
-
-  async update(id: string, workTypeData: any) {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("work_types")
-      .update({
-        name_he: workTypeData.name_he,
-        name_en: workTypeData.name_en,
-        updated_date: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-
-    if (error) throw error
-    return data[0]
-  },
-
-  async delete(id: string) {
-    const supabase = createClient()
-    const { error } = await supabase.from("work_types").delete().eq("id", id)
-
-    if (error) throw error
-  },
-}
+import { WorkType } from "@/lib/api-entities"
 
 const workTypeFields = [
   {
@@ -92,7 +38,7 @@ export default function JobTypesResourcePage() {
 
           <Suspense fallback={<div className="p-6">טוען...</div>}>
             <ManageGenericList
-              Entity={WorkTypeEntity}
+              Entity={WorkType}
               entityName="סוג עבודה"
               entityNamePlural="סוגי עבודה"
               fields={workTypeFields}

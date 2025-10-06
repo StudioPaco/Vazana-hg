@@ -3,7 +3,7 @@
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
-import { Cart } from "@/entities/all"
+import { Cart } from "@/lib/api-entities"
 
 const cartFields = [
   {

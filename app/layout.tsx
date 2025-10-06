@@ -4,7 +4,9 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SidebarProvider } from "@/components/layout/sidebar-navigation"
 import { ThemeProvider as CustomThemeProvider } from "@/lib/theme-context"
+import { LanguageProvider } from "@/lib/language-context"
 import { LoadingProvider } from "@/components/layout/loading-overlay"
+import AppWrapper from "@/components/layout/app-wrapper"
 
 export const metadata: Metadata = {
   title: "Vazana Studio - וזאנה סטודיו",
@@ -26,13 +28,17 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Futura:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="antialiased bg-neutral-50" suppressHydrationWarning>
-        <CustomThemeProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-            <LoadingProvider>
-              <SidebarProvider>{children}</SidebarProvider>
-            </LoadingProvider>
-          </ThemeProvider>
-        </CustomThemeProvider>
+        <LanguageProvider>
+          <CustomThemeProvider>
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+              <LoadingProvider>
+                <SidebarProvider>
+                  <AppWrapper>{children}</AppWrapper>
+                </SidebarProvider>
+              </LoadingProvider>
+            </ThemeProvider>
+          </CustomThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   )

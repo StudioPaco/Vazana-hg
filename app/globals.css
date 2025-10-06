@@ -191,6 +191,78 @@
   direction: rtl;
 }
 
+/* RTL Support for Form Controls */
+.rtl input,
+.rtl textarea,
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+  text-align: right;
+  direction: rtl;
+}
+
+.rtl select,
+[dir="rtl"] select {
+  text-align: right;
+  direction: rtl;
+}
+
+/* RTL Support for Shadcn/UI Components */
+.rtl [data-radix-select-trigger],
+[dir="rtl"] [data-radix-select-trigger] {
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.rtl [data-radix-select-value],
+[dir="rtl"] [data-radix-select-value] {
+  text-align: right;
+}
+
+.rtl [data-radix-select-content],
+[dir="rtl"] [data-radix-select-content] {
+  text-align: right;
+}
+
+.rtl [data-radix-select-item],
+[dir="rtl"] [data-radix-select-item] {
+  text-align: right;
+  justify-content: flex-end;
+}
+
+/* RTL Support for Date Inputs */
+.rtl input[type="date"],
+.rtl input[type="time"],
+.rtl input[type="datetime-local"],
+[dir="rtl"] input[type="date"],
+[dir="rtl"] input[type="time"],
+[dir="rtl"] input[type="datetime-local"] {
+  text-align: right;
+  direction: rtl;
+}
+
+/* RTL Support for Combobox/Dropdown components */
+.rtl [role="combobox"],
+[dir="rtl"] [role="combobox"] {
+  text-align: right;
+}
+
+.rtl [role="option"],
+[dir="rtl"] [role="option"] {
+  text-align: right;
+}
+
+/* RTL Support for Button content alignment */
+.rtl .flex.items-center.justify-between,
+[dir="rtl"] .flex.items-center.justify-between {
+  flex-direction: row-reverse;
+}
+
+/* RTL Support for Labels */
+.rtl label,
+[dir="rtl"] label {
+  text-align: right;
+}
+
 /* Custom font utility classes for Hebrew and English text */
 .font-hebrew {
   font-family: var(--font-hebrew);
@@ -200,148 +272,254 @@
   font-family: var(--font-english);
 }
 
-/* Language-specific text styling */
-[lang="he"],
-.hebrew-text {
-  font-family: var(--font-hebrew);
-  direction: rtl;
+/* Utility classes for RTL text alignment */
+.text-start-rtl {
+  text-align: start;
+}
+
+.text-end-rtl {
+  text-align: end;
+}
+
+[dir="rtl"] .text-start-rtl {
   text-align: right;
 }
 
-[lang="en"],
-.english-text {
-  font-family: var(--font-english);
-  direction: ltr;
+[dir="rtl"] .text-end-rtl {
   text-align: left;
 }
 
-/* Custom utility classes for Vazana Studio color scheme */
-.bg-vazana-yellow {
-  background-color: var(--color-vazana-yellow);
-}
-.text-vazana-yellow {
-  color: var(--color-vazana-yellow);
-}
-.border-vazana-yellow {
-  border-color: var(--color-vazana-yellow);
+[dir="ltr"] .text-start-rtl {
+  text-align: left;
 }
 
-.bg-vazana-teal {
-  background-color: var(--color-vazana-teal);
-}
-.text-vazana-teal {
-  color: var(--color-vazana-teal);
-}
-.border-vazana-teal {
-  border-color: var(--color-vazana-teal);
-}
-
-.bg-vazana-dark {
-  background-color: var(--color-vazana-dark);
-}
-.text-vazana-dark {
-  color: var(--color-vazana-dark);
-}
-.border-vazana-dark {
-  border-color: var(--color-vazana-dark);
-}
-
-/* Dynamic theme color support */
-.theme-primary {
-  background-color: var(--color-primary);
-}
-.theme-secondary {
-  background-color: var(--color-secondary);
-}
-.theme-accent {
-  background-color: var(--color-accent);
-}
-
-/* Rounded containers theme */
-.rounded-theme .rounded-lg,
-.rounded-theme .rounded-md,
-.rounded-theme .rounded,
-.rounded-theme [class*="rounded"] {
-  border-radius: 1rem !important;
-}
-
-.rounded-theme .rounded-xl {
-  border-radius: 1.5rem !important;
-}
-
-.rounded-theme .rounded-2xl {
-  border-radius: 2rem !important;
-}
-
-/* Apply dynamic colors to components */
-.bg-primary {
-  background-color: var(--theme-primary) !important;
-}
-.bg-secondary {
-  background-color: var(--theme-secondary) !important;
-}
-.text-primary {
-  color: var(--theme-primary) !important;
-}
-.text-secondary {
-  color: var(--theme-secondary) !important;
-}
-
-/* RTL Dropdown Menu Styles */
-[dir="rtl"] select,
-[dir="rtl"] .dropdown-menu,
-[dir="rtl"] [role="listbox"],
-[dir="rtl"] [role="combobox"] {
+[dir="ltr"] .text-end-rtl {
   text-align: right;
-  direction: rtl;
 }
 
-[dir="rtl"] .dropdown-content {
-  right: 0;
-  left: auto;
+/* Additional RTL Support for Select Components with !important */
+[data-radix-select-content],
+[data-radix-select-content] * {
+  text-align: right !important;
+  direction: rtl !important;
 }
 
-/* Hebrew dropdown text alignment */
-select[dir="rtl"],
-.select-trigger[dir="rtl"] {
-  text-align: right;
-  padding-right: 12px;
-  padding-left: 32px;
+[data-radix-select-item],
+[data-radix-select-item] * {
+  text-align: right !important;
+  direction: rtl !important;
+  justify-content: flex-start !important;
 }
 
-/* Button Press Animations */
-button,
-.btn,
-[role="button"] {
-  transition: all 0.15s ease-in-out;
+[data-radix-select-item-text] {
+  text-align: right !important;
+  direction: rtl !important;
 }
 
-button:hover,
-.btn:hover,
-[role="button"]:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+[data-radix-select-value],
+[data-radix-select-value] * {
+  text-align: right !important;
+  direction: rtl !important;
 }
 
-button:active,
-.btn:active,
-[role="button"]:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+[data-radix-select-trigger] {
+  text-align: right !important;
+  direction: rtl !important;
 }
 
-/* Primary button specific animations */
-button.bg-primary:active,
-button[class*="bg-teal"]:active,
-button[class*="bg-yellow"]:active {
-  transform: translateY(1px) scale(0.98);
+.dir-rtl,
+.dir-rtl * {
+  text-align: right !important;
+  direction: rtl !important;
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+/* Super aggressive RTL styling for Select components */
+[data-state="open"] [data-radix-select-item],
+[data-state="open"] [data-radix-select-item] *,
+[data-radix-popper-content-wrapper] [data-radix-select-item],
+[data-radix-popper-content-wrapper] [data-radix-select-item] *,
+.select-item,
+.select-item * {
+  text-align: right !important;
+  direction: rtl !important;
+  justify-content: flex-start !important;
+}
+
+/* Force RTL on all Select-related elements */
+[role="option"],
+[role="option"] *,
+[data-radix-select-item-text],
+[data-radix-select-value] span {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Ensure database dropdown items are RTL */
+.database-dropdown [data-radix-select-item],
+.database-dropdown [data-radix-select-item] * {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Ultra-aggressive RTL for placeholders and all states */
+[data-radix-select-trigger][data-placeholder],
+[data-radix-select-trigger][data-placeholder] *,
+[data-radix-select-value][data-placeholder],
+[data-radix-select-value][data-placeholder] *,
+[data-placeholder] {
+  text-align: right !important;
+  direction: rtl !important;
+  justify-content: flex-end !important;
+}
+
+/* Force RTL on date inputs */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Force RTL on all Select trigger content */
+[data-radix-select-trigger] > span,
+[data-radix-select-trigger] > div,
+[data-radix-select-value] > span,
+[data-radix-select-value] > div {
+  text-align: right !important;
+  direction: rtl !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Specific targeting for placeholder text */
+[data-radix-select-trigger]:not([data-state="open"]):not([aria-expanded="true"]),
+[data-radix-select-trigger]:not([data-state="open"]):not([aria-expanded="true"]) * {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Ultra-aggressive Hebrew placeholder text alignment */
+[data-radix-select-trigger] span:contains("בחר"),
+[data-radix-select-trigger] span[aria-label*="בחר"],
+[data-radix-select-value] span:contains("בחר"),
+[data-radix-select-value] span[title*="בחר"],
+[data-radix-select-trigger]:has-text("בחר"),
+[data-radix-select-value]:has-text("בחר") {
+  text-align: right !important;
+  direction: rtl !important;
+  justify-content: flex-end !important;
+  width: 100% !important;
+}
+
+/* Force RTL on any element containing Hebrew text */
+*:contains("בחר סוג עבודה"),
+*:contains("בחר לקוח קיים"),
+*:contains("בחר עובד"),
+*:contains("בחר רכב"),
+*:contains("בחר עגלה") {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Direct Hebrew text targeting */
+[data-radix-select-trigger]:not([data-state]):empty::before,
+[data-radix-select-value]:empty::before {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Target DatabaseDropdown specifically */
+.database-dropdown [data-radix-select-trigger],
+.database-dropdown [data-radix-select-value] {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+.database-dropdown [data-radix-select-trigger] > *,
+.database-dropdown [data-radix-select-value] > * {
+  text-align: right !important;
+  direction: rtl !important;
+  width: 100% !important;
+}
+
+/* Date input placeholder */
+input[type="date"]::placeholder {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Custom scrollbar styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* RTL placeholder class for components */
+.rtl-placeholder,
+.rtl-placeholder *,
+.rtl-placeholder [data-radix-select-value],
+.rtl-placeholder [data-radix-select-trigger] {
+  text-align: right !important;
+  direction: rtl !important;
+  justify-content: flex-start !important;
+}
+
+.rtl-placeholder [data-radix-select-value]:empty::before {
+  content: attr(placeholder);
+  text-align: right !important;
+  direction: rtl !important;
+  width: 100%;
+  display: block;
+}
+
+/* Target specific Hebrew placeholders */
+[data-radix-select-value]:before,
+[data-radix-select-value]:after,
+[data-radix-select-trigger][aria-labelledby]:empty,
+[data-radix-select-trigger][data-placeholder="בחר סוג עבודה"],
+[data-radix-select-trigger][data-placeholder="בחר לקוח קיים"],
+[data-radix-select-trigger][data-placeholder="בחר עובד"],
+[data-radix-select-trigger][data-placeholder="בחר רכב"],
+[data-radix-select-trigger][data-placeholder="בחר עגלה"] {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Aggressive placeholder styling */
+::placeholder,
+::-webkit-input-placeholder,
+::-moz-placeholder,
+:-ms-input-placeholder {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Date input specific styling */
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  text-align: right !important;
+  direction: rtl !important;
 }

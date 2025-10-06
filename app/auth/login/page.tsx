@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { clientAuth } from "@/lib/client-auth"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -20,8 +21,7 @@ export default function LoginPage() {
   // Check if already logged in
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const isLoggedIn = localStorage.getItem("vazana_logged_in")
-      if (isLoggedIn === "true") {
+      if (clientAuth.isAuthenticated()) {
         router.push("/")
       }
     }
@@ -29,34 +29,24 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Login attempt:", { username, password }) // Added debug logging
     setIsLoading(true)
     setError("")
 
-    // Add small delay to show loading state
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    // Simple hardcoded authentication
-    if (username === "root" && password === "10203040") {
-      console.log("Login successful") // Added debug logging
-      localStorage.setItem("vazana_logged_in", "true")
-      localStorage.setItem(
-        "vazana_user",
-        JSON.stringify({
-          username: "root",
-          email: "root@vazana.com",
-          role: "admin",
-        }),
-      )
-
-      console.log("Redirecting to dashboard...")
-      window.location.href = "/"
-    } else {
-      console.log("Login failed") // Added debug logging
-      setError("שם משתמש או סיסמה שגויים") // Invalid username or password in Hebrew
+    try {
+      const result = await clientAuth.login(username, password)
+      
+      if (result.success) {
+        console.log("Login successful:", result.user?.username)
+        router.push("/")
+      } else {
+        setError(result.error || "שגיאה בלתי ידועה")
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      setError("אירעה שגיאה בלתי צפויה")
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   return (
@@ -124,10 +114,17 @@ export default function LoginPage() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-vazana-yellow hover:bg-vazana-yellow/90 text-vazana-dark font-medium transition-all duration-200 active:scale-95" // Added visual feedback
+              className="w-full bg-vazana-yellow hover:bg-vazana-yellow/90 text-vazana-dark font-medium transition-all duration-200 active:scale-95"
               disabled={isLoading}
             >
-              {isLoading ? "מתחבר..." : "התחבר"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  מתחבר...
+                </>
+              ) : (
+                "התחבר"
+              )}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-gray-500">משתמש ברירת מחדל: root | סיסמה: 10203040</div>

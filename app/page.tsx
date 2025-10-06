@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import MainDashboard from "@/components/dashboard/main-dashboard"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
+import { clientAuth } from "@/lib/client-auth"
 
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -12,11 +13,12 @@ export default function HomePage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const loggedIn = localStorage.getItem("vazana_logged_in")
-      console.log("Checking authentication state:", loggedIn)
+      const authenticated = clientAuth.isAuthenticated()
+      console.log("Checking authentication state:", authenticated)
 
-      if (loggedIn === "true") {
-        console.log("User is authenticated, showing dashboard")
+      if (authenticated) {
+        const user = clientAuth.getCurrentUser()
+        console.log("User is authenticated:", user?.username)
         setIsLoggedIn(true)
       } else {
         console.log("User not authenticated, redirecting to login")

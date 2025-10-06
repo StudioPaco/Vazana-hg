@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Activity,
 } from "lucide-react"
-import Image from "next/image"
+// import Image from "next/image"
 import { useState, createContext, useContext } from "react"
 import { useLoading } from "./loading-overlay"
 
@@ -61,7 +61,8 @@ export default function SidebarNavigation() {
   }
 
   const handleNavigation = (href: string) => {
-    setLoading(true)
+    // Temporarily disabled loading overlay for better performance
+    // setLoading(true)
     router.prefetch(href)
     router.push(href)
   }
@@ -83,7 +84,9 @@ export default function SidebarNavigation() {
 
         {!isMinimized && (
           <div className="flex flex-col items-center justify-center space-y-3">
-            <Image src="/images/vazana-logo.png" alt="Vazana Logo" width={120} height={60} className="object-contain" />
+            <div className="w-[120px] h-[60px] bg-vazana-yellow rounded-md flex items-center justify-center">
+              <span className="text-vazana-dark font-bold text-lg font-hebrew">Vazana</span>
+            </div>
             <div className="text-center">
               <p className="text-sm text-gray-600 font-hebrew">ניהול לקוחות ועבודות</p>
             </div>
