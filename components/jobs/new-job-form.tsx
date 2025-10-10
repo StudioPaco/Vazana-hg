@@ -192,15 +192,19 @@ export default function NewJobForm() {
         cart_id: selectedCart ? selectedCart.id : null, // Use proper UUID instead of string
         service_description: formData.description || null,
         add_to_calendar: formData.calendarSync,
-        payment_status: "ממתין",
+        payment_status: "pending", // Use English values for database
         created_by: "root",
         // created_by_id: sampleUserId, // Temporarily removed to avoid foreign key constraint
-        created_date: new Date().toISOString(),
+        // Let database handle created_date/updated_date with DEFAULT NOW()
         total_amount: formData.totalAmount,
         job_specific_shift_rate: formData.jobSpecificShiftRate,
         notes: formData.notes,
         receipt_id: formData.receiptId,
         is_sample: false,
+        // Add new required fields
+        job_time: null, // Will be filled later or left null
+        job_location: formData.location, // Use the location as job_location
+        status: 'scheduled', // Default status
       }
 
       console.log("[v0] Submitting job data:", jobData)

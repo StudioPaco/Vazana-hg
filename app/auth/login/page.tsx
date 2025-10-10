@@ -81,8 +81,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="text-left"
-                placeholder="root"
-                autoComplete="username" // Added missing autocomplete attribute
+                autoComplete="username"
                 required
                 disabled={isLoading}
               />
@@ -127,7 +126,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-gray-500">משתמש ברירת מחדל: root | סיסמה: 10203040</div>
         </CardContent>
       </Card>
     </div>

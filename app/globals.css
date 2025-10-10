@@ -361,6 +361,35 @@
   direction: rtl !important;
 }
 
+/* Fix popup/modal text rendering and blur issues */
+[data-radix-dialog-content],
+[data-radix-dialog-content] *,
+.dialog-content,
+.dialog-content * {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+  will-change: auto !important;
+}
+
+/* Ensure popups don't inherit any problematic transforms */
+[data-radix-dialog-overlay],
+[data-radix-dialog-content] {
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Fix font rendering specifically for Hebrew text in popups */
+[data-radix-dialog-content] .font-hebrew,
+[data-radix-dialog-content] [dir="rtl"] {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  font-feature-settings: "liga" 1, "kern" 1 !important;
+}
+
 /* Ultra-aggressive RTL for placeholders and all states */
 [data-radix-select-trigger][data-placeholder],
 [data-radix-select-trigger][data-placeholder] *,
@@ -520,6 +549,166 @@ input[type="date"]::placeholder {
 input[type="date"]::-webkit-datetime-edit,
 input[type="date"]::-webkit-inner-spin-button,
 input[type="date"]::-webkit-calendar-picker-indicator {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Enhanced RTL support for date inputs based on user analysis */
+input[type="date"][dir="rtl"],
+input[id="date"][dir="rtl"],
+input.text-right[type="date"] {
+  text-align: right !important;
+  direction: rtl !important;
+  unicode-bidi: embed !important;
+}
+
+/* Force RTL on all date input internals */
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Webkit date picker styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-left: 0 !important;
+  margin-right: 8px !important;
+}
+
+/* Ultra-aggressive RTL date input fix */
+input[data-slot="input"][type="date"],
+input.text-right[type="date"],
+input[dir="rtl"][type="date"] {
+  text-align: right !important;
+  direction: rtl !important;
+  unicode-bidi: embed !important;
+  writing-mode: horizontal-tb !important;
+}
+
+/* Force RTL on all date input pseudo-elements */
+input[type="date"]::-webkit-datetime-edit {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: embed !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: row-reverse !important;
+}
+
+/* Date input placeholder when empty */
+input[type="date"]:invalid,
+input[type="date"]:placeholder-shown {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Ultra-specific fix for Hebrew select placeholders based on user analysis */
+button[role="combobox"] span[dir="rtl"],
+button[role="combobox"] span:contains("בחר"),
+button.database-dropdown[role="combobox"] span,
+[data-radix-select-trigger] span[style*="pointer-events"] {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: embed !important;
+  writing-mode: horizontal-tb !important;
+}
+
+/* Proper RTL date input styling - align right but preserve format */
+input[type="date"],
+input[data-slot="input"][type="date"],
+input.text-right[type="date"],
+input[dir="rtl"][type="date"],
+input#job_date,
+input[id="job_date"],
+input[id*="date"],
+input[name*="date"] {
+  text-align: right !important;
+}
+
+/* Force calendar picker to right side */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  order: -1 !important;
+}
+
+/* Target specific input with ID job_date */
+#job_date,
+input#job_date {
+  text-align: right !important;
+}
+
+/* Force RTL on modal date inputs */
+.scroll-content input[type="date"],
+.scroll-content input[type="month"],
+[dir="rtl"] input[type="date"],
+[dir="rtl"] input[type="month"] {
+  text-align: right !important;
+  direction: ltr !important;
+  unicode-bidi: normal !important;
+}
+
+/* RTL date input calendar icon positioning */
+.scroll-content input[type="date"]::-webkit-calendar-picker-indicator,
+.scroll-content input[type="month"]::-webkit-calendar-picker-indicator,
+[dir="rtl"] input[type="date"]::-webkit-calendar-picker-indicator,
+[dir="rtl"] input[type="month"]::-webkit-calendar-picker-indicator {
+  margin-left: auto !important;
+  margin-right: 4px !important;
+}
+
+/* Force all modal content to be RTL aligned */
+[dir="rtl"] .scroll-content,
+[dir="rtl"] .scroll-content *,
+.scroll-content[dir="rtl"],
+.scroll-content[dir="rtl"] * {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Exception for email inputs */
+[dir="rtl"] .scroll-content input[type="email"],
+.scroll-content[dir="rtl"] input[type="email"] {
+  text-align: left !important;
+  direction: ltr !important;
+}
+
+/* Force RTL on form elements in modals */
+[dir="rtl"] .scroll-content input,
+[dir="rtl"] .scroll-content textarea,
+[dir="rtl"] .scroll-content select,
+.scroll-content[dir="rtl"] input,
+.scroll-content[dir="rtl"] textarea,
+.scroll-content[dir="rtl"] select {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+/* Force RTL on all Hebrew placeholder spans */
+span:lang(he),
+span[dir="rtl"],
+span:contains("בחר סוג עבודה"),
+span:contains("בחר לקוח קיים"),
+span:contains("בחר עובד"),
+span:contains("בחר רכב"),
+span:contains("בחר עגלה") {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: isolate !important;
+}
+
+/* Override any conflicting LTR styles for Hebrew text */
+button.database-dropdown.rtl-placeholder,
+button.database-dropdown.rtl-placeholder * {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+/* Ensure flex containers don't override text alignment */
+.flex.items-center.justify-between span[dir="rtl"] {
+  flex: 1;
   text-align: right !important;
   direction: rtl !important;
 }

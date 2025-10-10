@@ -250,7 +250,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
         <div className="overflow-y-auto px-1 max-h-[calc(85vh-120px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           <form id="edit-job-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Job Info Section */}
-            <div className="bg-gradient-to-br from-vazana-teal/5 to-vazana-yellow/5 p-4 rounded-lg">
+            <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-4">
                 <ClipboardIcon className="w-5 h-5 text-vazana-teal" />
                 <h3 className="text-lg font-semibold text-vazana-dark font-hebrew">פרטי העבודה</h3>
@@ -348,7 +348,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
             </div>
 
             {/* Resources Section */}
-            <div className="bg-gradient-to-br from-vazana-yellow/5 to-vazana-teal/5 p-4 rounded-lg">
+            <div className="bg-blue-50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-4">
                 <UsersIcon className="w-5 h-5 text-vazana-teal" />
                 <h3 className="text-lg font-semibold text-vazana-dark font-hebrew">משאבים</h3>
@@ -410,7 +410,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
             </div>
 
             {/* Status Section */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg">
+            <div className="bg-slate-50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-4">
                 <SettingsIcon className="w-5 h-5 text-vazana-teal" />
                 <h3 className="text-lg font-semibold text-vazana-dark font-hebrew">סטטוס העבודה</h3>
@@ -430,7 +430,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
             </div>
             
             {/* Payment Section */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg">
+            <div className="bg-green-50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-4">
                 <DollarSign className="w-5 h-5 text-vazana-teal" />
                 <h3 className="text-lg font-semibold text-vazana-dark font-hebrew">תשלום וחשבונית</h3>

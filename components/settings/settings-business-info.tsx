@@ -18,6 +18,10 @@ const BUSINESS_ADDRESS_KEY = "vazana-business-address"
 const BUSINESS_PHONE_KEY = "vazana-business-phone"
 const BUSINESS_VAT_ID_KEY = "vazana-business-vat-id"
 const BUSINESS_EMAIL_KEY = "vazana-business-email" // New
+const BANK_ACCOUNT_NAME_KEY = "vazana-bank-account-name"
+const BANK_NAME_KEY = "vazana-bank-name"
+const BANK_BRANCH_KEY = "vazana-bank-branch"
+const BANK_ACCOUNT_NUMBER_KEY = "vazana-bank-account-number"
 
 export default function SettingsBusinessInfo() {
   const navigate = useNavigate()
@@ -28,6 +32,13 @@ export default function SettingsBusinessInfo() {
   const [businessPhone, setBusinessPhone] = useState(() => localStorage.getItem(BUSINESS_PHONE_KEY) || "")
   const [businessVatId, setBusinessVatId] = useState(() => localStorage.getItem(BUSINESS_VAT_ID_KEY) || "")
   const [businessEmail, setBusinessEmail] = useState(() => localStorage.getItem(BUSINESS_EMAIL_KEY) || "") // New
+  
+  // Bank account information
+  const [bankAccountName, setBankAccountName] = useState(() => localStorage.getItem(BANK_ACCOUNT_NAME_KEY) || "")
+  const [bankName, setBankName] = useState(() => localStorage.getItem(BANK_NAME_KEY) || "")
+  const [bankBranch, setBankBranch] = useState(() => localStorage.getItem(BANK_BRANCH_KEY) || "")
+  const [bankAccountNumber, setBankAccountNumber] = useState(() => localStorage.getItem(BANK_ACCOUNT_NUMBER_KEY) || "")
+  
   const [isSaved, setIsSaved] = useState(false)
 
   useEffect(() => {
@@ -59,6 +70,14 @@ export default function SettingsBusinessInfo() {
       businessVatIdPlaceholder: "e.g., IE1234567X",
       businessEmailLabel: "Business Email", // New
       businessEmailPlaceholder: "e.g., contact@yourcompany.com", // New
+      bankAccountNameLabel: "Account Name",
+      bankAccountNamePlaceholder: "e.g., Your Company LLC",
+      bankNameLabel: "Bank Name",
+      bankNamePlaceholder: "e.g., Bank of America",
+      bankBranchLabel: "Branch",
+      bankBranchPlaceholder: "e.g., Main Branch",
+      bankAccountNumberLabel: "Account Number",
+      bankAccountNumberPlaceholder: "e.g., 123456789"
       saveInfo: "Save Business Info",
       infoSaved: "Business Info Saved!",
       backToSettings: "Back to Settings",
@@ -81,6 +100,14 @@ export default function SettingsBusinessInfo() {
       businessVatIdPlaceholder: "לדוגמה, 123456789",
       businessEmailLabel: "אימייל העסק", // New
       businessEmailPlaceholder: "לדוגמה, contact@yourcompany.com", // New
+      bankAccountNameLabel: "שם חשבון",
+      bankAccountNamePlaceholder: 'לדוגמה, החברה שלך בע"מ',
+      bankNameLabel: "בנק",
+      bankNamePlaceholder: "לדוגמה, בנק לאומי",
+      bankBranchLabel: "סניף",
+      bankBranchPlaceholder: "לדוגמה, 123",
+      bankAccountNumberLabel: "מספר חשבון",
+      bankAccountNumberPlaceholder: "לדוגמה, 12-345-678901"
       saveInfo: "שמור פרטי עסק",
       infoSaved: "פרטי העסק נשמרו!",
       backToSettings: "חזור להגדרות",
@@ -96,7 +123,14 @@ export default function SettingsBusinessInfo() {
     localStorage.setItem(BUSINESS_ADDRESS_KEY, businessAddress)
     localStorage.setItem(BUSINESS_PHONE_KEY, businessPhone)
     localStorage.setItem(BUSINESS_VAT_ID_KEY, businessVatId)
-    localStorage.setItem(BUSINESS_EMAIL_KEY, businessEmail) // New
+    localStorage.setItem(BUSINESS_EMAIL_KEY, businessEmail)
+    
+    // Save bank account information
+    localStorage.setItem(BANK_ACCOUNT_NAME_KEY, bankAccountName)
+    localStorage.setItem(BANK_NAME_KEY, bankName)
+    localStorage.setItem(BANK_BRANCH_KEY, bankBranch)
+    localStorage.setItem(BANK_ACCOUNT_NUMBER_KEY, bankAccountNumber)
+    
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 3000)
   }
@@ -210,6 +244,71 @@ export default function SettingsBusinessInfo() {
                   placeholder={t.businessEmailPlaceholder}
                   className="mt-1 border-neutral-300 focus:border-primary"
                 />
+              </div>
+              
+              {/* Bank Account Information Section */}
+              <div className="pt-6 border-t border-neutral-200">
+                <h3 className="text-lg font-semibold text-neutral-800 mb-4">
+                  {isHebrew ? "פרטי חשבון בנק" : "Bank Account Information"}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="bankAccountName" className="font-medium text-neutral-700">
+                      {t.bankAccountNameLabel}
+                    </Label>
+                    <Input
+                      id="bankAccountName"
+                      value={bankAccountName}
+                      onChange={(e) => setBankAccountName(e.target.value)}
+                      placeholder={t.bankAccountNamePlaceholder}
+                      className="mt-1 border-neutral-300 focus:border-primary"
+                      dir={isHebrew ? "rtl" : "ltr"}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="bankName" className="font-medium text-neutral-700">
+                      {t.bankNameLabel}
+                    </Label>
+                    <Input
+                      id="bankName"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder={t.bankNamePlaceholder}
+                      className="mt-1 border-neutral-300 focus:border-primary"
+                      dir={isHebrew ? "rtl" : "ltr"}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="bankBranch" className="font-medium text-neutral-700">
+                      {t.bankBranchLabel}
+                    </Label>
+                    <Input
+                      id="bankBranch"
+                      value={bankBranch}
+                      onChange={(e) => setBankBranch(e.target.value)}
+                      placeholder={t.bankBranchPlaceholder}
+                      className="mt-1 border-neutral-300 focus:border-primary"
+                      dir={isHebrew ? "rtl" : "ltr"}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="bankAccountNumber" className="font-medium text-neutral-700">
+                      {t.bankAccountNumberLabel}
+                    </Label>
+                    <Input
+                      id="bankAccountNumber"
+                      value={bankAccountNumber}
+                      onChange={(e) => setBankAccountNumber(e.target.value)}
+                      placeholder={t.bankAccountNumberPlaceholder}
+                      className="mt-1 border-neutral-300 focus:border-primary"
+                      dir={isHebrew ? "rtl" : "ltr"}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-neutral-100">

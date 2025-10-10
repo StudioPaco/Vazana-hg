@@ -37,6 +37,8 @@ interface ManageGenericListProps {
   displayField?: string
   language?: "he" | "en"
   textOverrides?: Record<string, string>
+  rtl?: boolean
+  workerLayout?: boolean
 }
 
 export default function ManageGenericList({
@@ -47,6 +49,8 @@ export default function ManageGenericList({
   displayField = "name_en",
   language = "he",
   textOverrides = {},
+  rtl = true,
+  workerLayout = false,
 }: ManageGenericListProps) {
   const [items, setItems] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -181,7 +185,7 @@ export default function ManageGenericList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${rtl ? 'text-right' : ''}`} dir={rtl ? 'rtl' : 'ltr'}>
       <Button onClick={openNewForm} className="flex items-center gap-2 bg-[#FFCC00] hover:bg-[#E6B800] text-[#1A1A1A]">
         <Plus className="w-4 h-4" /> {t.addNew}
       </Button>
@@ -195,7 +199,7 @@ export default function ManageGenericList({
             <form onSubmit={handleSubmit} className="space-y-4">
               {fields.map((field) => (
                 <div key={field.name}>
-                  <label htmlFor={field.name} className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                  <label htmlFor={field.name} className={`block text-sm font-medium text-[#1A1A1A] mb-1 ${rtl ? 'text-right font-hebrew' : 'text-left'}`}>
                     {isHebrew ? field.labelHe : field.labelEn}{" "}
                     {field.required && <span className="text-red-500">*</span>}
                   </label>
@@ -207,7 +211,8 @@ export default function ManageGenericList({
                       onChange={handleInputChange}
                       placeholder={isHebrew ? field.placeholderHe : field.placeholderEn}
                       required={field.required}
-                      className="w-full min-h-[80px] border-gray-300 focus:border-[#00DAC0]"
+                      className={`w-full min-h-[80px] border-gray-300 focus:border-[#00DAC0] ${rtl ? 'text-right font-hebrew' : 'text-left'}`}
+                      dir={rtl ? 'rtl' : 'ltr'}
                       rows={3}
                     />
                   ) : (
@@ -219,7 +224,8 @@ export default function ManageGenericList({
                       onChange={handleInputChange}
                       placeholder={isHebrew ? field.placeholderHe : field.placeholderEn}
                       required={field.required}
-                      className="w-full border-gray-300 focus:border-[#00DAC0]"
+                      className={`w-full border-gray-300 focus:border-[#00DAC0] ${rtl ? 'text-right font-hebrew' : 'text-left'}`}
+                      dir={rtl ? 'rtl' : 'ltr'}
                     />
                   )}
                 </div>
@@ -281,34 +287,60 @@ export default function ManageGenericList({
           {items.map((item) => (
             <Card
               key={item.id}
-              className="p-4 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow border-gray-200"
+              className={`p-4 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow border-gray-200 ${rtl ? 'text-right' : 'text-left'}`}
+              dir={rtl ? 'rtl' : 'ltr'}
             >
-              <div>
-                <p className="font-medium text-[#1A1A1A]">{item[displayField] || item.name || item.name_en || "N/A"}</p>
-                {entityName === (isHebrew ? "סוג עבודה" : "Work Type") &&
-                  item.name_he &&
-                  displayField !== "name_he" && (
-                    <p className="text-xs text-gray-500">
-                      {isHebrew ? "שם בעברית" : "Name (HE)"}: {item.name_he}
+              <div className={rtl ? 'text-right' : 'text-left'}>
+                {workerLayout && entityName === "עובד" ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-right">
+                      <p className="font-semibold text-base text-[#1A1A1A] font-hebrew">{item.name}</p>
+                      <p className="text-sm text-gray-600 font-hebrew">{item.phone_number}</p>
+                    </div>
+                    <div className="text-right">
+                      {item.shift_rate && (
+                        <p className="text-sm text-gray-500 font-hebrew">
+                          תעריף: ₪{item.shift_rate}
+                        </p>
+                      )}
+                      {item.address && (
+                        <p className="text-xs text-gray-400 font-hebrew">
+                          {item.address}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className={`font-medium text-[#1A1A1A] ${rtl ? 'font-hebrew' : ''}`}>
+                      {item[displayField] || item.name || item.name_en || "N/A"}
                     </p>
-                  )}
-                {fields
-                  .filter(
-                    (f) =>
-                      f.name !== displayField &&
-                      f.name !== "details" &&
-                      f.name !== "name_en" &&
-                      f.name !== "name_he" &&
-                      item[f.name],
-                  )
-                  .map((f) => (
-                    <p key={f.name} className="text-xs text-gray-500">
-                      {isHebrew ? f.labelHe : f.labelEn}: {item[f.name]}
-                    </p>
-                  ))}
-                {item.details && <p className="text-sm text-gray-600 mt-1">{item.details}</p>}
+                    {entityName === (isHebrew ? "סוג עבודה" : "Work Type") &&
+                      item.name_he &&
+                      displayField !== "name_he" && (
+                        <p className={`text-xs text-gray-500 ${rtl ? 'font-hebrew' : ''}`}>
+                          {isHebrew ? "שם בעברית" : "Name (HE)"}: {item.name_he}
+                        </p>
+                      )}
+                    {fields
+                      .filter(
+                        (f) =>
+                          f.name !== displayField &&
+                          f.name !== "details" &&
+                          f.name !== "name_en" &&
+                          f.name !== "name_he" &&
+                          item[f.name],
+                      )
+                      .map((f) => (
+                        <p key={f.name} className={`text-xs text-gray-500 ${rtl ? 'font-hebrew' : ''}`}>
+                          {isHebrew ? f.labelHe : f.labelEn}: {item[f.name]}
+                        </p>
+                      ))}
+                    {item.details && <p className={`text-sm text-gray-600 mt-1 ${rtl ? 'font-hebrew' : ''}`}>{item.details}</p>}
+                  </>
+                )}
               </div>
-              <div className="flex gap-1 shrink-0">
+              <div className={`flex gap-1 shrink-0 ${rtl ? 'order-first' : 'order-last'}`}>
                 <Button variant="ghost" size="icon" onClick={() => handleEdit(item)} aria-label={t.edit}>
                   <Edit2 className="w-4 h-4 text-gray-600 hover:text-[#1A1A1A]" />
                 </Button>

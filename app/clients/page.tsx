@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
+import SidebarNavigation from "@/components/layout/sidebar-navigation"
+import AppNavigation from "@/components/layout/app-navigation"
 import ClientsPage from "@/components/clients/clients-page"
 
 export default function Clients() {
@@ -25,9 +26,10 @@ export default function Clients() {
   return (
     <div className="min-h-screen bg-gray-50 flex" dir="rtl">
       <SidebarNavigation />
-      <MainContent>
+      <div className="flex-1 mr-64 p-6">
+        <AppNavigation />
         <ClientsPage />
-      </MainContent>
+      </div>
     </div>
   )
 }

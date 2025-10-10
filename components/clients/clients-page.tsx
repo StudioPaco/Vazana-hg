@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp } from "lucide-react"
-import Link from "next/link"
+import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp, Edit } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import ClientEditModal from "@/components/clients/client-edit-modal"
+import NewClientModal from "@/components/clients/new-client-modal"
+import StatusBadge from "@/components/ui/status-badge"
+import { StatsContainer } from "@/components/ui/stats-container"
 
 interface Client {
   id: string
@@ -31,6 +34,7 @@ interface Job {
   job_date: string
   site: string
   payment_status: string
+  job_status?: string
 }
 
 export default function ClientsPage() {
@@ -40,20 +44,24 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientJobs, setClientJobs] = useState<{ [key: string]: Job[] }>({})
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [newClientModalOpen, setNewClientModalOpen] = useState(false)
 
+  // Calculate client statistics
   const activeClientsCount = clients.filter((client) => client.status === "active").length
+  const averageSecurityRate =
+    clients.length > 0 ? Math.round(clients.reduce((sum, client) => sum + client.security_rate, 0) / clients.length) : 0
+    
+  const [realClientStats, setRealClientStats] = useState<{[key: string]: number}>({})
+  const [isLoadingStats, setIsLoadingStats] = useState(false)
+  
   const getMostActiveClient = () => {
-    const clientJobCounts = {
-      "1": 8, // אדהם עבודות פיתוח
-      "2": 5, // אלקים סימון בבשים
-      "3": 3, // דברים זוהרים
-    }
-
     let mostActiveClient = null
     let maxJobs = 0
 
     clients.forEach((client) => {
-      const jobCount = clientJobCounts[client.id] || 0
+      const jobCount = realClientStats[client.id] || 0
       if (jobCount > maxJobs) {
         maxJobs = jobCount
         mostActiveClient = { name: client.company_name, count: jobCount }
@@ -62,10 +70,40 @@ export default function ClientsPage() {
 
     return mostActiveClient || { name: "אין נתונים", count: 0 }
   }
-
+  
+  const fetchClientStats = async () => {
+    if (clients.length === 0 || isLoadingStats) return
+    
+    setIsLoadingStats(true)
+    try {
+      const supabase = createClient()
+      const statsPromises = clients.map(async (client) => {
+        const { data, error } = await supabase
+          .from("jobs")
+          .select("id")
+          .eq("client_id", client.id)
+        
+        return {
+          clientId: client.id,
+          count: error ? 0 : (data?.length || 0)
+        }
+      })
+      
+      const results = await Promise.all(statsPromises)
+      const statsMap = results.reduce((acc, result) => {
+        acc[result.clientId] = result.count
+        return acc
+      }, {} as {[key: string]: number})
+      
+      setRealClientStats(statsMap)
+    } catch (error) {
+      console.error("Failed to fetch client stats:", error)
+    } finally {
+      setIsLoadingStats(false)
+    }
+  }
+  
   const mostActiveClient = getMostActiveClient()
-  const averageSecurityRate =
-    clients.length > 0 ? Math.round(clients.reduce((sum, client) => sum + client.security_rate, 0) / clients.length) : 0
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -105,6 +143,12 @@ export default function ClientsPage() {
     )
     setFilteredClients(filtered)
   }, [searchTerm, clients])
+  
+  useEffect(() => {
+    if (clients.length > 0) {
+      fetchClientStats()
+    }
+  }, [clients])
 
   const handleDeleteClient = async (id: string) => {
     if (confirm("האם אתה בטוח שברצונך למחוק לקוח זה?")) {
@@ -122,6 +166,8 @@ export default function ClientsPage() {
     }
   }
 
+  // Note: Job statuses are now managed solely through database values
+  
   const fetchClientJobs = async (clientId: string) => {
     try {
       const supabase = createClient()
@@ -134,30 +180,17 @@ export default function ClientsPage() {
 
       if (error) {
         console.error("[v0] Error fetching client jobs:", error)
-        const sampleJobs: Job[] = [
-          {
-            id: "1",
-            job_number: "0001",
-            work_type: "אבטחה",
-            job_date: "2024-01-15",
-            site: "משרד ראשי",
-            payment_status: "completed",
-          },
-          {
-            id: "2",
-            job_number: "0003",
-            work_type: "סיור",
-            job_date: "2024-01-10",
-            site: "מחסן צפון",
-            payment_status: "pending",
-          },
-        ]
-        setClientJobs((prev) => ({ ...prev, [clientId]: sampleJobs }))
+        setClientJobs((prev) => ({ ...prev, [clientId]: [] }))
         return
       }
 
       if (data) {
-        setClientJobs((prev) => ({ ...prev, [clientId]: data }))
+        // Use job_status directly from database
+        const jobsWithStatus = data.map(job => ({
+          ...job,
+          job_status: job.job_status || 'לא צוין' // Default if missing
+        }))
+        setClientJobs((prev) => ({ ...prev, [clientId]: jobsWithStatus }))
       }
     } catch (error) {
       console.error("[v0] Failed to fetch client jobs:", error)
@@ -177,7 +210,7 @@ export default function ClientsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6" dir="rtl">
+      <div className="space-y-6" dir="rtl">
         <div className="relative pb-16">
           <div className="absolute top-0 right-0">
             <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
@@ -199,7 +232,7 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6" dir="rtl">
+    <div className="space-y-6" dir="rtl">
       <div className="relative pb-16">
         <div className="absolute top-0 right-0">
           <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
@@ -211,68 +244,48 @@ export default function ClientsPage() {
       </div>
 
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">תעריף אבטחה ממוצע</p>
-                  <p className="text-2xl font-bold">₪{averageSecurityRate}</p>
-                </div>
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">לקוחות פעילים</p>
-                  <p className="text-2xl font-bold">{activeClientsCount}</p>
-                </div>
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Users className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">לקוח מוביל החודש</p>
-                  <p className="text-lg font-bold truncate">{mostActiveClient.name}</p>
-                  <p className="text-sm text-gray-500">{mostActiveClient.count} עבודות</p>
-                </div>
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Trophy className="h-5 w-5 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <StatsContainer
+            title="תעריף אבטחה ממוצע"
+            value={`₪${averageSecurityRate}`}
+            icon={Users}
+            color="blue"
+          />
+          
+          <StatsContainer
+            title="לקוחות פעילים"
+            value={activeClientsCount}
+            icon={Users}
+            color="green"
+          />
+          
+          <StatsContainer
+            title="לקוח מוביל החודש"
+            value={mostActiveClient.name}
+            subtitle={`${mostActiveClient.count} עבודות`}
+            icon={Trophy}
+            color="yellow"
+          />
+        </div>
+        
+        <div className="flex justify-between items-center gap-4">
+          <div className="relative flex-1 max-w-md">
             <Input
               placeholder="חפש לקוחות (שם, איש קשר, עיר)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10 text-right h-full"
+              className="pr-10 text-right"
               dir="rtl"
             />
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           </div>
-        </div>
-
-        <div className="flex justify-start">
-          <Button asChild className="bg-teal-500 hover:bg-teal-600 text-white">
-            <Link href="/clients/new">
-              <Plus className="ml-2 h-4 w-4" />
-              הוסף לקוח
-            </Link>
+          
+          <Button 
+            onClick={() => setNewClientModalOpen(true)}
+            className="bg-teal-500 hover:bg-teal-600 text-white"
+          >
+            <Plus className="ml-2 h-4 w-4" />
+            הוסף לקוח
           </Button>
         </div>
 
@@ -292,7 +305,7 @@ export default function ClientsPage() {
           <div className="space-y-4">
             {filteredClients.map((client) => (
               <Card key={client.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
+                <CardContent className="px-4 py-2">
                   <div className="relative mb-4">
                     {/* Client name and info - positioned at top-right */}
                     <div className="absolute top-0 right-0 text-right">
@@ -319,12 +332,19 @@ export default function ClientsPage() {
                         asChild
                         className="bg-transparent border-gray-300 h-8 px-3 text-xs"
                       >
-                        <Link href={`/clients/${client.id}/edit`}>ערוך</Link>
+                        <span
+                          onClick={() => {
+                            setEditingClient(client)
+                            setEditModalOpen(true)
+                          }}
+                        >
+                          ערוך
+                        </span>
                       </Button>
                     </div>
 
                     {/* Spacer to ensure content doesn't overlap */}
-                    <div className="h-16"></div>
+                    <div className="h-8"></div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -391,12 +411,11 @@ export default function ClientsPage() {
                               key={job.id}
                               className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
                             >
-                              <Badge
-                                variant={job.payment_status === "completed" ? "default" : "secondary"}
-                                className="text-xs"
-                              >
-                                {job.payment_status === "completed" ? "הושלם" : "ממתין"}
-                              </Badge>
+                              <StatusBadge 
+                                status={job.job_status || "ממתין"}
+                                type="job"
+                                size="sm"
+                              />
                               <div className="text-right">
                                 <p className="font-medium text-sm">עבודה #{job.job_number}</p>
                                 <p className="text-xs text-gray-600">
@@ -419,6 +438,27 @@ export default function ClientsPage() {
             ))}
           </div>
         )}
+        
+        <ClientEditModal
+          client={editingClient}
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          onClientUpdated={(updatedClient) => {
+            setClients(clients.map(client => 
+              client.id === updatedClient.id ? updatedClient : client
+            ))
+            setEditingClient(null)
+          }}
+        />
+        
+        <NewClientModal
+          open={newClientModalOpen}
+          onOpenChange={setNewClientModalOpen}
+          onClientCreated={(newClient) => {
+            setClients([newClient, ...clients])
+            setFilteredClients([newClient, ...filteredClients])
+          }}
+        />
       </div>
     </div>
   )

@@ -17,8 +17,9 @@ import {
   Activity,
 } from "lucide-react"
 // import Image from "next/image"
-import { useState, createContext, useContext } from "react"
+import { useState, createContext, useContext, useEffect } from "react"
 import { useLoading } from "./loading-overlay"
+import { clientAuth } from "@/lib/client-auth"
 
 const SidebarContext = createContext<{
   isMinimized: boolean
@@ -33,9 +34,9 @@ export const useSidebar = () => useContext(SidebarContext)
 const navigationItems = [
   { name: "ניווט", href: "/", icon: Home },
   { name: "עבודות", href: "/jobs", icon: Briefcase },
-  { name: "לקוחות", href: "/clients", icon: Users },
   { name: "עבודה חדשה", href: "/jobs/new", icon: Plus },
-  { name: "הפקת חשבוניות", href: "/invoices", icon: Calculator },
+  { name: "לקוחות", href: "/clients", icon: Users },
+  { name: "הפקת חשבוניות", href: "/invoices/new", icon: Calculator },
   { name: "ארכיון חשבוניות", href: "/invoices/archive", icon: Archive },
   { name: "ארכיון מסמכים", href: "/documents", icon: FileText },
   { name: "מרכז תחזוקה", href: "/maintenance", icon: Activity },
@@ -53,6 +54,12 @@ export default function SidebarNavigation() {
   const router = useRouter()
   const { isMinimized, setIsMinimized } = useSidebar()
   const { setLoading } = useLoading()
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  
+  useEffect(() => {
+    const user = clientAuth.getCurrentUser()
+    setCurrentUser(user)
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem("vazana_logged_in")
@@ -135,8 +142,12 @@ export default function SidebarNavigation() {
       <div className={`absolute bottom-0 left-0 right-0 ${isMinimized ? "p-2" : "p-4"} border-t border-gray-200`}>
         {!isMinimized && (
           <div className="text-right mb-3">
-            <p className="text-sm font-semibold text-vazana-dark font-hebrew">שלום, root</p>
-            <p className="text-xs text-gray-600 font-hebrew">מנהל מערכת</p>
+            <p className="text-sm font-semibold text-vazana-dark font-hebrew">
+              שלום, {currentUser?.full_name || currentUser?.username || 'משתמש'}
+            </p>
+            <p className="text-xs text-gray-600 font-hebrew">
+              {currentUser?.username === 'root' ? 'מנהל מערכת ראשי' : 'משתמש'}
+            </p>
           </div>
         )}
         <button

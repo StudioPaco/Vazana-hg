@@ -9,31 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import EditJobModal from "@/components/jobs/edit-job-modal"
+import StatusBadge from "@/components/ui/status-badge"
 
-// Automatic status calculation
-const getJobStatus = (jobDate: string): string => {
-  const now = new Date()
-  const jobDateTime = new Date(jobDate)
-  
-  // Debug logging
-  console.log('Status calc - now:', now, 'job:', jobDateTime, 'diff hours:', (jobDateTime.getTime() - now.getTime()) / (1000 * 3600))
-  
-  const timeDiff = jobDateTime.getTime() - now.getTime()
-  const hoursDiff = timeDiff / (1000 * 3600)
-  
-  // Job is more than 24 hours in the past -> finished
-  if (hoursDiff < -24) {
-    return "הושלם"
-  } 
-  // Job is within 24 hours (past or future) -> in progress
-  else if (hoursDiff >= -24 && hoursDiff <= 24) {
-    return "בתהליך"
-  } 
-  // Job is more than 24 hours in the future -> active
-  else {
-    return "פעיל"
-  }
-}
+// Note: Job statuses are now managed solely through database values
+// Status calculation is handled by manual updates or edit modal
 
 // Convert shift type to Hebrew
 const getShiftTypeInHebrew = (shiftType: string): string => {
@@ -117,14 +96,11 @@ export default function JobsPage() {
         
         console.log("[v0] Successfully fetched jobs:", allJobs)
         
-        // Update job statuses automatically
-        const updatedJobs = allJobs.map(job => ({
-          ...job,
-          job_status: getJobStatus(job.job_date)
-        }))
+        // Use jobs exactly as they come from the database - no status calculation
+        console.log("[v0] Using job statuses directly from database")
         
-        setJobs(updatedJobs)
-        setFilteredJobs(updatedJobs)
+        setJobs(allJobs)
+        setFilteredJobs(allJobs)
       } catch (error) {
         console.error("[v0] Failed to fetch jobs:", error)
         // Don't show sample data - just show empty state
@@ -517,7 +493,7 @@ export default function JobsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className={preferences?.jobs_view_mode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
+          <div className={`mt-6 ${preferences?.jobs_view_mode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}`}>
             {filteredJobs.map((job) => {
               const isExpanded = expandedJobs.has(job.id)
 
@@ -604,8 +580,14 @@ export default function JobsPage() {
                             <p className="font-medium font-hebrew text-sm">{getShiftTypeInHebrew(job.shift_type)}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-gray-500 font-hebrew text-xs">לקוח</p>
-                            <p className="font-medium font-hebrew text-sm">{job.client_name}</p>
+                            <div className="mb-1">
+                              <p className="text-gray-500 font-hebrew text-sm">אתר</p>
+                              <p className="font-medium font-hebrew text-sm">{job.site}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-500 font-hebrew text-sm">עיר</p>
+                              <p className="font-medium font-hebrew text-sm">{job.city}</p>
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -614,36 +596,36 @@ export default function JobsPage() {
                           <div className="col-span-2 space-y-3 text-sm">
                             <div className="grid grid-cols-2 gap-4">
                               <div className="text-right">
-                                <p className="text-gray-500 font-hebrew">תאריך</p>
-                                <p className="font-medium font-hebrew">
+                                <p className="text-gray-500 font-hebrew text-sm">תאריך</p>
+                                <p className="font-medium font-hebrew text-base">
                                   {new Date(job.job_date).toLocaleDateString("he-IL")}
                                 </p>
                               </div>
                               <div className="text-right">
-                                <p className="text-gray-500 font-hebrew">סוג עבודה</p>
-                                <p className="font-medium font-hebrew">{job.work_type}</p>
+                                <p className="text-gray-500 font-hebrew text-sm">סוג עבודה</p>
+                                <p className="font-medium font-hebrew text-base">{job.work_type}</p>
                               </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                               <div className="text-right">
-                                <p className="text-gray-500 font-hebrew">אתר</p>
-                                <p className="font-medium font-hebrew">{job.site}</p>
+                                <p className="text-gray-500 font-hebrew text-sm">אתר</p>
+                                <p className="font-medium font-hebrew text-base">{job.site}</p>
                               </div>
                               <div className="text-right">
-                                <p className="text-gray-500 font-hebrew">לקוח</p>
-                                <p className="font-medium font-hebrew">{job.client_name}</p>
+                                <p className="text-gray-500 font-hebrew text-sm">עיר</p>
+                                <p className="font-medium font-hebrew text-base">{job.city}</p>
                               </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                               <div className="text-right">
-                                <p className="text-gray-500 font-hebrew">משמרת</p>
-                                <p className="font-medium font-hebrew">{getShiftTypeInHebrew(job.shift_type)}</p>
+                                <p className="text-gray-500 font-hebrew text-sm">משמרת</p>
+                                <p className="font-medium font-hebrew text-base">{getShiftTypeInHebrew(job.shift_type)}</p>
                               </div>
                               <div className="text-right">
-                                <p className="text-gray-500 font-hebrew">עיר</p>
-                                <p className="font-medium font-hebrew">{job.city}</p>
+                                <p className="text-gray-500 font-hebrew text-sm">סטטוס</p>
+                                <p className="font-medium font-hebrew text-base">{job.job_status}</p>
                               </div>
                             </div>
                           </div>
@@ -662,13 +644,21 @@ export default function JobsPage() {
                               <span className="text-sm text-gray-600 font-hebrew">{job.vehicle_name}</span>
                               <Truck className="w-4 h-4 text-blue-500" />
                             </div>
+                            {job.cart_name && (
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="text-sm text-gray-600 font-hebrew">{job.cart_name}</span>
+                                <div className="w-4 h-4 text-blue-500 flex items-center justify-center">
+                                  <div className="w-3 h-3 border border-blue-500 rounded-sm"></div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
 
                       <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                          <Badge className={getStatusColor(job.job_status)}>{job.job_status}</Badge>
+                          <Badge className={`${getStatusColor(job.job_status)} ${!isExpanded ? "text-base px-3 py-1" : ""}`}>{job.job_status}</Badge>
                           {isExpanded && (
                             <Badge className={getPaymentStatusColor(job.payment_status)}>{job.payment_status}</Badge>
                           )}

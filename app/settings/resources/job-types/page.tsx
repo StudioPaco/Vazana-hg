@@ -3,6 +3,7 @@
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
+import AppNavigation from "@/components/layout/app-navigation"
 import { WorkType } from "@/lib/api-entities"
 
 const workTypeFields = [
@@ -31,6 +32,7 @@ export default function JobTypesResourcePage() {
     <div className="min-h-screen bg-gray-50 flex">
       <MainContent>
         <div className="p-6">
+          <AppNavigation />
           <div className="text-right mb-6">
             <h1 className="text-3xl font-bold text-gray-900">סוגי עבודה</h1>
             <p className="text-gray-600">ניהול סוגי העבודות במערכת</p>

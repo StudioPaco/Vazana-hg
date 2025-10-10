@@ -1,39 +1,29 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Archive } from "lucide-react"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
+import InvoicesPage from "@/components/invoices/invoices-page"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
+import { BackButton } from "@/components/ui/back-button"
 
 export default function InvoiceArchivePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <SidebarNavigation />
-      <div className="mr-64 p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="text-right">
-            <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">ארכיון חשבוניות</h1>
-            <p className="text-gray-600 font-hebrew">חשבוניות ישנות וארכיון</p>
+    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
+      <MainContent>
+        <div className="p-6">
+          {/* Header with Back Button */}
+          <div className="relative mb-6">
+            <div className="absolute top-0 right-0 text-right z-10">
+              <h1 className="text-2xl font-bold text-gray-900">ארכיון חשבוניות</h1>
+              <p className="text-gray-600">צפה בחשבוניות שנשלחו ושילמו</p>
+            </div>
+            <div className="absolute top-0 left-0 z-10">
+              <BackButton href="/invoices" />
+            </div>
+            <div className="h-16"></div>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-hebrew">
-                <Archive className="w-5 h-5" />
-                ארכיון חשבוניות
-              </CardTitle>
-              <CardDescription className="font-hebrew">כאן תוכל לראות חשבוניות ישנות ומאורכבות</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-gray-500 font-hebrew">
-                <Archive className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-                <p className="text-lg font-medium mb-2">אין חשבוניות בארכיון</p>
-                <p className="text-sm">חשבוניות ישנות יופיעו כאן לאחר ארכוב</p>
-              </div>
-            </CardContent>
-          </Card>
+          <InvoicesPage />
         </div>
-      </div>
+      </MainContent>
+      <SidebarNavigation />
     </div>
   )
 }

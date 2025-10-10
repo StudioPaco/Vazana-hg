@@ -651,7 +651,8 @@ export default function NewJob() {
                     type="date"
                     value={formData.job_date}
                     onChange={(e) => handleChange("job_date", e.target.value)}
-                    className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 ${errors.job_date ? "border-red-500" : ""}`}
+                    className={`mt-1 border-neutral-300 focus:border-primary text-neutral-900 text-right ${errors.job_date ? "border-red-500" : ""}`}
+                    style={{ textAlign: 'right' }}
                   />
                   {errors.job_date && <p className="text-xs text-red-500 mt-1">{errors.job_date}</p>}
                 </div>

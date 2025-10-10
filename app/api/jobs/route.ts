@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       job_number: jobNumber,
       // created_by_id: defaultUser.id, // Temporarily removed to avoid foreign key constraint
       created_by: defaultUser.email,
-      updated_date: new Date().toISOString(),
+      // Let database handle timestamps with DEFAULT NOW()
       is_sample: true,
     }
 

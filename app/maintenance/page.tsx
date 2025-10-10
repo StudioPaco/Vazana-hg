@@ -290,7 +290,15 @@ export default function MaintenancePage() {
       })
 
       setFeatures(featureStatuses)
-      setLastFullCheck(new Date())
+      const checkTime = new Date()
+      setLastFullCheck(checkTime)
+      
+      // Store check timestamp in localStorage for 24h throttling
+      try {
+        localStorage.setItem('maintenance:lastCheck', checkTime.toISOString())
+      } catch (error) {
+        console.warn('Could not store maintenance check timestamp:', error)
+      }
 
       addLog("success", "Full system health check completed", "System")
     } catch (error) {
@@ -538,7 +546,33 @@ export default function MaintenancePage() {
 
     setHasAccess(true)
     addLog("info", "Maintenance dashboard initialized", "System")
-    runFullSystemCheck()
+    
+    // Check if we should auto-run the system check
+    const shouldAutoCheck = () => {
+      try {
+        const lastCheck = localStorage.getItem('maintenance:lastCheck')
+        if (!lastCheck) return true
+        
+        const lastCheckTime = new Date(lastCheck)
+        const now = new Date()
+        const hoursSinceLastCheck = (now.getTime() - lastCheckTime.getTime()) / (1000 * 60 * 60)
+        
+        return hoursSinceLastCheck >= 24
+      } catch (error) {
+        return true // If localStorage fails, run the check
+      }
+    }
+    
+    if (shouldAutoCheck()) {
+      runFullSystemCheck()
+    } else {
+      const lastCheck = localStorage.getItem('maintenance:lastCheck')
+      if (lastCheck) {
+        const lastCheckTime = new Date(lastCheck)
+        setLastFullCheck(lastCheckTime)
+        addLog("info", `מערכת נבדקה לאחרונה ב-${lastCheckTime.toLocaleString('he-IL')}`, "System")
+      }
+    }
   }, [router])
 
   const healthyFeatures = features.filter((f) => f.status === "healthy").length

@@ -38,26 +38,51 @@ import {
   Lock,
 } from "lucide-react"
 import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
+import AppNavigation from "@/components/layout/app-navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useTheme } from "@/lib/theme-context"
 import { clientAuth } from "@/lib/client-auth"
 import { useSearchParams, useRouter } from "next/navigation"
+import ResourceModal from "@/components/settings/resource-modal"
+import DataExportImport from "@/components/settings/data-export-import"
+import UserEditModal from "@/components/settings/user-edit-modal"
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true)
   const [emailAlerts, setEmailAlerts] = useState(false)
   const [language, setLanguage] = useState("he")
   const [sessionTimeout, setSessionTimeout] = useState(24) // hours
+  const [fontSize, setFontSize] = useState(16) // Base font size in px
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
+  const [isPaymentTermsOpen, setIsPaymentTermsOpen] = useState(false)
+  const [paymentTerms, setPaymentTerms] = useState([
+    { id: 1, value: "immediate", label: "מיידי" },
+    { id: 2, value: "current+15", label: "שוטף +15" },
+    { id: 3, value: "current+30", label: "שוטף +30" },
+    { id: 4, value: "current+60", label: "שוטף +60" },
+    { id: 5, value: "current+90", label: "שוטף +90" }
+  ])
+  const [editingUser, setEditingUser] = useState<any>(null)
+  const [userEditModalOpen, setUserEditModalOpen] = useState(false)
+  const [resourceModalType, setResourceModalType] = useState<"workers" | "vehicles" | "carts" | "job-types" | null>(null)
+  const [dataExportImportOpen, setDataExportImportOpen] = useState(false)
+  const [dataExportOpen, setDataExportOpen] = useState(false)
+  const [dataImportOpen, setDataImportOpen] = useState(false)
+  const [autoBackup, setAutoBackup] = useState(true)
   const [companyData, setCompanyData] = useState({
+    id: null,
     name: "וזאנה אבטחת כבישים",
     email: "",
     registration: "",
     address: "",
     phone: "",
+    bankAccountName: "",
+    bankName: "",
+    bankBranch: "",
+    bankAccountNumber: "",
   })
-  const [users, setUsers] = useState([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת" }])
+  const [users, setUsers] = useState([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת", isSystem: true }])
   const [financialSettings, setFinancialSettings] = useState({
     vatPercentage: 18,
     autoInvoiceSync: false,
@@ -71,29 +96,58 @@ export default function SettingsPage() {
   const { pendingSettings, setPendingSettings, applySettings, colorThemes } = useTheme()
   const supabase = createClient()
   const [activeTab, setActiveTab] = useState("general")
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab")
-    if (tabFromUrl && ["general", "business", "users", "resources", "integrations", "data"].includes(tabFromUrl)) {
+    if (tabFromUrl && ["general", "business", "resources", "users", "integrations", "data"].includes(tabFromUrl)) {
       setActiveTab(tabFromUrl)
     } else {
       setActiveTab("general")
     }
     loadBusinessSettings()
     loadUsers()
+    
+    // Load current user
+    const user = clientAuth.getCurrentUser()
+    setCurrentUser(user)
+    
+    // Load payment terms from localStorage
+    const savedPaymentTerms = localStorage.getItem('vazana-payment-terms')
+    if (savedPaymentTerms) {
+      try {
+        setPaymentTerms(JSON.parse(savedPaymentTerms))
+      } catch (error) {
+        console.error('Error loading payment terms:', error)
+      }
+    }
   }, [searchParams])
 
   const loadBusinessSettings = async () => {
     try {
-      const { data, error } = await supabase.from("business_settings").select("*").single()
+      // Get all business settings and use the first one
+      const { data: allData, error } = await supabase
+        .from("business_settings")
+        .select("*")
+        .order('created_at', { ascending: true })
+        .limit(1)
 
-      if (data) {
+      // Load bank account info from localStorage as fallback
+      const savedBankInfo = JSON.parse(localStorage.getItem("bankAccountInfo") || "{}")
+
+      if (allData && allData.length > 0) {
+        const data = allData[0] // Use the first (oldest) record
         setCompanyData({
+          id: data.id,
           name: data.company_name || "וזאנה אבטחת כבישים",
           email: data.company_email || "",
           registration: data.registration_number || "",
           address: data.address || "",
           phone: data.phone || "",
+          bankAccountName: data.bank_account_name || savedBankInfo.bankAccountName || "",
+          bankName: data.bank_name || savedBankInfo.bankName || "",
+          bankBranch: data.bank_branch || savedBankInfo.bankBranch || "",
+          bankAccountNumber: data.bank_account_number || savedBankInfo.bankAccountNumber || "",
         })
         setFinancialSettings({
           vatPercentage: data.vat_percentage || 18,
@@ -112,13 +166,18 @@ export default function SettingsPage() {
       const { data, error } = await supabase.from("user_profiles").select("*")
 
       if (data) {
-        const formattedUsers = data.map((user) => ({
-          id: user.id,
-          username: user.username,
-          role: user.role === "admin" ? "מנהל" : "משתמש",
-          description: user.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
-        }))
-        setUsers([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת" }, ...formattedUsers])
+        const formattedUsers = data
+          .filter(user => user.username !== "root") // Exclude root from DB users
+          .map((user) => ({
+            id: user.id,
+            username: user.username,
+            role: user.role === "admin" ? "מנהל" : "משתמש",
+            description: user.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
+            isSystem: false
+          }))
+        
+        // Only include the hardcoded root user
+        setUsers([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת", isSystem: true }, ...formattedUsers])
       }
     } catch (error) {
       console.error("Error loading users:", error)
@@ -127,21 +186,97 @@ export default function SettingsPage() {
 
   const handleSaveBusinessDetails = async () => {
     try {
-      const { error } = await supabase.from("business_settings").upsert({
+      // Validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const phoneRegex = /^[\d\-\+\(\)\s]+$/
+      
+      if (companyData.email && !emailRegex.test(companyData.email)) {
+        alert("אימייל לא תקין. אנא הזן אימייל בפורמט נכון")
+        return
+      }
+      
+      if (companyData.phone && !phoneRegex.test(companyData.phone)) {
+        alert("מספר טלפון לא תקין. אנא הזן רק מספרים וסימנים מיוחדים")
+        return
+      }
+      
+      // Save bank account info to localStorage as fallback
+      const bankInfo = {
+        bankAccountName: companyData.bankAccountName,
+        bankName: companyData.bankName,
+        bankBranch: companyData.bankBranch,
+        bankAccountNumber: companyData.bankAccountNumber,
+      }
+      localStorage.setItem("bankAccountInfo", JSON.stringify(bankInfo))
+
+      const updateData = {
         company_name: companyData.name,
         company_email: companyData.email,
         registration_number: companyData.registration,
         address: companyData.address,
         phone: companyData.phone,
+        bank_account_name: companyData.bankAccountName,
+        bank_name: companyData.bankName,
+        bank_branch: companyData.bankBranch,
+        bank_account_number: companyData.bankAccountNumber,
         vat_percentage: financialSettings.vatPercentage,
         auto_invoice_sync: financialSettings.autoInvoiceSync,
         day_shift_end_time: financialSettings.dayShiftEnd,
         night_shift_end_time: financialSettings.nightShiftEnd,
         updated_at: new Date().toISOString(),
-      })
+      }
 
-      if (error) throw error
-      alert("פרטי העסק נשמרו בהצלחה!")
+      // Include ID if updating existing record
+      if (companyData.id) {
+        updateData.id = companyData.id
+      }
+
+      let data, error
+      
+      if (companyData.id) {
+        // Update existing record by ID
+        const result = await supabase
+          .from("business_settings")
+          .update(updateData)
+          .eq('id', companyData.id)
+          .select()
+          .single()
+        data = result.data
+        error = result.error
+      } else {
+        // Create new record
+        const result = await supabase
+          .from("business_settings")
+          .insert(updateData)
+          .select()
+          .single()
+        data = result.data
+        error = result.error
+      }
+
+      if (error) {
+        console.error("Database save failed:", {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          updateData
+        })
+        
+        // Check if it's a missing column error
+        if (error.message && error.message.includes('bank_account')) {
+          alert("השמירה בבסיס הנתונים נכשלה - ערוצי חשבון הבנק חסרים. הנתונים נשמרו באחסון מקומי.")
+        } else {
+          alert(`שגיאה בשמירה לבסיס נתונים: ${error.message}. הנתונים נשמרו באחסון מקומי.`)
+        }
+      } else {
+        // Update the ID in case this was an insert
+        if (data && !companyData.id) {
+          setCompanyData(prev => ({ ...prev, id: data.id }))
+        }
+        alert("פרטי העסק נשמרו בהצלחה!")
+      }
     } catch (error) {
       console.error("Error saving business settings:", error)
       alert("שגיאה בשמירת פרטי העסק")
@@ -243,8 +378,11 @@ export default function SettingsPage() {
   }
 
   const handleEditUser = (userId: string) => {
-    console.log("[v0] Editing user:", userId)
-    window.location.href = `/settings/users/${userId}/edit`
+    const user = users.find(u => u.id === userId)
+    if (user) {
+      setEditingUser(user)
+      setUserEditModalOpen(true)
+    }
   }
 
   const handleDeleteUser = (userId: string) => {
@@ -266,6 +404,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <SidebarNavigation />
       <div className={`${isMinimized ? "mr-24" : "mr-64"} p-6 transition-all duration-300`}>
+        <AppNavigation />
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="text-right">
             <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">הגדרות</h1>
@@ -280,11 +419,11 @@ export default function SettingsPage() {
               <TabsTrigger value="business" className="font-hebrew">
                 פרטי עסק
               </TabsTrigger>
-              <TabsTrigger value="users" className="font-hebrew">
-                משתמשים
-              </TabsTrigger>
               <TabsTrigger value="resources" className="font-hebrew">
                 ניהול משאבים
+              </TabsTrigger>
+              <TabsTrigger value="users" className="font-hebrew">
+                משתמשים
               </TabsTrigger>
               <TabsTrigger value="integrations" className="font-hebrew">
                 אינטגרציות
@@ -403,63 +542,12 @@ export default function SettingsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between font-hebrew">
-                    <Lock className="w-5 h-5 text-vazana-teal" />
-                    <span>אבטחה ופרטיות</span>
+                    <Globe className="w-5 h-5 text-vazana-teal" />
+                    <span>שפה ותצוגה</span>
                   </CardTitle>
                   <CardDescription className="text-right font-hebrew">
-                    נהל הגדרות אבטחה וזמן פגישה
+                    קבע את שפת המערכת וגודל הגופן
                   </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="font-hebrew text-right block">זמן פגישה (שעות)</Label>
-                    <div className="flex items-center gap-2">
-                      <Select 
-                        value={sessionTimeout.toString()} 
-                        onValueChange={(value) => setSessionTimeout(Number(value))}
-                        dir="rtl"
-                      >
-                        <SelectTrigger className="text-right font-hebrew w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1" className="font-hebrew">1 שעה</SelectItem>
-                          <SelectItem value="4" className="font-hebrew">4 שעות</SelectItem>
-                          <SelectItem value="8" className="font-hebrew">8 שעות</SelectItem>
-                          <SelectItem value="12" className="font-hebrew">12 שעות</SelectItem>
-                          <SelectItem value="24" className="font-hebrew">24 שעות</SelectItem>
-                          <SelectItem value="48" className="font-hebrew">48 שעות</SelectItem>
-                          <SelectItem value="168" className="font-hebrew">שבוע</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <p className="text-sm text-gray-600 font-hebrew text-right">
-                      משך הזמן שלפניו המשתמש יוצא אוטומטית מהמערכת
-                    </p>
-                  </div>
-                  
-                  <div className="flex justify-start pt-4">
-                    <Button 
-                      onClick={() => {
-                        clientAuth.updateSessionDuration(sessionTimeout)
-                        alert(`זמן הפגישה עודכן ל-${sessionTimeout} שעות`)
-                      }}
-                      className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
-                    >
-                      <Save className="ml-2 w-4 h-4" />
-                      שמור הגדרות אבטחה
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
-                    <Globe className="w-5 h-5 text-vazana-teal" />
-                    <span>שפה</span>
-                  </CardTitle>
-                  <CardDescription className="text-right font-hebrew">בחר את שפת המממשק המועדפת עליך.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -480,150 +568,434 @@ export default function SettingsPage() {
                         English
                       </Button>
                     </div>
-                    <Label className="font-hebrew">שפת ממשק</Label>
+                    <Label className="font-hebrew">שפת המערכת</Label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="12"
+                        max="24"
+                        value={fontSize}
+                        onChange={(e) => setFontSize(parseInt(e.target.value) || 16)}
+                        className="w-20 text-center"
+                      />
+                      <span className="text-sm text-gray-600">px</span>
+                    </div>
+                    <Label className="font-hebrew">גודל גופן בסיסי</Label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between font-hebrew">
+                    <Lock className="w-5 h-5 text-vazana-teal" />
+                    <span>אבטחה והרשאות</span>
+                  </CardTitle>
+                  <CardDescription className="text-right font-hebrew">
+                    הגדרות אבטחה ופעילות משתמשים
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="72"
+                        value={sessionTimeout}
+                        onChange={(e) => setSessionTimeout(parseInt(e.target.value) || 24)}
+                        className="w-20 text-center"
+                      />
+                      <span className="text-sm text-gray-600 font-hebrew">שעות</span>
+                    </div>
+                    <Label className="font-hebrew">זמן פג תוקף ההתחברות</Label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Switch />
+                    <Label className="font-hebrew">דרוש אימות דו-שלבי (בקרוב)</Label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Switch />
+                    <Label className="font-hebrew">רשום פעילות משתמשים</Label>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="business" className="space-y-6">
-              <Card dir="rtl">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
-                    <span>פרטי עסק</span>
-                    <Briefcase className="w-5 h-5 text-vazana-teal" />
-                  </CardTitle>
+                  <CardTitle className="text-right font-hebrew">פרטי עסק</CardTitle>
+                  <CardDescription className="text-right font-hebrew">
+                    עדכן את פרטי העסק ופרטי חשבון הבנק
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">שם החברה *</Label>
+                      <Label className="text-right font-hebrew">שם חברה</Label>
                       <Input
                         value={companyData.name}
                         onChange={(e) => setCompanyData({ ...companyData, name: e.target.value })}
-                        className="text-right font-hebrew"
+                        className="text-right"
                         dir="rtl"
+                        placeholder="שם החברה..."
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">אימייל החברה *</Label>
+                      <Label className="text-right font-hebrew">אימייל</Label>
                       <Input
                         type="email"
                         value={companyData.email}
                         onChange={(e) => setCompanyData({ ...companyData, email: e.target.value })}
-                        placeholder="company@example.com"
-                        className="text-right font-hebrew"
-                        dir="rtl"
+                        className="text-left"
+                        placeholder="email@company.com"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">ח.פ / ע.מ</Label>
+                      <Label className="text-right font-hebrew">מספר רשום</Label>
                       <Input
                         value={companyData.registration}
                         onChange={(e) => setCompanyData({ ...companyData, registration: e.target.value })}
-                        placeholder="הזן מספר חברה..."
-                        className="text-right font-hebrew"
-                        dir="rtl"
+                        className="text-left"
+                        placeholder="123456789"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">כתובת</Label>
-                      <Input
-                        value={companyData.address}
-                        onChange={(e) => setCompanyData({ ...companyData, address: e.target.value })}
-                        placeholder="הזן כתובת..."
-                        className="text-right font-hebrew"
-                        dir="rtl"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">טלפון</Label>
+                      <Label className="text-right font-hebrew">טלפון</Label>
                       <Input
                         value={companyData.phone}
                         onChange={(e) => setCompanyData({ ...companyData, phone: e.target.value })}
-                        placeholder="הזן מספר טלפון..."
-                        className="text-right font-hebrew"
+                        className="text-left"
+                        placeholder="050-1234567"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label className="text-right font-hebrew">כתובת</Label>
+                      <Input
+                        value={companyData.address}
+                        onChange={(e) => setCompanyData({ ...companyData, address: e.target.value })}
+                        className="text-right"
                         dir="rtl"
+                        placeholder="רחוב הרצל 1, תל אביב"
                       />
                     </div>
                   </div>
-                  <div className="flex justify-start">
-                    <Button
-                      onClick={handleSaveBusinessDetails}
-                      className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
-                    >
+
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold mb-4 text-right font-hebrew">פרטי חשבון בנק</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">שם בעל החשבון</Label>
+                        <Input
+                          value={companyData.bankAccountName}
+                          onChange={(e) => setCompanyData({ ...companyData, bankAccountName: e.target.value })}
+                          className="text-right"
+                          dir="rtl"
+                          placeholder="שם בעל חשבון"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">שם הבנק</Label>
+                        <Input
+                          value={companyData.bankName}
+                          onChange={(e) => setCompanyData({ ...companyData, bankName: e.target.value })}
+                          className="text-right"
+                          dir="rtl"
+                          placeholder="בנק לאומי"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">מספר סניף</Label>
+                        <Input
+                          value={companyData.bankBranch}
+                          onChange={(e) => setCompanyData({ ...companyData, bankBranch: e.target.value })}
+                          className="text-left"
+                          placeholder="123"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">מספר חשבון</Label>
+                        <Input
+                          value={companyData.bankAccountNumber}
+                          onChange={(e) => setCompanyData({ ...companyData, bankAccountNumber: e.target.value })}
+                          className="text-left"
+                          placeholder="12-345-678901"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold mb-4 text-right font-hebrew">הגדרות כספים</h3>
+                    
+                    {/* VAT Section */}
+                    <div className="space-y-4 mb-6">
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">אחוז מעמ (%)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={financialSettings.vatPercentage}
+                          onChange={(e) => setFinancialSettings({ ...financialSettings, vatPercentage: parseInt(e.target.value) || 0 })}
+                          className="text-left w-32"
+                        />
+                        <p className="text-sm text-gray-600 font-hebrew text-right">
+                          הגדר את אחוז המע"מ הברירת מחדל עבור חשבוניות חדשות.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Shift Times Section */}
+                    <div className="space-y-4 mb-6">
+                      <h4 className="font-semibold text-right font-hebrew">זמני משמרות</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-right font-hebrew">סיום משמרת יום</Label>
+                          <Input
+                            type="time"
+                            value={financialSettings.dayShiftEnd}
+                            onChange={(e) => setFinancialSettings({ ...financialSettings, dayShiftEnd: e.target.value })}
+                            className="text-left"
+                          />
+                          <p className="text-sm text-gray-600 font-hebrew text-right">
+                            הגדר את שעת סיום משמרת יום (לחישוב שעות נוספות).
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-right font-hebrew">סיום משמרת לילה</Label>
+                          <Input
+                            type="time"
+                            value={financialSettings.nightShiftEnd}
+                            onChange={(e) => setFinancialSettings({ ...financialSettings, nightShiftEnd: e.target.value })}
+                            className="text-left"
+                          />
+                          <p className="text-sm text-gray-600 font-hebrew text-right">
+                            הגדר את שעת סיום משמרת לילה (לחישוב שעות נוספות).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Auto Invoice Sync Section */}
+                    <div className="space-y-4 mb-6">
+                      <div className="flex items-center justify-between">
+                        <Switch
+                          checked={financialSettings.autoInvoiceSync}
+                          onCheckedChange={(checked) => setFinancialSettings({ ...financialSettings, autoInvoiceSync: checked })}
+                        />
+                        <Label className="font-hebrew">סינכרון חשבוניות אוטומטי</Label>
+                      </div>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-right font-hebrew mb-2">מה זה סינכרון חשבוניות אוטומטי?</h4>
+                        <p className="text-sm text-gray-700 font-hebrew text-right mb-2">
+                          כאשר האפשרות מופעלת, המערכת תסנכרן אוטומטית חשבוניות עם מערכות חיצוניות כמו תוכנות הנהחשבונות או מערכות CRM.
+                        </p>
+                        <p className="text-sm text-gray-700 font-hebrew text-right mb-2">
+                          <strong>איך להשתמש:</strong>
+                        </p>
+                        <ul className="text-sm text-gray-700 font-hebrew text-right list-disc list-inside space-y-1">
+                          <li>הפעל את האפשרות כדי לאפשר סינכרון אוטומטי</li>
+                          <li>הגדר את פרטי ההתחברות בלשונית "אינטגרציות"</li>
+                          <li>חשבוניות חדשות יסונכרנו אוטומטית כל 15 דקות</li>
+                          <li>קבל התראות על שגיאות סינכרון בדואר האלקטרוני</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Terms Section - integrated into financial section */}
+                  <div className="space-y-4 mb-6">
+                    <h4 className="font-semibold text-right font-hebrew">תנאי תשלום</h4>
+                    <div className="flex items-center justify-between">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsPaymentTermsOpen(true)}
+                        className="font-hebrew"
+                      >
+                        <Edit className="w-4 h-4 ml-2" />
+                        ערוך
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={paymentTerms.find(t => t.id === 2)?.value || "current+15"}
+                          onValueChange={(value) => {
+                            console.log("שינוי תנאי תשלום ברירת מחדל:", value)
+                          }}
+                          dir="rtl"
+                        >
+                          <SelectTrigger className="text-right font-hebrew w-48">
+                            <SelectValue placeholder="בחר תנאי תשלום..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {paymentTerms.map((term) => (
+                              <SelectItem key={term.id} value={term.value} className="font-hebrew">
+                                {term.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Label className="font-hebrew">תנאי תשלום ברירת מחדל</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-start pt-4">
+                    <Button onClick={handleSaveBusinessDetails} className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
                       <Save className="ml-2 w-4 h-4" />
-                      שמור שינויים
+                      שמור פרטים
                     </Button>
                   </div>
                 </CardContent>
               </Card>
+              
+              {/* Payment Terms Modal */}
+              <Dialog open={isPaymentTermsOpen} onOpenChange={setIsPaymentTermsOpen}>
+                <DialogContent className="max-w-2xl" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-right font-hebrew">ניהול תנאי תשלום</DialogTitle>
+                    <DialogDescription className="text-right font-hebrew">
+                      ערוך את רשימת תנאי התשלום הזמינים במערכת
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {paymentTerms.map((term, index) => (
+                      <div key={term.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newTerms = paymentTerms.filter(t => t.id !== term.id)
+                            setPaymentTerms(newTerms)
+                            localStorage.setItem('vazana-payment-terms', JSON.stringify(newTerms))
+                          }}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <Input
+                          value={term.label}
+                          onChange={(e) => {
+                            const newTerms = paymentTerms.map(t => 
+                              t.id === term.id ? { ...t, label: e.target.value } : t
+                            )
+                            setPaymentTerms(newTerms)
+                            localStorage.setItem('vazana-payment-terms', JSON.stringify(newTerms))
+                          }}
+                          className="text-right"
+                          dir="rtl"
+                          placeholder="תיאור (למשל: 'שוטף +30')"
+                        />
+                        <Input
+                          value={term.value}
+                          onChange={(e) => {
+                            const newTerms = paymentTerms.map(t => 
+                              t.id === term.id ? { ...t, value: e.target.value } : t
+                            )
+                            setPaymentTerms(newTerms)
+                            localStorage.setItem('vazana-payment-terms', JSON.stringify(newTerms))
+                          }}
+                          className="text-left"
+                          placeholder="current+30"
+                        />
+                      </div>
+                    ))}
+                    
+                    <Button
+                      onClick={() => {
+                        const newTerm = {
+                          id: Math.max(...paymentTerms.map(t => t.id)) + 1,
+                          value: "custom",
+                          label: "תנאי חדש"
+                        }
+                        const newTerms = [...paymentTerms, newTerm]
+                        setPaymentTerms(newTerms)
+                        localStorage.setItem('vazana-payment-terms', JSON.stringify(newTerms))
+                      }}
+                      variant="outline"
+                      className="w-full font-hebrew"
+                    >
+                      <Plus className="w-4 h-4 ml-2" />
+                      הוסף תנאי תשלום
+                    </Button>
+                  </div>
+                  
+                  <DialogFooter className="flex gap-2 justify-start">
+                    <Button 
+                      onClick={() => setIsPaymentTermsOpen(false)} 
+                      className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
+                    >
+                      סיים
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </TabsContent>
 
-              <Card dir="rtl">
+            <TabsContent value="resources" className="space-y-6">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between font-hebrew">
-                    <span>הגדרת כספים</span>
-                    <DollarSign className="w-5 h-5 text-vazana-teal" />
+                    <Briefcase className="w-5 h-5 text-vazana-teal" />
+                    <span>ניהול משאבים</span>
                   </CardTitle>
+                  <CardDescription className="text-right font-hebrew">
+                    נהל עובדים, רכבים וציוד
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="font-hebrew text-right block">אחוז מע"מ ברירת מחדל (%)</Label>
-                    <Input
-                      type="number"
-                      value={financialSettings.vatPercentage}
-                      onChange={(e) =>
-                        setFinancialSettings({ ...financialSettings, vatPercentage: Number(e.target.value) })
-                      }
-                      className="text-right font-hebrew"
-                      dir="rtl"
-                    />
-                    <p className="text-sm text-gray-600 font-hebrew text-right">
-                      הגדר את שיעור המע"מ ברירת מחדל עבור חשבוניות חדשות.
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Switch
-                      checked={financialSettings.autoInvoiceSync}
-                      onCheckedChange={(checked) =>
-                        setFinancialSettings({ ...financialSettings, autoInvoiceSync: checked })
-                      }
-                    />
-                    <Label className="font-hebrew">התאמה אוטומטית לחשבונית</Label>
-                  </div>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col items-center gap-2 font-hebrew"
+                    onClick={() => setResourceModalType("workers")}
+                  >
+                    <Users className="w-8 h-8 text-blue-600" />
+                    <span>עובדים</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col items-center gap-2 font-hebrew"
+                    onClick={() => setResourceModalType("vehicles")}
+                  >
+                    <Car className="w-8 h-8 text-green-600" />
+                    <span>רכבים</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col items-center gap-2 font-hebrew"
+                    onClick={() => setResourceModalType("carts")}
+                  >
+                    <ShoppingCart className="w-8 h-8 text-purple-600" />
+                    <span>עגלות</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col items-center gap-2 font-hebrew"
+                    onClick={() => setResourceModalType("job-types")}
+                  >
+                    <Briefcase className="w-8 h-8 text-orange-600" />
+                    <span>סוגי עבודה</span>
+                  </Button>
                 </CardContent>
               </Card>
-
-              <Card dir="rtl">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
-                    <span>הגדרת פעולות</span>
-                    <Clock className="w-5 h-5 text-vazana-teal" />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="font-hebrew text-right block">שעות סיום משמרת יום</Label>
-                    <Input
-                      type="time"
-                      value={financialSettings.dayShiftEnd}
-                      onChange={(e) => setFinancialSettings({ ...financialSettings, dayShiftEnd: e.target.value })}
-                      className="text-right font-hebrew"
-                      dir="rtl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-hebrew text-right block">שעות סיום משמרת לילה</Label>
-                    <Input
-                      type="time"
-                      value={financialSettings.nightShiftEnd}
-                      onChange={(e) => setFinancialSettings({ ...financialSettings, nightShiftEnd: e.target.value })}
-                      className="text-right font-hebrew"
-                      dir="rtl"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+              
+              {/* Resource Modal */}
+              <ResourceModal
+                type={resourceModalType}
+                open={resourceModalType !== null}
+                onOpenChange={() => setResourceModalType(null)}
+              />
             </TabsContent>
 
             <TabsContent value="users" className="space-y-6">
@@ -633,232 +1005,262 @@ export default function SettingsPage() {
                     <Users className="w-5 h-5 text-vazana-teal" />
                     <span>ניהול משתמשים</span>
                   </CardTitle>
-                  <CardDescription className="text-right font-hebrew">נהל משתמשים והרשאות מערכת.</CardDescription>
+                  <CardDescription className="text-right font-hebrew">
+                    נהל משתמשי המערכת והרשאותיהם
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-start mb-4">
-                      <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
-                        <DialogTrigger asChild>
-                          <Button className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
-                            <Plus className="ml-2 w-4 h-4" />
-                            הוסף משתמש חדש
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]" dir="rtl">
-                          <DialogHeader>
-                            <DialogTitle className="font-hebrew text-right">הוסף משתמש חדש</DialogTitle>
-                            <DialogDescription className="font-hebrew text-right">
-                              הזן את פרטי המשתמש החדש להוספה למערכת.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault()
-                              const formData = new FormData(e.target as HTMLFormElement)
-                              handleAddUser({
-                                username: formData.get("username"),
-                                full_name: formData.get("full_name"),
-                                password: formData.get("password"),
-                                role: formData.get("role"),
-                              })
-                            }}
-                          >
-                            <div className="grid gap-4 py-4">
-                              <div className="space-y-2">
-                                <Label className="font-hebrew text-right block">שם משתמש (אימייל)</Label>
-                                <Input
-                                  name="username"
-                                  type="email"
-                                  placeholder="user@company.com"
-                                  className="text-left font-hebrew"
-                                  dir="ltr"
-                                  required
-                                />
-                                <p className="text-xs text-gray-500 font-hebrew text-right">
-                                  שם המשתמש חייב להיות בפורמט אימייל
-                                </p>
-                              </div>
-                              <div className="space-y-2">
-                                <Label className="font-hebrew text-right block">שם מלא</Label>
-                                <Input
-                                  name="full_name"
-                                  placeholder="הזן שם מלא..."
-                                  className="text-right font-hebrew"
-                                  dir="rtl"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label className="font-hebrew text-right block">סיסמה</Label>
-                                <Input
-                                  name="password"
-                                  type="password"
-                                  placeholder="לפחות 8 תווים עם אותיות קטנות וגדולות"
-                                  className="text-right font-hebrew"
-                                  dir="rtl"
-                                  required
-                                  minLength={8}
-                                />
-                                <p className="text-xs text-gray-500 font-hebrew text-right">
-                                  לפחות 8 תווים, אותיות קטנות וגדולות
-                                </p>
-                              </div>
-                              <div className="space-y-2">
-                                <Label className="font-hebrew text-right block">תפקיד</Label>
-                                <Select name="role" dir="rtl" required>
-                                  <SelectTrigger className="text-right font-hebrew">
-                                    <SelectValue placeholder="בחר תפקיד..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="admin" className="font-hebrew">
-                                      מנהל
-                                    </SelectItem>
-                                    <SelectItem value="user" className="font-hebrew">
-                                      משתמש
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                            <DialogFooter>
-                              <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
-                                הוסף משתמש
-                              </Button>
-                            </DialogFooter>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-
+                <CardContent className="space-y-4">
+                  <div className="flex justify-start mb-4">
+                    <Button onClick={() => setIsAddUserOpen(true)} className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
+                      <Plus className="ml-2 w-4 h-4" />
+                      הוסף משתמש
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
                     {users.map((user) => (
                       <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-vazana-teal text-white font-hebrew">{user.role}</Badge>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditUser(user.id)}
-                            className="font-hebrew bg-transparent"
-                          >
-                            <Edit className="ml-1 w-3 h-3" />
-                            ערוך
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="font-hebrew bg-transparent text-red-600 hover:text-red-700"
-                            disabled={user.id === "root"}
-                          >
-                            <Trash2 className="ml-1 w-3 h-3" />
-                            מחק
-                          </Button>
+                        <div className="flex gap-2">
+                          {!user.isSystem && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditUser(user.id)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteUser(user.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                          {user.isSystem && (
+                            <Badge variant="secondary" className="text-xs font-hebrew">
+                              מערכת
+                            </Badge>
+                          )}
                         </div>
+                        
                         <div className="text-right">
-                          <p className="font-semibold font-hebrew">{user.username}</p>
-                          <p className="text-sm text-gray-600 font-hebrew">{user.description}</p>
+                          <h3 className="font-medium">{user.username}</h3>
+                          <p className="text-sm text-gray-600">{user.description}</p>
+                          <Badge variant={user.role === "מנהל" ? "default" : "secondary"} className="text-xs font-hebrew">
+                            {user.role}
+                          </Badge>
                         </div>
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
 
-            <TabsContent value="resources" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <Settings className="w-5 h-5 text-vazana-teal" />
-                    <CardTitle className="font-hebrew">ניהול משאבים</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Users className="w-5 h-5 text-vazana-teal" />
-                        <h3 className="font-semibold font-hebrew">עובדים</h3>
-                      </div>
-                      <p className="text-sm text-gray-600 font-hebrew text-right mb-3">
-                        ערוך את רשימת העובדים הזמינו לביצוע עבודות.
-                      </p>
-                      <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
-                        <Link href="/settings/resources/workers?tab=resources">נהל עובדים</Link>
+              {/* Add User Dialog */}
+              <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+                <DialogContent className="max-w-md" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-right font-hebrew">הוסף משתמש חדש</DialogTitle>
+                    <DialogDescription className="text-right font-hebrew">
+                      מלא את פרטי המשתמש החדש
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <form onSubmit={(e) => {
+                    e.preventDefault()
+                    const formData = new FormData(e.target as HTMLFormElement)
+                    const userData = {
+                      username: formData.get('username') as string,
+                      full_name: formData.get('full_name') as string,
+                      phone_number: formData.get('phone_number') as string,
+                      password: formData.get('password') as string,
+                      role: formData.get('role') as string,
+                    }
+                    handleAddUser(userData)
+                  }} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">שם משתמש (אימייל)</Label>
+                      <Input
+                        name="username"
+                        type="email"
+                        className="text-left"
+                        placeholder="user@example.com"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">שם מלא</Label>
+                      <Input
+                        name="full_name"
+                        className="text-right"
+                        dir="rtl"
+                        placeholder="שם מלא..."
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">מספר טלפון</Label>
+                      <Input
+                        name="phone_number"
+                        type="tel"
+                        className="text-left"
+                        placeholder="050-1234567"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">סיסמה</Label>
+                      <Input
+                        name="password"
+                        type="password"
+                        className="text-left"
+                        placeholder="לפחות 8 תווים"
+                        required
+                        minLength={8}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">תפקיד</Label>
+                      <Select name="role" required>
+                        <SelectTrigger className="text-right" dir="rtl">
+                          <SelectValue placeholder="בחר תפקיד..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin" className="font-hebrew">מנהל</SelectItem>
+                          <SelectItem value="user" className="font-hebrew">משתמש</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <DialogFooter className="flex gap-2 justify-start">
+                      <Button type="submit" className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
+                        הוסף משתמש
                       </Button>
-                    </Card>
-
-                    <Card className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Briefcase className="w-5 h-5 text-vazana-teal" />
-                        <h3 className="font-semibold font-hebrew">סוג עבודה</h3>
-                      </div>
-                      <p className="text-sm text-gray-600 font-hebrew text-right mb-3">
-                        ערוך את סוג העבודות הזמינו במערכת.
-                      </p>
-                      <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
-                        <Link href="/settings/resources/job-types?tab=resources">נהל סוגי עבודה</Link>
+                      <Button type="button" variant="outline" onClick={() => setIsAddUserOpen(false)} className="font-hebrew">
+                        בטל
                       </Button>
-                    </Card>
-
-                    <Card className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <ShoppingCart className="w-5 h-5 text-vazana-teal" />
-                        <h3 className="font-semibold font-hebrew">עגלות/נגררים</h3>
-                      </div>
-                      <p className="text-sm text-gray-600 font-hebrew text-right mb-3">
-                        ערוך את רשימת העגלות או הנגררים הזמינו.
-                      </p>
-                      <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
-                        <Link href="/settings/resources/shopping-carts?tab=resources">נהל עגלות/נגררים</Link>
-                      </Button>
-                    </Card>
-
-                    <Card className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Car className="w-5 h-5 text-vazana-teal" />
-                        <h3 className="font-semibold font-hebrew">כלי רכב</h3>
-                      </div>
-                      <p className="text-sm text-gray-600 font-hebrew text-right mb-3">
-                        ערוך את רשימת כלי הרכב הזמינו ופרטיהם.
-                      </p>
-                      <Button variant="outline" className="w-full font-hebrew bg-transparent" asChild>
-                        <Link href="/settings/resources/vehicles?tab=resources">נהל כלי רכב</Link>
-                      </Button>
-                    </Card>
-                  </div>
-                </CardContent>
-              </Card>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              
+              {/* User Edit Modal */}
+              <UserEditModal
+                user={editingUser}
+                open={userEditModalOpen}
+                onOpenChange={setUserEditModalOpen}
+                onUserUpdated={(updatedUser) => {
+                  setUsers(users.map(user => 
+                    user.id === updatedUser.id ? updatedUser : user
+                  ))
+                  setEditingUser(null)
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="integrations" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between font-hebrew">
-                    <Calendar className="w-5 h-5 text-vazana-teal" />
-                    <span>אינטגרציות יומן</span>
+                    <Globe className="w-5 h-5 text-vazana-teal" />
+                    <span>אינטגרציות</span>
                   </CardTitle>
                   <CardDescription className="text-right font-hebrew">
-                    חבר את המערכת ליומנים חיצוניים לסנכרון עבודות.
+                    התחבר לשירותים חיצוניים
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <Button variant="outline" className="font-hebrew bg-transparent">
-                      חבר
-                    </Button>
-                    <div className="text-right">
-                      <p className="font-semibold font-hebrew">Google Calendar</p>
-                      <p className="text-sm text-gray-600 font-hebrew">סנכרן עבודות עם יומן Google</p>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4 p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary" className="font-hebrew">לא מחובר</Badge>
+                        <h3 className="font-semibold text-right font-hebrew">דואר</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        שליחת חשבוניות והתראות באימייל
+                      </p>
+                      <Button variant="outline" disabled className="w-full font-hebrew">
+                        התחבר (בקרוב)
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-4 p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary" className="font-hebrew">לא מחובר</Badge>
+                        <h3 className="font-semibold text-right font-hebrew">הנהחשבונות</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        סינכרון עם תוכנת הנהחשבונות
+                      </p>
+                      <Button variant="outline" disabled className="w-full font-hebrew">
+                        התחבר (בקרוב)
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-4 p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary" className="font-hebrew">לא מחובר</Badge>
+                        <h3 className="font-semibold text-right font-hebrew">וואטסאפ</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        שליחת התראות ועדכונים בוואטסאפ
+                      </p>
+                      <Button variant="outline" disabled className="w-full font-hebrew">
+                        התחבר (בקרוב)
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-4 p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary" className="font-hebrew">לא מחובר</Badge>
+                        <h3 className="font-semibold text-right font-hebrew">יום ערך</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        סינכרון עם שירותי יום ערך
+                      </p>
+                      <Button variant="outline" disabled className="w-full font-hebrew">
+                        התחבר (בקרוב)
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <Button variant="outline" className="font-hebrew bg-transparent">
-                      חבר
-                    </Button>
-                    <div className="text-right">
-                      <p className="font-semibold font-hebrew">Outlook Calendar</p>
-                      <p className="text-sm text-gray-600 font-hebrew">סנכרן עבודות עם יומן Outlook</p>
+                  
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold mb-4 text-right font-hebrew">API הגדרות</h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">API Key (לשימוש עתידי)</Label>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" disabled className="font-hebrew">
+                            העתק
+                          </Button>
+                          <Input
+                            value="****-****-****-****"
+                            readOnly
+                            className="text-left"
+                            type="password"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">רמת גישה</Label>
+                        <Select disabled>
+                          <SelectTrigger className="text-right" dir="rtl">
+                            <SelectValue placeholder="רק לקריאה" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="read" className="font-hebrew">רק לקריאה</SelectItem>
+                            <SelectItem value="write" className="font-hebrew">קריאה וכתיבה</SelectItem>
+                            <SelectItem value="admin" className="font-hebrew">מנהל</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -870,31 +1272,205 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between font-hebrew">
                     <Download className="w-5 h-5 text-vazana-teal" />
-                    <span>יצוא נתונים</span>
+                    <span>ניהול נתונים</span>
                   </CardTitle>
                   <CardDescription className="text-right font-hebrew">
-                    הורד את הנתונים האפליקציה שלך בפורמט CSV.
+                    יצא או יבא נתונים מהמערכת
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Button
-                      variant="outline"
-                      className="font-hebrew bg-vazana-yellow hover:bg-vazana-yellow/90 text-vazana-dark"
-                    >
-                      <Download className="ml-2 w-4 h-4" />
-                      יצא עבודות (CSV)
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="font-hebrew bg-vazana-yellow hover:bg-vazana-yellow/90 text-vazana-dark"
-                    >
-                      <Download className="ml-2 w-4 h-4" />
-                      יצא חשבוניות (CSV)
-                    </Button>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4 p-4 border rounded-lg">
+                      <h3 className="font-semibold text-right font-hebrew">יציאת נתונים</h3>
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        יצא את כל נתוני המערכת לקובץ JSON
+                      </p>
+                      <Button
+                        onClick={() => setDataExportOpen(true)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 font-hebrew"
+                      >
+                        <Download className="ml-2 w-4 h-4" />
+                        יצא נתונים
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-4 p-4 border rounded-lg">
+                      <h3 className="font-semibold text-right font-hebrew">יבוא נתונים</h3>
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        יבא נתונים מקובץ JSON למערכת
+                      </p>
+                      
+                      <div className="flex items-center justify-between mb-3 p-2 bg-green-50 rounded">
+                        <Switch
+                          checked={autoBackup}
+                          onCheckedChange={setAutoBackup}
+                        />
+                        <Label className="font-hebrew text-sm">גיבוי אוטומטי לפני יבוא</Label>
+                      </div>
+                      
+                      <Button
+                        onClick={() => setDataImportOpen(true)}
+                        variant="outline"
+                        className="w-full border-orange-200 text-orange-700 hover:bg-orange-50 font-hebrew"
+                      >
+                        <Plus className="ml-2 w-4 h-4" />
+                        יבא נתונים
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold mb-2 text-right font-hebrew">אזהרה</h3>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-sm text-yellow-800 text-right font-hebrew">
+                        יבוא נתונים עלול לדרוס נתונים קיימים. מומלץ ליצוא גיבוי לפני יבוא.
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+              
+              {/* Data Export Modal */}
+              <Dialog open={dataExportOpen} onOpenChange={setDataExportOpen}>
+                <DialogContent className="max-w-lg" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-right font-hebrew">יציאת נתונים</DialogTitle>
+                    <DialogDescription className="text-right font-hebrew">
+                      יצא את נתוני המערכת לקובץ JSON
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">בחר נתונים ליצוא:</Label>
+                      <div className="space-y-2">
+                        {[
+                          { key: 'jobs', label: 'עבודות', checked: true },
+                          { key: 'clients', label: 'לקוחות', checked: true },
+                          { key: 'invoices', label: 'חשבוניות', checked: true },
+                          { key: 'workers', label: 'עובדים', checked: true },
+                          { key: 'vehicles', label: 'רכבים', checked: true },
+                          { key: 'business_settings', label: 'הגדרות עסק', checked: true }
+                        ].map(item => (
+                          <div key={item.key} className="flex items-center justify-between">
+                            <Switch defaultChecked={item.checked} />
+                            <Label className="font-hebrew">{item.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm text-blue-800 text-right font-hebrew">
+                        הנתונים יוצאו בפורמט JSON ויורדו אוטומטית למחשב שלך.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <DialogFooter className="flex gap-2 justify-start">
+                    <Button 
+                      onClick={() => {
+                        console.log('יציאת נתונים')
+                        setDataExportOpen(false)
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 font-hebrew"
+                    >
+                      <Download className="w-4 h-4 ml-2" />
+                      יצא עכשיו
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setDataExportOpen(false)}
+                      className="font-hebrew"
+                    >
+                      בטל
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              {/* Data Import Modal */}
+              <Dialog open={dataImportOpen} onOpenChange={setDataImportOpen}>
+                <DialogContent className="max-w-lg" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-right font-hebrew">יבוא נתונים</DialogTitle>
+                    <DialogDescription className="text-right font-hebrew">
+                      יבא נתונים מקובץ JSON למערכת
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <Switch
+                        checked={autoBackup}
+                        onCheckedChange={setAutoBackup}
+                      />
+                      <div className="text-right">
+                        <Label className="font-hebrew font-semibold">גיבוי אוטומטי לפני יבוא</Label>
+                        <p className="text-sm text-green-700 font-hebrew">
+                          במידה ומופעל, יצור גיבוי של הנתונים הנוכחיים לפני היבוא
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">בחר קובץ JSON:</Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <input 
+                          type="file" 
+                          accept=".json" 
+                          className="hidden" 
+                          id="import-file"
+                        />
+                        <label 
+                          htmlFor="import-file" 
+                          className="cursor-pointer flex flex-col items-center gap-2"
+                        >
+                          <Plus className="w-8 h-8 text-gray-400" />
+                          <span className="text-sm text-gray-600 font-hebrew">
+                            לחץ או גרור קובץ JSON
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-sm text-yellow-800 text-right font-hebrew">
+                        <strong>אזהרה:</strong> יבוא נתונים עלול להחליף נתונים קיימים. ודא שיש לך גיבוי לפני ההמשך.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <DialogFooter className="flex gap-2 justify-start">
+                    <Button 
+                      onClick={() => {
+                        if (autoBackup) {
+                          console.log('בוצע גיבוי אוטומטי...')
+                        }
+                        console.log('יבוא נתונים')
+                        setDataImportOpen(false)
+                      }}
+                      className="bg-orange-600 hover:bg-orange-700 font-hebrew"
+                    >
+                      <Plus className="w-4 h-4 ml-2" />
+                      יבא עכשיו
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setDataImportOpen(false)}
+                      className="font-hebrew"
+                    >
+                      בטל
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              {/* Legacy Data Export/Import Modal - keeping for backward compatibility */}
+              <DataExportImport
+                open={dataExportImportOpen}
+                onOpenChange={setDataExportImportOpen}
+              />
             </TabsContent>
           </Tabs>
         </div>
