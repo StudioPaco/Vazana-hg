@@ -204,7 +204,7 @@ export default function NewJobForm() {
         // Add new required fields
         job_time: null, // Will be filled later or left null
         job_location: formData.location, // Use the location as job_location
-        status: 'scheduled', // Default status
+        job_status: 'ממתין', // Will be auto-calculated by trigger
       }
 
       console.log("[v0] Submitting job data:", jobData)

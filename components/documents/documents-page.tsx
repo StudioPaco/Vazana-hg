@@ -99,8 +99,17 @@ export function DocumentsPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">ניהול מסמכים</h1>
+      <div className="relative space-y-6">
+        <div className="absolute top-0 right-0 text-right z-10">
+          <h1 className="text-2xl font-bold text-gray-900 font-hebrew">ניהול מסמכים</h1>
+          <p className="text-gray-600 font-hebrew">נהל ושמור מסמכים של המערכת</p>
+        </div>
+        
+        <div className="absolute top-0 left-0 z-10">
+          <FileText className="w-8 h-8 text-vazana-teal" />
+        </div>
+        
+        <div className="pt-16"></div>
       </div>
 
       {/* Upload Form */}

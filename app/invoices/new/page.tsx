@@ -408,12 +408,15 @@ export default function NewInvoicePage() {
       <MainContent>
         <div className="p-6 max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-start justify-between mb-6">
-            <BackButton href="/invoices" />
-            <div className="text-right">
+          <div className="relative mb-6">
+            <div className="absolute top-0 right-0 text-right z-10">
+              <div className="mb-2">
+                <BackButton href="/invoices" />
+              </div>
               <h1 className="text-2xl font-bold text-gray-900">הפקת חשבונית</h1>
               <p className="text-gray-600">צור חשבונית חדשה עבור לקוח ותקופה נבחרת</p>
             </div>
+            <div className="h-16"></div>
           </div>
 
           <div className="space-y-6">

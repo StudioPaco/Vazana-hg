@@ -10,12 +10,15 @@ export default function InvoiceArchivePage() {
       <MainContent>
         <div className="p-6">
           {/* Header with Back Button */}
-          <div className="flex items-start justify-between mb-6">
-            <BackButton href="/invoices" />
-            <div className="text-right">
+          <div className="relative space-y-6">
+            <div className="absolute top-0 right-0 text-right z-10">
+              <div className="mb-2">
+                <BackButton href="/invoices" />
+              </div>
               <h1 className="text-2xl font-bold text-gray-900">ארכיון חשבוניות</h1>
               <p className="text-gray-600">צפה בחשבוניות שנשלחו ושילמו</p>
             </div>
+            <div className="pt-16"></div>
           </div>
           <InvoicesPage />
         </div>

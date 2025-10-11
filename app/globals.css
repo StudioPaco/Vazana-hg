@@ -668,6 +668,94 @@ input#job_date {
   direction: rtl !important;
 }
 
+/* Rounded containers theme */
+.rounded-theme .rounded-lg,
+.rounded-theme [class*="rounded"],
+.rounded-theme .card,
+.rounded-theme .bg-white,
+.rounded-theme .bg-gray-50,
+.rounded-theme .border {
+  border-radius: 0.5rem !important;
+}
+
+.rounded-theme .rounded-md {
+  border-radius: 0.375rem !important;
+}
+
+.rounded-theme .rounded-sm {
+  border-radius: 0.125rem !important;
+}
+
+/* Non-rounded theme - square containers */
+html:not(.rounded-theme) .rounded-lg,
+html:not(.rounded-theme) [class*="rounded"],
+html:not(.rounded-theme) .card,
+html:not(.rounded-theme) .bg-white,
+html:not(.rounded-theme) .bg-gray-50,
+html:not(.rounded-theme) .border {
+  border-radius: 0 !important;
+}
+
+/* Dark mode enhancements */
+.dark .bg-gray-50 {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-white {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #475569 !important;
+}
+
+.dark .text-gray-900 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-gray-700 {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-gray-800 {
+  color: #f8fafc !important;
+}
+
+.dark .text-gray-400 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-black {
+  color: #f1f5f9 !important;
+}
+
+/* Fix button text in dark mode */
+.dark button {
+  color: inherit;
+}
+
+.dark .bg-vazana-teal {
+  background-color: #06B6D4 !important;
+  color: #1e293b !important;
+}
+
+.dark .text-vazana-teal {
+  color: #06B6D4 !important;
+}
+
+.dark .text-vazana-dark {
+  color: #f1f5f9 !important;
+}
+
 /* Exception for email inputs */
 [dir="rtl"] .scroll-content input[type="email"],
 .scroll-content[dir="rtl"] input[type="email"] {

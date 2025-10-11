@@ -79,13 +79,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [isDark, setIsDark] = useState(false)
   const [sidebarMinimizedByDefault, setSidebarMinimizedByDefault] = useState(false)
-  const [roundedContainers, setRoundedContainers] = useState(false)
+  const [roundedContainers, setRoundedContainers] = useState(true)
   const [colorTheme, setColorTheme] = useState(colorThemes[0])
 
   const [pendingSettings, setPendingSettings] = useState({
     isDark: false,
     sidebarMinimizedByDefault: false,
-    roundedContainers: false,
+    roundedContainers: true,
     colorTheme: colorThemes[0],
   })
 
@@ -96,12 +96,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const settings = JSON.parse(savedSettings)
       setIsDark(settings.isDark || false)
       setSidebarMinimizedByDefault(settings.sidebarMinimizedByDefault || false)
-      setRoundedContainers(settings.roundedContainers || false)
+      setRoundedContainers(settings.roundedContainers !== undefined ? settings.roundedContainers : true)
       setColorTheme(settings.colorTheme || colorThemes[0])
       setPendingSettings({
         isDark: settings.isDark || false,
         sidebarMinimizedByDefault: settings.sidebarMinimizedByDefault || false,
-        roundedContainers: settings.roundedContainers || false,
+        roundedContainers: settings.roundedContainers !== undefined ? settings.roundedContainers : true,
         colorTheme: settings.colorTheme || colorThemes[0],
       })
     }
@@ -110,10 +110,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Apply theme to document
     const root = document.documentElement
+    const body = document.body
+    
     if (isDark) {
       root.classList.add("dark")
+      body.classList.add("dark")
+      // Force dark mode styling
+      body.style.backgroundColor = "#0f172a"
+      body.style.color = "#f1f5f9"
     } else {
       root.classList.remove("dark")
+      body.classList.remove("dark")
+      body.style.backgroundColor = ""
+      body.style.color = ""
     }
 
     // Apply color theme

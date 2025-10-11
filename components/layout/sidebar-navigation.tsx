@@ -46,6 +46,21 @@ const navigationItems = [
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isMinimized, setIsMinimized] = useState(false)
 
+  useEffect(() => {
+    // Load sidebar minimized setting from theme preferences
+    const savedSettings = localStorage.getItem("vazana_theme_settings")
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings)
+        if (settings.sidebarMinimizedByDefault) {
+          setIsMinimized(true)
+        }
+      } catch (error) {
+        console.warn('Failed to load sidebar settings:', error)
+      }
+    }
+  }, [])
+
   return <SidebarContext.Provider value={{ isMinimized, setIsMinimized }}>{children}</SidebarContext.Provider>
 }
 

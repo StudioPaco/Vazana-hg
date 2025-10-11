@@ -37,6 +37,7 @@ import {
   Clock,
   Lock,
   Activity,
+  RefreshCw,
 } from "lucide-react"
 import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
 import AppNavigation from "@/components/layout/app-navigation"
@@ -558,7 +559,10 @@ export default function SettingsPage() {
                         variant={language === "he" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setLanguage("he")}
-                        className="font-hebrew bg-vazana-teal hover:bg-vazana-teal/90"
+                        className={`font-hebrew ${language === "he" 
+                          ? "bg-yellow-500 text-black hover:bg-yellow-600" 
+                          : "bg-vazana-teal hover:bg-vazana-teal/90"
+                        }`}
                       >
                         עברית
                       </Button>
@@ -566,6 +570,10 @@ export default function SettingsPage() {
                         variant={language === "en" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setLanguage("en")}
+                        className={`${language === "en" 
+                          ? "bg-yellow-500 text-black hover:bg-yellow-600" 
+                          : "hover:bg-gray-100"
+                        }`}
                       >
                         English
                       </Button>
@@ -634,6 +642,59 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <Switch />
                     <Label className="font-hebrew">שמירה אוטומטית של טפסים</Label>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Restore Defaults */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between font-hebrew">
+                    <RefreshCw className="w-5 h-5 text-orange-600" />
+                    <span>איפוס הגדרות</span>
+                  </CardTitle>
+                  <CardDescription className="text-right font-hebrew">
+                    החזר את כל ההגדרות לערכי ברירת המחדל
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-sm text-orange-800 text-right font-hebrew">
+                        <strong>אזהרה:</strong> פעולה זו תמחק את כל ההגדרות האישיות שלך ותחזיר את המערכת לערכי ברירת המחדל.
+                      </p>
+                    </div>
+                    
+                    <div className="flex justify-start">
+                      <Button 
+                        onClick={() => {
+                          if (confirm("האם אתה בטוח שברצונך לאפס את כל ההגדרות לערכי ברירת המחדל? פעולה זו בלתי הפיכה.")) {
+                            // Reset all settings to defaults
+                            setLanguage("he")
+                            setFontSize(16)
+                            setSessionTimeout(24)
+                            setNotifications(true)
+                            setEmailAlerts(false)
+                            setPendingSettings({
+                              isDark: false,
+                              sidebarMinimizedByDefault: false,
+                              roundedContainers: true,
+                              colorTheme: colorThemes[0],
+                            })
+                            // Clear localStorage theme settings
+                            localStorage.removeItem("vazana_theme_settings")
+                            alert("כל ההגדרות אופסו לערכי ברירת המחדל!")
+                            // Refresh the page to apply changes
+                            window.location.reload()
+                          }
+                        }}
+                        variant="outline" 
+                        className="border-orange-300 text-orange-700 hover:bg-orange-50 font-hebrew"
+                      >
+                        <RefreshCw className="ml-2 w-4 h-4" />
+                        איפוס לברירת מחדל
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1521,7 +1582,7 @@ export default function SettingsPage() {
                         <li>עבור ל-Meta Developer Console</li>
                         <li>צור אפליקציה חדשה עם WhatsApp Business API</li>
                         <li>העתק את ה-Access Token וה-Verify Token</li>
-                        <li>הגדר את ה-Webhook URL ל: {window.location.origin}/api/whatsapp/webhook</li>
+                        <li>הגדר את ה-Webhook URL ל: {typeof window !== 'undefined' ? window.location.origin : '[YOUR_DOMAIN]'}/api/whatsapp/webhook</li>
                       </ol>
                     </div>
                   </div>

@@ -247,7 +247,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
           </DialogTitle>
         </DialogHeader>
         
-        <div className="overflow-y-auto px-1 max-h-[calc(85vh-120px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <div className="overflow-y-auto px-1 max-h-[calc(75vh-120px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           <form id="edit-job-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Job Info Section */}
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -518,7 +518,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
         </div>
         
         {/* Action Buttons - Fixed at bottom */}
-        <div className="flex gap-4 justify-end border-t pt-4 mt-4 bg-white">
+        <div className="flex gap-4 justify-end border-t pt-4 mt-4 bg-white sticky bottom-0 z-20">
           <Button
             type="button"
             variant="outline"
