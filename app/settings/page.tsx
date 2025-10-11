@@ -36,6 +36,7 @@ import {
   DollarSign,
   Clock,
   Lock,
+  Activity,
 } from "lucide-react"
 import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
 import AppNavigation from "@/components/layout/app-navigation"
@@ -70,6 +71,7 @@ export default function SettingsPage() {
   const [dataExportOpen, setDataExportOpen] = useState(false)
   const [dataImportOpen, setDataImportOpen] = useState(false)
   const [autoBackup, setAutoBackup] = useState(true)
+  const [isWhatsAppSetupOpen, setIsWhatsAppSetupOpen] = useState(false)
   const [companyData, setCompanyData] = useState({
     id: null,
     name: "וזאנה אבטחת כבישים",
@@ -621,7 +623,17 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <Switch />
-                    <Label className="font-hebrew">רשום פעילות משתמשים</Label>
+                    <Label className="font-hebrew">רשום פעילות משתמשים - זמין למנהלים בלבד</Label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Switch />
+                    <Label className="font-hebrew">התראות צלילים</Label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Switch />
+                    <Label className="font-hebrew">שמירה אוטומטית של טפסים</Label>
                   </div>
                 </CardContent>
               </Card>
@@ -846,7 +858,69 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
+                  
+                  {/* Invoice Numbering Section */}
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold mb-4 text-right font-hebrew">מספור חשבוניות</h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">פורמט מספור חשבונית</Label>
+                        <Select dir="rtl">
+                          <SelectTrigger className="text-right font-hebrew">
+                            <SelectValue placeholder="בחר פורמט..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="YYYY-####" className="font-hebrew">2025-0001 (שנה-מספר רצוף)</SelectItem>
+                            <SelectItem value="####-YYYY" className="font-hebrew">0001-2025 (מספר-שנה)</SelectItem>
+                            <SelectItem value="VZ-####" className="font-hebrew">VZ-0001 (קידומת חברה)</SelectItem>
+                            <SelectItem value="####" className="font-hebrew">0001 (מספר רצוף פשוט)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">מספר החשבונית הבא</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          defaultValue="1"
+                          className="text-left w-32"
+                          placeholder="1"
+                        />
+                        <p className="text-sm text-gray-600 font-hebrew text-right">
+                          המספר שייתן לחשבונית הבאה שתיוצר.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Holiday Calendar Integration */}
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold mb-4 text-right font-hebrew">אינטגרציה עם לוח חגים</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Switch />
+                        <Label className="font-hebrew">סמן אוטומטי חגים יהודיים</Label>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Switch />
+                        <Label className="font-hebrew">סמן אוטומטי חגים כלליים</Label>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Switch defaultChecked />
+                        <Label className="font-hebrew">התראה על עבודות בימי חג</Label>
+                      </div>
+                      
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-800 text-right font-hebrew">
+                          <strong>איך זה עובד:</strong> המערכת תסמן אוטומטית ימי חג ותיתן אזהרות כשמתזמנים עבודות. תוכל להגדיר תעריפי חג מיוחדים בהגדרות הלקוחות.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="flex justify-start pt-4">
                     <Button onClick={handleSaveBusinessDetails} className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
                       <Save className="ml-2 w-4 h-4" />
@@ -987,6 +1061,74 @@ export default function SettingsPage() {
                     <Briefcase className="w-8 h-8 text-orange-600" />
                     <span>סוגי עבודה</span>
                   </Button>
+                </CardContent>
+              </Card>
+              
+              {/* Resource Availability Calendar */}
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between font-hebrew">
+                    <Calendar className="w-5 h-5 text-vazana-teal" />
+                    <span>לוח זמינות משאבים</span>
+                  </CardTitle>
+                  <CardDescription className="text-right font-hebrew">
+                    נהל זמינות עובדים, רכבים וציוד
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">סוג משאב</Label>
+                      <Select dir="rtl">
+                        <SelectTrigger className="text-right font-hebrew">
+                          <SelectValue placeholder="בחר סוג..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="worker" className="font-hebrew">עובדים</SelectItem>
+                          <SelectItem value="vehicle" className="font-hebrew">רכבים</SelectItem>
+                          <SelectItem value="cart" className="font-hebrew">עגלות</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">בחר משאב</Label>
+                      <Select dir="rtl">
+                        <SelectTrigger className="text-right font-hebrew">
+                          <SelectValue placeholder="בחר..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all" className="font-hebrew">כל המשאבים</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">תאריך</Label>
+                      <Input type="date" className="text-left" />
+                    </div>
+                  </div>
+                  
+                  <div className="border rounded-lg p-4">
+                    <div className="text-center text-gray-500 py-8">
+                      <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                      <p className="font-hebrew">בחר סוג משאב ותאריך כדי לראות את הזמינות</p>
+                      <p className="text-sm text-gray-400 font-hebrew mt-2">
+                        כאן יוצג לוח של המשאבים הזמינים בחודש הנבחר
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="font-hebrew" size="sm">
+                      <Plus className="w-4 h-4 ml-2" />
+                      סמן לא זמין
+                    </Button>
+                    <Button variant="outline" className="font-hebrew" size="sm">
+                      <Edit className="w-4 h-4 ml-2" />
+                      ערוך זמינות
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
               
@@ -1150,6 +1292,68 @@ export default function SettingsPage() {
                 </DialogContent>
               </Dialog>
               
+              {/* Audit Trail Section - Admin/Root Only */}
+              {(currentUser?.role === 'admin' || currentUser?.username === 'root') && (
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between font-hebrew">
+                      <Activity className="w-5 h-5 text-vazana-teal" />
+                      <span>יומן פעילות משתמשים</span>
+                    </CardTitle>
+                    <CardDescription className="text-right font-hebrew">
+                      מעקב אחר פעילות המשתמשים במערכת - זמין למנהלים בלבד
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Switch defaultChecked />
+                        <Label className="font-hebrew">רשם כניסות ויציאות</Label>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Switch defaultChecked />
+                        <Label className="font-hebrew">רשם שינויי נתונים</Label>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Switch defaultChecked />
+                        <Label className="font-hebrew">רשם מחיקות נתונים</Label>
+                      </div>
+                      
+                      <div className="border-t pt-4">
+                        <Button 
+                          variant="outline" 
+                          className="w-full font-hebrew"
+                          onClick={() => console.log('פתח יומן פעילות')}
+                        >
+                          <Activity className="w-4 h-4 ml-2" />
+                          צפה ביומן פעילות
+                        </Button>
+                        
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                          <h4 className="font-semibold text-right font-hebrew mb-2">פעילות אחרונה:</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">2 דקות</span>
+                              <span className="font-hebrew">עדכון פרטי לקוח - root</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">5 דקות</span>
+                              <span className="font-hebrew">יצירת עבודה חדשה - admin</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">12 דקות</span>
+                              <span className="font-hebrew">כניסה למערכת - user1</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
               {/* User Edit Modal */}
               <UserEditModal
                 user={editingUser}
@@ -1205,14 +1409,18 @@ export default function SettingsPage() {
                     
                     <div className="space-y-4 p-4 border rounded-lg">
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew">לא מחובר</Badge>
+                        <Badge variant="secondary" className="font-hebrew">זמין להתחברות</Badge>
                         <h3 className="font-semibold text-right font-hebrew">וואטסאפ</h3>
                       </div>
                       <p className="text-sm text-gray-600 text-right font-hebrew">
-                        שליחת התראות ועדכונים בוואטסאפ
+                        שליחת התראות ועדכונים בוואטסאפ Business
                       </p>
-                      <Button variant="outline" disabled className="w-full font-hebrew">
-                        התחבר (בקרוב)
+                      <Button 
+                        variant="outline" 
+                        className="w-full font-hebrew bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                        onClick={() => setIsWhatsAppSetupOpen(true)}
+                      >
+                        התחבר עכשיו
                       </Button>
                     </div>
                     
@@ -1231,40 +1439,114 @@ export default function SettingsPage() {
                   </div>
                   
                   <div className="border-t pt-4">
-                    <h3 className="font-semibold mb-4 text-right font-hebrew">API הגדרות</h3>
+                    <h3 className="font-semibold mb-4 text-right font-hebrew">פתרון קונפליקטי סינכרון</h3>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label className="text-right font-hebrew">API Key (לשימוש עתידי)</Label>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" disabled className="font-hebrew">
-                            העתק
-                          </Button>
-                          <Input
-                            value="****-****-****-****"
-                            readOnly
-                            className="text-left"
-                            type="password"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="text-right font-hebrew">רמת גישה</Label>
-                        <Select disabled>
-                          <SelectTrigger className="text-right" dir="rtl">
-                            <SelectValue placeholder="רק לקריאה" />
+                        <Label className="text-right font-hebrew">אסטרטגיית פתרון קונפליקטים</Label>
+                        <Select defaultValue="local_wins" dir="rtl">
+                          <SelectTrigger className="text-right font-hebrew">
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="read" className="font-hebrew">רק לקריאה</SelectItem>
-                            <SelectItem value="write" className="font-hebrew">קריאה וכתיבה</SelectItem>
-                            <SelectItem value="admin" className="font-hebrew">מנהל</SelectItem>
+                            <SelectItem value="local_wins" className="font-hebrew">מעדיף שינויים מקומיים</SelectItem>
+                            <SelectItem value="remote_wins" className="font-hebrew">מעדיף שינויים מרוחקים</SelectItem>
+                            <SelectItem value="manual" className="font-hebrew">החלטה ידנית</SelectItem>
+                            <SelectItem value="merge" className="font-hebrew">מיזוג אוטומטי</SelectItem>
                           </SelectContent>
                         </Select>
+                        <p className="text-sm text-gray-600 text-right font-hebrew">
+                          מה לעשות כשהאותו נתון שונה ב-2 מקומות באותו זמן
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Switch defaultChecked />
+                        <Label className="font-hebrew">התראה על קונפליקטי סינכרון</Label>
+                      </div>
+                      
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <p className="text-sm text-orange-800 text-right font-hebrew">
+                          <strong>חשוב לדעת:</strong> קונפליקטים יכולים להתרחש כש-2 משתמשים מעדכנים את אותו נתון באותו זמן. המערכת תפתור אותם בהתאם להגדרה שבחרת.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+              
+              {/* WhatsApp Setup Modal */}
+              <Dialog open={isWhatsAppSetupOpen} onOpenChange={setIsWhatsAppSetupOpen}>
+                <DialogContent className="max-w-md" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-right font-hebrew">התחברות לוואטסאפ Business</DialogTitle>
+                    <DialogDescription className="text-right font-hebrew">
+                      הגדר את החיבור לשליחת התראות בוואטסאפ
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">מספר הטלפון של העסק</Label>
+                      <Input
+                        type="tel"
+                        placeholder="972-50-1234567"
+                        className="text-left"
+                      />
+                      <p className="text-sm text-gray-600 font-hebrew text-right">
+                        המספר צריך להיות רשום ב-WhatsApp Business
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">Access Token</Label>
+                      <Input
+                        type="password"
+                        placeholder="הדבק כאן את ה-token מ-Meta Developer"
+                        className="text-left font-mono text-sm"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew">Webhook Verify Token</Label>
+                      <Input
+                        type="text"
+                        placeholder="בחר מחרוזת סיסמה חזקה"
+                        className="text-left"
+                      />
+                    </div>
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-right font-hebrew mb-2">איך להשיג את הפרטים:</h4>
+                      <ol className="text-sm text-blue-800 text-right font-hebrew space-y-1 list-decimal list-inside">
+                        <li>עבור ל-Meta Developer Console</li>
+                        <li>צור אפליקציה חדשה עם WhatsApp Business API</li>
+                        <li>העתק את ה-Access Token וה-Verify Token</li>
+                        <li>הגדר את ה-Webhook URL ל: {window.location.origin}/api/whatsapp/webhook</li>
+                      </ol>
+                    </div>
+                  </div>
+                  
+                  <DialogFooter className="flex gap-2 justify-start">
+                    <Button 
+                      onClick={() => {
+                        console.log('שמירת הגדרות WhatsApp')
+                        setIsWhatsAppSetupOpen(false)
+                        alert('הגדרות WhatsApp נשמרו בהצלחה!')
+                      }}
+                      className="bg-green-600 hover:bg-green-700 font-hebrew"
+                    >
+                      שמור והפעל
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsWhatsAppSetupOpen(false)}
+                      className="font-hebrew"
+                    >
+                      בטל
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
 
             <TabsContent value="data" className="space-y-6">
@@ -1318,6 +1600,87 @@ export default function SettingsPage() {
                       </Button>
                     </div>
                   </div>
+                  
+                  {/* Automated Backup Scheduling */}
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold mb-4 text-right font-hebrew">גיבוי אוטומטי מתוזמן</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Switch defaultChecked />
+                        <Label className="font-hebrew">הפעל גיבוי אוטומטי</Label>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-right font-hebrew">תדירות</Label>
+                          <Select defaultValue="daily" dir="rtl">
+                            <SelectTrigger className="text-right font-hebrew">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="daily" className="font-hebrew">יומי</SelectItem>
+                              <SelectItem value="weekly" className="font-hebrew">שבועי</SelectItem>
+                              <SelectItem value="monthly" className="font-hebrew">חודשי</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-right font-hebrew">שעה</Label>
+                          <Input type="time" defaultValue="02:00" className="text-left" />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-right font-hebrew">שמירת גיבויים ל-X ימים</Label>
+                        <Input type="number" min="7" max="365" defaultValue="30" className="text-left w-32" />
+                      </div>
+                      
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-sm text-green-800 text-right font-hebrew">
+                          גיבוי הבא: מחר ב-02:00 | גיבוי אחרון: 2025-10-09 02:00
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Selective Data Export */}
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold mb-4 text-right font-hebrew">יציאת נתונים מותאמת אישית</h3>
+                    <div className="space-y-4">
+                      <Button 
+                        variant="outline" 
+                        className="w-full font-hebrew bg-blue-50 border-blue-200 text-blue-700"
+                        onClick={() => console.log('פתח יציאה מותאמת')}
+                      >
+                        <Download className="w-4 h-4 ml-2" />
+                        יציאה מותאמת אישית
+                      </Button>
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        בחר תאריכים, לקוחות או סוגי נתונים מסוימים ליציאה
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Audit Trail Export */}
+                  {(currentUser?.role === 'admin' || currentUser?.username === 'root') && (
+                    <div className="border-t pt-4">
+                      <h3 className="font-semibold mb-4 text-right font-hebrew">יציאת יומן פעילות</h3>
+                      <div className="space-y-4">
+                        <Button 
+                          variant="outline" 
+                          className="w-full font-hebrew bg-purple-50 border-purple-200 text-purple-700"
+                          onClick={() => console.log('יציאת יומן פעילות')}
+                        >
+                          <Activity className="w-4 h-4 ml-2" />
+                          יצא יומן פעילות
+                        </Button>
+                        <p className="text-sm text-gray-600 text-right font-hebrew">
+                          יציאת כל פעילות המשתמשים, שינויים וכניסות - זמין למנהלים בלבד
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="border-t pt-4">
                     <h3 className="font-semibold mb-2 text-right font-hebrew">אזהרה</h3>

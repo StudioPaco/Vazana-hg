@@ -666,7 +666,6 @@ export default function NewInvoicePage() {
                     >
                       תצוגה מקדימה
                     </Button>
-                    <BackButton href="/invoices" />
                   </div>
                 </CardContent>
               </Card>

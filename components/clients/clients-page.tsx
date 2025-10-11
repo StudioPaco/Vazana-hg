@@ -173,7 +173,7 @@ export default function ClientsPage() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from("jobs")
-        .select("id, job_number, work_type, job_date, site, payment_status")
+        .select("id, job_number, work_type, job_date, site, payment_status, job_status")
         .eq("client_id", clientId)
         .order("job_date", { ascending: false })
         .limit(10)
@@ -185,10 +185,10 @@ export default function ClientsPage() {
       }
 
       if (data) {
-        // Use job_status directly from database
+        // Use job_status directly from database (should be auto-calculated)
         const jobsWithStatus = data.map(job => ({
           ...job,
-          job_status: job.job_status || 'לא צוין' // Default if missing
+          job_status: job.job_status || 'ממתין' // Default to waiting if missing
         }))
         setClientJobs((prev) => ({ ...prev, [clientId]: jobsWithStatus }))
       }
