@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,13 +18,13 @@ interface Client {
   contact_person: string
   phone: string
   email: string
-  address: string
-  city: string
-  security_rate: number
-  installation_rate: number
-  payment_method: number
-  status: string
-  notes: string
+  address?: string
+  city?: string
+  security_rate?: number
+  installation_rate?: number
+  payment_method?: string
+  status?: string
+  notes?: string
 }
 
 interface Job {
@@ -37,10 +37,20 @@ interface Job {
   job_status?: string
 }
 
-export default function ClientsPage() {
+interface ClientsPageProps {
+  showHeader?: boolean
+  searchTerm?: string
+  onStatsCalculated?: (stats: {
+    averageSecurityRate: number
+    activeClientsCount: number
+    mostActiveClient: { name: string; count: number }
+  }) => void
+}
+
+export default function ClientsPage({ showHeader = true, searchTerm: externalSearchTerm = "", onStatsCalculated }: ClientsPageProps) {
   const [clients, setClients] = useState<Client[]>([])
   const [filteredClients, setFilteredClients] = useState<Client[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState(externalSearchTerm)
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientJobs, setClientJobs] = useState<{ [key: string]: Job[] }>({})
@@ -51,7 +61,7 @@ export default function ClientsPage() {
   // Calculate client statistics
   const activeClientsCount = clients.filter((client) => client.status === "active").length
   const averageSecurityRate =
-    clients.length > 0 ? Math.round(clients.reduce((sum, client) => sum + client.security_rate, 0) / clients.length) : 0
+    clients.length > 0 ? Math.round(clients.reduce((sum, client) => sum + (client.security_rate || 0), 0) / clients.length) : 0
     
   const [realClientStats, setRealClientStats] = useState<{[key: string]: number}>({})
   const [isLoadingStats, setIsLoadingStats] = useState(false)
@@ -134,12 +144,17 @@ export default function ClientsPage() {
     fetchClients()
   }, [])
 
+  // Sync external search term with internal state
+  useEffect(() => {
+    setSearchTerm(externalSearchTerm)
+  }, [externalSearchTerm])
+
   useEffect(() => {
     const filtered = clients.filter(
       (client) =>
         client.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.city.toLowerCase().includes(searchTerm.toLowerCase()),
+        (client.city || '').toLowerCase().includes(searchTerm.toLowerCase()),
     )
     setFilteredClients(filtered)
   }, [searchTerm, clients])
@@ -150,6 +165,22 @@ export default function ClientsPage() {
     }
   }, [clients])
 
+  // Call stats callback when stats change - using useMemo to prevent infinite loops
+  const statsData = useMemo(() => {
+    const mostActive = getMostActiveClient()
+    return {
+      averageSecurityRate,
+      activeClientsCount,
+      mostActiveClient: mostActive
+    }
+  }, [averageSecurityRate, activeClientsCount, realClientStats])
+
+  useEffect(() => {
+    if (onStatsCalculated && !loading && statsData) {
+      onStatsCalculated(statsData)
+    }
+  }, [statsData, loading, onStatsCalculated])
+
   const handleDeleteClient = async (id: string) => {
     if (confirm("האם אתה בטוח שברצונך למחוק לקוח זה?")) {
       setClients(clients.filter((client) => client.id !== id))
@@ -157,7 +188,8 @@ export default function ClientsPage() {
   }
 
   const handleCopyClient = async (client: Client) => {
-    const clientInfo = `${client.company_name}\n${client.contact_person}\n${client.phone}\n${client.email}\n${client.address}, ${client.city}`
+    const addressInfo = [client.address, client.city].filter(Boolean).join(', ')
+    const clientInfo = `${client.company_name}\n${client.contact_person}\n${client.phone}\n${client.email}${addressInfo ? `\n${addressInfo}` : ''}`
     try {
       await navigator.clipboard.writeText(clientInfo)
       alert("פרטי הלקוח הועתקו ללוח")
@@ -233,61 +265,67 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="relative pb-16">
-        <div className="absolute top-0 right-0">
-          <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
-          <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
+      {showHeader && (
+        <div className="relative pb-16">
+          <div className="absolute top-0 right-0">
+            <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
+            <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
+          </div>
+          <div className="absolute top-0 left-0">
+            <Users className="h-6 w-6 text-gray-400" />
+          </div>
         </div>
-        <div className="absolute top-0 left-0">
-          <Users className="h-6 w-6 text-gray-400" />
-        </div>
-      </div>
+      )}
 
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <StatsContainer
-            title="תעריף אבטחה ממוצע"
-            value={`₪${averageSecurityRate}`}
-            icon={Users}
-            color="blue"
-          />
-          
-          <StatsContainer
-            title="לקוחות פעילים"
-            value={activeClientsCount}
-            icon={Users}
-            color="green"
-          />
-          
-          <StatsContainer
-            title="לקוח מוביל החודש"
-            value={mostActiveClient.name}
-            subtitle={`${mostActiveClient.count} עבודות`}
-            icon={Trophy}
-            color="yellow"
-          />
-        </div>
-        
-        <div className="flex justify-between items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Input
-              placeholder="חפש לקוחות (שם, איש קשר, עיר)..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10 text-right"
-              dir="rtl"
+        {showHeader && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <StatsContainer
+              title="תעריף אבטחה ממוצע"
+              value={`₪${averageSecurityRate}`}
+              icon={Users}
+              color="blue"
             />
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            
+            <StatsContainer
+              title="לקוחות פעילים"
+              value={activeClientsCount}
+              icon={Users}
+              color="green"
+            />
+            
+            <StatsContainer
+              title="לקוח מוביל החודש"
+              value={mostActiveClient.name}
+              subtitle={`${mostActiveClient.count} עבודות`}
+              icon={Trophy}
+              color="yellow"
+            />
           </div>
-          
-          <Button 
-            onClick={() => setNewClientModalOpen(true)}
-            className="bg-teal-500 hover:bg-teal-600 text-white"
-          >
-            <Plus className="ml-2 h-4 w-4" />
-            הוסף לקוח
-          </Button>
-        </div>
+        )}
+        
+        {showHeader && (
+          <div className="flex justify-between items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Input
+                placeholder="חפש לקוחות (שם, איש קשר, עיר)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pr-10 text-right"
+                dir="rtl"
+              />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            </div>
+            
+            <Button 
+              onClick={() => setNewClientModalOpen(true)}
+              className="bg-teal-500 hover:bg-teal-600 text-white"
+            >
+              <Plus className="ml-2 h-4 w-4" />
+              הוסף לקוח
+            </Button>
+          </div>
+        )}
 
         {filteredClients.length === 0 ? (
           <Card>
@@ -359,7 +397,7 @@ export default function ClientsPage() {
                       </div>
                       <div className="flex items-center justify-end">
                         <span className="mr-2 text-sm">
-                          {client.address}, {client.city}
+                          {[client.address, client.city].filter(Boolean).join(', ') || 'לא הוגדר'}
                         </span>
                         <MapPin className="h-3 w-3 text-gray-500" />
                       </div>
@@ -368,18 +406,18 @@ export default function ClientsPage() {
                     <div className="text-right space-y-1">
                       <div>
                         <p className="text-xs text-gray-600">תעריף אבטחה</p>
-                        <p className="font-medium text-sm">₪{client.security_rate}</p>
+                        <p className="font-medium text-sm">₪{client.security_rate || 0}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-600">תעריף התקנה</p>
-                        <p className="font-medium text-sm">₪{client.installation_rate}</p>
+                        <p className="font-medium text-sm">₪{client.installation_rate || 0}</p>
                       </div>
                     </div>
 
                     <div className="text-right space-y-1">
                       <div>
                         <p className="text-xs text-gray-600">אופן תשלום (יומי)</p>
-                        <p className="font-medium text-sm">{client.payment_method}</p>
+                        <p className="font-medium text-sm">{client.payment_method || 'לא הוגדר'}</p>
                       </div>
                       {client.notes && (
                         <div>
@@ -445,7 +483,7 @@ export default function ClientsPage() {
           onOpenChange={setEditModalOpen}
           onClientUpdated={(updatedClient) => {
             setClients(clients.map(client => 
-              client.id === updatedClient.id ? updatedClient : client
+              client.id === updatedClient.id ? { ...client, ...updatedClient } : client
             ))
             setEditingClient(null)
           }}

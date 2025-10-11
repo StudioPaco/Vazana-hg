@@ -141,6 +141,17 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+/* Enhanced dark mode text visibility fixes */
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-gray-400 {
+  color: oklch(0.8 0 0) !important; /* Light gray for dark mode */
+}
+
+.dark .text-sm {
+  color: oklch(0.7 0 0); /* Slightly dimmer for small text */
+}
+
 @theme inline {
   --font-hebrew: "Alef", sans-serif;
   --font-english: "Futura", sans-serif;

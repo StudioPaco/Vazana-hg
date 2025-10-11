@@ -10,11 +10,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon } from "lucide-react"
+import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon, RotateCcw } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import DatabaseDropdown from "@/components/ui/database-dropdown"
 import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/hooks/use-job-form-data"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
+import { SimpleAutoSave } from "@/lib/simple-auto-save"
+import { customAlert, customConfirm } from "@/lib/custom-alert"
 
 // Standardized shift types - single source of truth
 const SHIFT_TYPES = [
@@ -26,6 +28,8 @@ const SHIFT_TYPES = [
 export default function NewJobForm() {
   const router = useRouter()
   const [jobNumber, setJobNumber] = useState("")
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true)
+  const autoSave = new SimpleAutoSave('new-job-draft', 15)
   const { preferences } = useUserPreferences()
   const { clients, loading: clientsLoading, error: clientsError } = useClients()
   const { workTypes, loading: workTypesLoading, error: workTypesError } = useWorkTypes()
@@ -45,6 +49,12 @@ export default function NewJobForm() {
     clientPhone: "",
     clientEmail: "",
     clientAddress: "",
+    clientCity: "",
+    clientPostalCode: "",
+    clientPaymentTerms: "immediate",
+    clientHourlyRate: "",
+    clientMaintenanceRate: "",
+    clientNotes: "",
     existingClientId: "",
     // Job resources
     employee: "",
@@ -58,7 +68,35 @@ export default function NewJobForm() {
     receiptId: null,
     isSample: false,
   })
+  
+  // Auto-save on form data changes
+  useEffect(() => {
+    autoSave.save({ formData, clientType })
+  }, [formData, clientType])
 
+  // Load auto-save setting from localStorage
+  useEffect(() => {
+    const autoSave = localStorage.getItem('vazana-auto-save-forms')
+    if (autoSave !== null) {
+      setAutoSaveEnabled(autoSave === 'true')
+    }
+  }, [])
+  
+  // Reset timeout when user visits the form
+  useEffect(() => {
+    autoSave.resetTimeout()
+  }, [])
+  
+  // Load saved data on mount
+  useEffect(() => {
+    const savedData = autoSave.load()
+    if (savedData && savedData.formData && savedData.clientType) {
+      setFormData(savedData.formData)
+      setClientType(savedData.clientType)
+      console.log('Loaded auto-saved form data')
+    }
+  }, [])
+  
   useEffect(() => {
     if (preferences && formData.calendarSync !== preferences.add_to_calendar_default) {
       setFormData(prev => ({
@@ -145,6 +183,7 @@ export default function NewJobForm() {
         { field: formData.clientPhone, name: "איש קשר", key: "clientPhone", message: "הכנס שם איש הקשר" },
         { field: formData.clientEmail, name: 'דוא"ל', key: "clientEmail", message: 'הכנס כתובת דוא"ל תקינה' },
         { field: formData.clientAddress, name: "כתובת", key: "clientAddress", message: "הכנס כתובת החברה" },
+        { field: formData.clientCity, name: "עיר", key: "clientCity", message: "הכנס שם העיר" },
       )
     }
 
@@ -160,7 +199,7 @@ export default function NewJobForm() {
     if (missingFields.length > 0) {
       setValidationErrors(errors)
       const fieldNames = missingFields.map(({ name }) => name).join(", ")
-      alert(`שדות חובה חסרים: ${fieldNames}`)
+      customAlert(`שדות חובה חסרים: ${fieldNames}`)
       return
     }
 
@@ -192,7 +231,7 @@ export default function NewJobForm() {
         cart_id: selectedCart ? selectedCart.id : null, // Use proper UUID instead of string
         service_description: formData.description || null,
         add_to_calendar: formData.calendarSync,
-        payment_status: "pending", // Use English values for database
+        payment_status: "ממתין לתשלום", // Hebrew payment status
         created_by: "root",
         // created_by_id: sampleUserId, // Temporarily removed to avoid foreign key constraint
         // Let database handle created_date/updated_date with DEFAULT NOW()
@@ -204,7 +243,7 @@ export default function NewJobForm() {
         // Add new required fields
         job_time: null, // Will be filled later or left null
         job_location: formData.location, // Use the location as job_location
-        job_status: 'ממתין', // Will be auto-calculated by trigger
+        // job_status will be auto-calculated by database trigger
       }
 
       console.log("[v0] Submitting job data:", jobData)
@@ -218,6 +257,10 @@ export default function NewJobForm() {
       }
 
       console.log("[v0] Job created successfully:", data)
+      
+      // Clear auto-save after successful job creation
+      autoSave.clear()
+      
       alert("העבודה נוצרה בהצלחה!")
       router.push("/jobs")
     } catch (error) {
@@ -390,6 +433,7 @@ export default function NewJobForm() {
                     id="clientName"
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                    placeholder="הזן שם חברה"
                     className={`text-right ${validationErrors.clientName ? "border-red-500" : ""}`}
                     dir="rtl"
                   />
@@ -405,7 +449,7 @@ export default function NewJobForm() {
                     id="clientPhone"
                     value={formData.clientPhone}
                     onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
-                    placeholder="דוגמה: משרד ראשי, בניין א'"
+                    placeholder="שם איש קשר ראשי"
                     className={`text-right ${validationErrors.clientPhone ? "border-red-500" : ""}`}
                     dir="rtl"
                   />
@@ -415,15 +459,15 @@ export default function NewJobForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="clientEmail" className="text-right block">
-                    דוא\"ל *
+                    כתובת דוא"ל *
                   </Label>
                   <Input
                     id="clientEmail"
                     type="email"
                     value={formData.clientEmail}
                     onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
-                    className={`text-right ${validationErrors.clientEmail ? "border-red-500" : ""}`}
-                    dir="rtl"
+                    placeholder="contact@company.com"
+                    className={`text-left ${validationErrors.clientEmail ? "border-red-500" : ""}`}
                   />
                   {validationErrors.clientEmail && (
                     <p className="text-red-500 text-sm text-right">{validationErrors.clientEmail}</p>
@@ -437,12 +481,101 @@ export default function NewJobForm() {
                     id="clientAddress"
                     value={formData.clientAddress}
                     onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
+                    placeholder="כתובת רחוב"
                     className={`text-right ${validationErrors.clientAddress ? "border-red-500" : ""}`}
                     dir="rtl"
                   />
                   {validationErrors.clientAddress && (
                     <p className="text-red-500 text-sm text-right">{validationErrors.clientAddress}</p>
                   )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientCity" className="text-right block">
+                    עיר *
+                  </Label>
+                  <Input
+                    id="clientCity"
+                    value={formData.clientCity}
+                    onChange={(e) => setFormData({ ...formData, clientCity: e.target.value })}
+                    placeholder="שם העיר"
+                    className={`text-right ${validationErrors.clientCity ? "border-red-500" : ""}`}
+                    dir="rtl"
+                  />
+                  {validationErrors.clientCity && (
+                    <p className="text-red-500 text-sm text-right">{validationErrors.clientCity}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientPostalCode" className="text-right block">
+                    תיבת דואר
+                  </Label>
+                  <Input
+                    id="clientPostalCode"
+                    value={formData.clientPostalCode}
+                    onChange={(e) => setFormData({ ...formData, clientPostalCode: e.target.value })}
+                    placeholder="מספר תיבת דואר"
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientPaymentTerms" className="text-right block">
+                    אופן תשלום
+                  </Label>
+                  <Select
+                    value={formData.clientPaymentTerms}
+                    onValueChange={(value) => setFormData({ ...formData, clientPaymentTerms: value })}
+                  >
+                    <SelectTrigger className="text-right">
+                      <SelectValue placeholder="בחר אופן תשלום" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="immediate">מיידי</SelectItem>
+                      <SelectItem value="current+15">שוטף +15</SelectItem>
+                      <SelectItem value="current+30">שוטף +30</SelectItem>
+                      <SelectItem value="current+60">שוטף +60</SelectItem>
+                      <SelectItem value="current+90">שוטף +90</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientHourlyRate" className="text-right block">
+                    תעריף שעתי (₪)
+                  </Label>
+                  <Input
+                    id="clientHourlyRate"
+                    type="number"
+                    value={formData.clientHourlyRate}
+                    onChange={(e) => setFormData({ ...formData, clientHourlyRate: e.target.value })}
+                    placeholder="120"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientMaintenanceRate" className="text-right block">
+                    תעריף הערכה (₪)
+                  </Label>
+                  <Input
+                    id="clientMaintenanceRate"
+                    type="number"
+                    value={formData.clientMaintenanceRate}
+                    onChange={(e) => setFormData({ ...formData, clientMaintenanceRate: e.target.value })}
+                    placeholder="150"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="clientNotes" className="text-right block">
+                    הערות על הלקוח
+                  </Label>
+                  <Textarea
+                    id="clientNotes"
+                    value={formData.clientNotes}
+                    onChange={(e) => setFormData({ ...formData, clientNotes: e.target.value })}
+                    placeholder="הערות נוספות על לקוח זה..."
+                    className="min-h-[80px] text-right"
+                    dir="rtl"
+                  />
                 </div>
               </div>
             )}
@@ -555,6 +688,45 @@ export default function NewJobForm() {
         <div className="flex gap-4 justify-start">
           <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white px-8">
             יצר עבודה
+          </Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => {
+              if (customConfirm('האם אתה בטוח שברצונך לאפס את כל הטיוטה השמורה? פעולה זו בלתי הפיכה.')) {
+                autoSave.clear()
+                // Reset all form fields to initial state
+                setFormData({
+                  jobType: "",
+                  date: "",
+                  location: "",
+                  shiftType: "",
+                  city: "",
+                  clientName: "",
+                  clientPhone: "",
+                  clientEmail: "",
+                  clientAddress: "",
+                  existingClientId: "",
+                  employee: "",
+                  vehicle: "",
+                  cart: "",
+                  description: "",
+                  calendarSync: preferences?.add_to_calendar_default ?? false,
+                  totalAmount: null,
+                  jobSpecificShiftRate: null,
+                  notes: null,
+                  receiptId: null,
+                  isSample: false,
+                })
+                setClientType("existing")
+                setValidationErrors({})
+                customAlert('טיוטת העבודה אופסה בהצלחה!')
+              }
+            }}
+            className="px-4 text-orange-600 border-orange-300 hover:bg-orange-50"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            איפוס טיוטה
           </Button>
           <Button type="button" variant="outline" onClick={handleCancel} className="px-8 bg-transparent">
             ביטול

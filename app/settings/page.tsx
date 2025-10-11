@@ -72,8 +72,41 @@ export default function SettingsPage() {
   const [dataExportOpen, setDataExportOpen] = useState(false)
   const [dataImportOpen, setDataImportOpen] = useState(false)
   const [autoBackup, setAutoBackup] = useState(true)
+  const [autoSaveForms, setAutoSaveForms] = useState(true)
+  
+  // Load auto-save setting from localStorage on mount
+  useEffect(() => {
+    const savedAutoSave = localStorage.getItem('vazana-auto-save-forms')
+    if (savedAutoSave !== null) {
+      setAutoSaveForms(savedAutoSave === 'true')
+    } else {
+      // First time - set to default (true) and save to localStorage
+      localStorage.setItem('vazana-auto-save-forms', 'true')
+    }
+    
+    // Load font size from localStorage
+    const savedFontSize = localStorage.getItem('vazana-font-size')
+    if (savedFontSize) {
+      const size = parseInt(savedFontSize)
+      if (size >= 12 && size <= 20) {
+        setFontSize(size)
+        document.documentElement.style.setProperty('--font-size-base', `${size}px`)
+      }
+    }
+  }, [])
   const [isWhatsAppSetupOpen, setIsWhatsAppSetupOpen] = useState(false)
-  const [companyData, setCompanyData] = useState({
+  const [companyData, setCompanyData] = useState<{
+    id?: string | null;
+    name: string;
+    email: string;
+    registration: string;
+    address: string;
+    phone: string;
+    bankAccountName: string;
+    bankName: string;
+    bankBranch: string;
+    bankAccountNumber: string;
+  }>({
     id: null,
     name: "וזאנה אבטחת כבישים",
     email: "",
@@ -96,7 +129,7 @@ export default function SettingsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isMinimized } = useSidebar()
-  const { pendingSettings, setPendingSettings, applySettings, colorThemes } = useTheme()
+  const { pendingSettings, setPendingSettings, applySettings, colorThemes, isDark, sidebarMinimizedByDefault, roundedContainers, colorTheme } = useTheme()
   const supabase = createClient()
   const [activeTab, setActiveTab] = useState("general")
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -212,7 +245,7 @@ export default function SettingsPage() {
       }
       localStorage.setItem("bankAccountInfo", JSON.stringify(bankInfo))
 
-      const updateData = {
+      const updateData: any = {
         company_name: companyData.name,
         company_email: companyData.email,
         registration_number: companyData.registration,
@@ -370,13 +403,15 @@ export default function SettingsPage() {
         username: data.username,
         role: data.role === "admin" ? "מנהל" : "משתמש",
         description: data.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
+        isSystem: false,
       }
       setUsers((prev) => [...prev, newUser])
       setIsAddUserOpen(false)
       alert("משתמש חדש נוסף בהצלחה! כעת הוא יכול להתחבר למערכת")
     } catch (error) {
       console.error("Error adding user:", error)
-      alert(`שגיאה כללית בהוספת משתמש: ${error.message || error}`)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      alert(`שגיאה כללית בהוספת משתמש: ${errorMessage}`)
     }
   }
 
@@ -532,9 +567,50 @@ export default function SettingsPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="12"
+                        max="20"
+                        value={fontSize}
+                        onChange={(e) => {
+                          const newSize = parseInt(e.target.value) || 16
+                          // Enforce min/max limits
+                          const clampedSize = Math.min(20, Math.max(12, newSize))
+                          setFontSize(clampedSize)
+                        }}
+                        className="w-20 text-center"
+                      />
+                      <span className="text-sm text-gray-600">px</span>
+                    </div>
+                    <Label className="font-hebrew">גודל גופן בסיסי (12-20)</Label>
+                  </div>
 
                   <div className="flex justify-start pt-4">
-                    <Button onClick={applySettings} className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
+                    <Button 
+                      onClick={() => {
+                        // Apply theme settings
+                        applySettings()
+                        
+                        // Save font size separately
+                        setFontSize(fontSize)
+                        localStorage.setItem('vazana-font-size', fontSize.toString())
+                        
+                        // Apply font size to document
+                        document.documentElement.style.setProperty('--font-size-base', `${fontSize}px`)
+                      }}
+                      className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew text-white dark:text-white border-0 shadow-md disabled:opacity-50"
+                      style={{ backgroundColor: '#00dac0', color: '#ffffff' }}
+                      disabled={
+                        // Check if any setting changed from current applied state
+                        pendingSettings.isDark === isDark &&
+                        pendingSettings.sidebarMinimizedByDefault === sidebarMinimizedByDefault &&
+                        pendingSettings.roundedContainers === roundedContainers &&
+                        pendingSettings.colorTheme.name === colorTheme.name
+                      }
+                    >
                       <Save className="ml-2 w-4 h-4" />
                       החל הגדרות
                     </Button>
@@ -581,20 +657,6 @@ export default function SettingsPage() {
                     <Label className="font-hebrew">שפת המערכת</Label>
                   </div>
                   
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        min="12"
-                        max="24"
-                        value={fontSize}
-                        onChange={(e) => setFontSize(parseInt(e.target.value) || 16)}
-                        className="w-20 text-center"
-                      />
-                      <span className="text-sm text-gray-600">px</span>
-                    </div>
-                    <Label className="font-hebrew">גודל גופן בסיסי</Label>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -640,7 +702,30 @@ export default function SettingsPage() {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <Switch />
+                    <Switch 
+                      checked={autoSaveForms}
+                      onCheckedChange={(checked) => {
+                        if (!checked) {
+                          // Show confirmation when disabling
+                          if (confirm(
+                            "האם אתה בטוח שברצונך לבטל את השמירה האוטומטית של טפסים?\n\n" +
+                            "אזהרה: כל הנתונים השמורים של טיוטות טפסים ילכו לאיבוד!\n\n" +
+                            "לחץ 'אישור' כדי לבטל את השמירה האוטומטית, או 'ביטול' כדי להשאיר מופעל."
+                          )) {
+                            setAutoSaveForms(false)
+                            localStorage.setItem('vazana-auto-save-forms', 'false')
+                            // Clear all saved form drafts from localStorage
+                            localStorage.removeItem('new-job-draft')
+                            localStorage.removeItem('new-invoice-draft')
+                            alert('השמירה האוטומטית בוטלה וכל הטיוטות נמחקו!')
+                          }
+                        } else {
+                          setAutoSaveForms(true)
+                          localStorage.setItem('vazana-auto-save-forms', 'true')
+                          alert('השמירה האוטומטית של טפסים הופעלה!')
+                        }
+                      }}
+                    />
                     <Label className="font-hebrew">שמירה אוטומטית של טפסים</Label>
                   </div>
                 </CardContent>
@@ -675,15 +760,20 @@ export default function SettingsPage() {
                             setSessionTimeout(24)
                             setNotifications(true)
                             setEmailAlerts(false)
+                            setAutoSaveForms(true) // Reset auto-save to ON (default)
                             setPendingSettings({
                               isDark: false,
                               sidebarMinimizedByDefault: false,
                               roundedContainers: true,
                               colorTheme: colorThemes[0],
                             })
-                            // Clear localStorage theme settings
+                            // Apply the reset settings immediately (not just pending)
+                            applySettings()
+                            // Clear localStorage theme settings and form drafts
                             localStorage.removeItem("vazana_theme_settings")
-                            alert("כל ההגדרות אופסו לערכי ברירת המחדל!")
+                            localStorage.removeItem("new-job-draft")
+                            localStorage.removeItem("new-invoice-draft")
+                            alert("כל ההגדרות אופסו לערכי ברירת המחדל וכל הטיוטות נמחקו!")
                             // Refresh the page to apply changes
                             window.location.reload()
                           }
@@ -1194,11 +1284,13 @@ export default function SettingsPage() {
               </Card>
               
               {/* Resource Modal */}
-              <ResourceModal
-                type={resourceModalType}
-                open={resourceModalType !== null}
-                onOpenChange={() => setResourceModalType(null)}
-              />
+              {resourceModalType && (
+                <ResourceModal
+                  type={resourceModalType}
+                  open={resourceModalType !== null}
+                  onOpenChange={() => setResourceModalType(null)}
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="users" className="space-y-6">
@@ -1422,7 +1514,13 @@ export default function SettingsPage() {
                 onOpenChange={setUserEditModalOpen}
                 onUserUpdated={(updatedUser) => {
                   setUsers(users.map(user => 
-                    user.id === updatedUser.id ? updatedUser : user
+                    user.id === updatedUser.id ? {
+                      id: updatedUser.id,
+                      username: updatedUser.username || '',
+                      role: updatedUser.role === 'admin' ? 'מנהל' : 'משתמש',
+                      description: updatedUser.description || (updatedUser.role === 'admin' ? 'מנהל מערכת' : 'משתמש רגיל'),
+                      isSystem: false
+                    } : user
                   ))
                   setEditingUser(null)
                 }}
@@ -1444,7 +1542,7 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 p-4 border rounded-lg">
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew">לא מחובר</Badge>
+                        <Badge variant="secondary" className="font-hebrew dark:bg-red-900 dark:text-red-100 bg-red-100 text-red-800">לא מחובר</Badge>
                         <h3 className="font-semibold text-right font-hebrew">דואר</h3>
                       </div>
                       <p className="text-sm text-gray-600 text-right font-hebrew">
@@ -1457,7 +1555,7 @@ export default function SettingsPage() {
                     
                     <div className="space-y-4 p-4 border rounded-lg">
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew">לא מחובר</Badge>
+                        <Badge variant="secondary" className="font-hebrew dark:bg-red-900 dark:text-red-100 bg-red-100 text-red-800">לא מחובר</Badge>
                         <h3 className="font-semibold text-right font-hebrew">הנהחשבונות</h3>
                       </div>
                       <p className="text-sm text-gray-600 text-right font-hebrew">
@@ -1487,7 +1585,7 @@ export default function SettingsPage() {
                     
                     <div className="space-y-4 p-4 border rounded-lg">
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew">לא מחובר</Badge>
+                        <Badge variant="secondary" className="font-hebrew dark:bg-red-900 dark:text-red-100 bg-red-100 text-red-800">לא מחובר</Badge>
                         <h3 className="font-semibold text-right font-hebrew">יום ערך</h3>
                       </div>
                       <p className="text-sm text-gray-600 text-right font-hebrew">

@@ -64,13 +64,13 @@ const getJobStatus = (jobDate: string): string => {
   } else if (hoursDiff <= 24) {
     return "בתהליך" // Within 24 hours
   } else {
-    return "פעיל" // Future job
+    return "ממתין" // Future job - changed from פעיל to ממתין
   }
 }
 
 const getPaymentStatus = (jobStatus: string): string => {
   if (jobStatus === "הושלם") {
-    return "ממתין לחשבונית"
+    return "ממתין לתשלום"
   }
   return "לא רלוונטי" // Grayed out until job is finished
 }
@@ -175,10 +175,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
       const selectedClient = clients.find((c) => c.id === formData.clientId)
       const selectedWorkType = workTypes.find((wt) => wt.id === formData.jobType)
 
-      // Calculate automatic statuses
-      const autoJobStatus = getJobStatus(formData.date)
-      const autoPaymentStatus = getPaymentStatus(autoJobStatus)
-
+      // Let database trigger handle status calculations automatically
       const updateData = {
         work_type: selectedWorkType ? selectedWorkType.name_he : "",
         job_date: formData.date,
@@ -193,14 +190,13 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
         vehicle_id: selectedVehicle ? selectedVehicle.id : null,
         cart_name: selectedCart?.name || null,
         cart_id: selectedCart ? selectedCart.id : null,
-        service_description: formData.description || null,
+        service_description: formData.description || undefined,
         add_to_calendar: formData.calendarSync,
-        total_amount: formData.totalAmount ? parseFloat(formData.totalAmount) : null,
-        job_specific_shift_rate: formData.jobSpecificShiftRate ? parseFloat(formData.jobSpecificShiftRate) : null,
-        notes: formData.notes || null,
-        receipt_id: formData.receiptId || null,
-        job_status: autoJobStatus,
-        payment_status: autoPaymentStatus,
+        total_amount: formData.totalAmount ? parseFloat(formData.totalAmount) : 0,
+        job_specific_shift_rate: formData.jobSpecificShiftRate ? parseFloat(formData.jobSpecificShiftRate) : undefined,
+        notes: formData.notes || '',
+        receipt_id: formData.receiptId || undefined,
+        // Remove manual status calculations - let database trigger handle it
       }
 
       const response = await fetch(`/api/jobs/${job.id}`, {
@@ -217,8 +213,16 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
 
       const result = await response.json()
       
-      // Update the job object with new data
-      const updatedJob = { ...job, ...updateData }
+      // Calculate refreshed status based on new date
+      const refreshedJobStatus = getJobStatus(formData.date)
+      
+      // Update the job object with new data and refreshed status
+      const updatedJob = { 
+        ...job, 
+        ...updateData, 
+        job_status: refreshedJobStatus,
+        payment_status: getPaymentStatus(refreshedJobStatus)
+      }
       onJobUpdated(updatedJob)
       onOpenChange(false)
       alert("העבודה עודכנה בהצלחה!")

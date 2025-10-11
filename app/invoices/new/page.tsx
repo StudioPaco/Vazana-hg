@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowRight, FileText, Calendar, User, Calculator, CheckCircle } from "lucide-react"
+import { ArrowRight, FileText, Calendar, User, Calculator, CheckCircle, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import DatabaseDropdown from "@/components/ui/database-dropdown"
 import { BackButton } from "@/components/ui/back-button"
 import InvoicePreviewModal from "@/components/invoices/invoice-preview-modal"
+import { SimpleAutoSave } from "@/lib/simple-auto-save"
 
 interface Client {
   id: string
@@ -61,6 +62,8 @@ export default function NewInvoicePage() {
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true)
+  const autoSave = new SimpleAutoSave('new-invoice-draft', 15)
   
   // Form state
   const [selectedClient, setSelectedClient] = useState("")
@@ -83,6 +86,26 @@ export default function NewInvoicePage() {
   const [searchPerformed, setSearchPerformed] = useState(false)
   const [lastSearchedClient, setLastSearchedClient] = useState("")
   const [lastSearchedMonth, setLastSearchedMonth] = useState("")
+  
+  // Auto-save on form data changes - include full session state
+  useEffect(() => {
+    // Only save if we have meaningful data (not just initial state)
+    if (selectedClient || selectedMonth || notes || searchPerformed) {
+      autoSave.save({
+        selectedClient,
+        selectedMonth,
+        notes,
+        paymentTerms,
+        includeBankDetails,
+        showOlderJobs,
+        jobs,
+        summary,
+        searchPerformed,
+        lastSearchedClient,
+        lastSearchedMonth
+      })
+    }
+  }, [selectedClient, selectedMonth, notes, paymentTerms, includeBankDetails, showOlderJobs, jobs, summary, searchPerformed, lastSearchedClient, lastSearchedMonth])
 
   // Generate current month and 5 previous months
   const generateMonths = () => {
@@ -108,6 +131,42 @@ export default function NewInvoicePage() {
   }
   
   const months = generateMonths()
+  
+  // Load auto-save setting from localStorage
+  useEffect(() => {
+    const autoSave = localStorage.getItem('vazana-auto-save-forms')
+    if (autoSave !== null) {
+      setAutoSaveEnabled(autoSave === 'true')
+    }
+  }, [])
+  
+  // Reset timeout when user visits the form
+  useEffect(() => {
+    autoSave.resetTimeout()
+  }, [])
+  
+  // Load saved data on mount - restore full session state
+  useEffect(() => {
+    const savedData = autoSave.load()
+    if (savedData && savedData.searchPerformed) {
+      // Restore form selections
+      if (savedData.selectedClient) setSelectedClient(savedData.selectedClient)
+      if (savedData.selectedMonth) setSelectedMonth(savedData.selectedMonth)
+      if (savedData.notes) setNotes(savedData.notes)
+      if (savedData.paymentTerms) setPaymentTerms(savedData.paymentTerms)
+      if (typeof savedData.includeBankDetails === 'boolean') setIncludeBankDetails(savedData.includeBankDetails)
+      if (typeof savedData.showOlderJobs === 'boolean') setShowOlderJobs(savedData.showOlderJobs)
+      
+      // Restore search results and state
+      if (savedData.jobs) setJobs(savedData.jobs)
+      if (savedData.summary) setSummary(savedData.summary)
+      if (savedData.searchPerformed) setSearchPerformed(savedData.searchPerformed)
+      if (savedData.lastSearchedClient) setLastSearchedClient(savedData.lastSearchedClient)
+      if (savedData.lastSearchedMonth) setLastSearchedMonth(savedData.lastSearchedMonth)
+      
+      console.log('Loaded auto-saved invoice form data with full session state')
+    }
+  }, [])
   
   // Fetch clients on component mount
   useEffect(() => {
@@ -388,6 +447,9 @@ export default function NewInvoicePage() {
         description: "החשבונית נוצרה בהצלחה",
       })
       
+      // Clear auto-save after successful invoice creation
+      autoSave.clear()
+      
       // Navigate to invoice view or back to invoices list
       router.push('/invoices')
       
@@ -618,7 +680,7 @@ export default function NewInvoicePage() {
                     <Checkbox
                       id="includeBankDetails"
                       checked={includeBankDetails}
-                      onCheckedChange={setIncludeBankDetails}
+                      onCheckedChange={(checked) => setIncludeBankDetails(checked as boolean)}
                     />
                   </div>
                 </CardContent>
@@ -657,6 +719,31 @@ export default function NewInvoicePage() {
                       className="bg-teal-600 hover:bg-teal-700 text-white px-8"
                     >
                       {creating ? "יוצר חשבונית..." : "צור חשבונית"}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (confirm('האם אתה בטוח שברצונך לאפס את כל הטיוטה השמורה? פעולה זו בלתי הפיכה.')) {
+                          autoSave.clear()
+                          // Reset all form fields to initial state
+                          setSelectedClient("")
+                          setSelectedMonth("")
+                          setNotes("")
+                          setPaymentTerms("נטו 30")
+                          setIncludeBankDetails(true)
+                          setShowOlderJobs(false)
+                          setJobs([])
+                          setSummary({ subtotal: 0, tax_amount: 0, total_amount: 0 })
+                          setSearchPerformed(false)
+                          setLastSearchedClient("")
+                          setLastSearchedMonth("")
+                          alert('טיוטת החשבונית אופסה בהצלחה!')
+                        }
+                      }}
+                      variant="outline"
+                      className="px-4 text-orange-600 border-orange-300 hover:bg-orange-50"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      איפוס טיוטה
                     </Button>
                     <Button
                       onClick={previewInvoice}

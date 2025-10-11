@@ -11,14 +11,14 @@ async function getAuthenticatedUser(request: NextRequest) {
   return await verifyToken(token)
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
     const supabase = createClient()
 
     // Get receipt with related data

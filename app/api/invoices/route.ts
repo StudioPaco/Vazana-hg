@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { invoiceService } from "@/lib/invoice-service"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient()
+    const supabase = await createClient()
 
     const {
       data: { user },
@@ -14,20 +14,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: receipts, error } = await supabase
-      .from("receipts")
+    const { data: invoices, error } = await supabase
+      .from("invoices")
       .select(`
         *,
         clients:client_id(company_name, contact_person, email, address, city)
       `)
       .eq("created_by_id", user.id)
-      .order("created_date", { ascending: false })
+      .order("invoice_date", { ascending: false })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ data: receipts })
+    return NextResponse.json({ data: invoices })
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient()
+    const supabase = await createClient()
 
     const {
       data: { user },
@@ -81,37 +81,56 @@ export async function POST(request: NextRequest) {
     // Generate invoice number
     const invoiceNumber = invoiceService.generateInvoiceNumber()
 
-    // Create receipt record
-    const receiptData = {
-      receipt_number: invoiceNumber,
+    // Create invoice record
+    const invoiceData = {
+      invoice_number: invoiceNumber,
       client_id: clientId,
       total_amount: total,
       status: "draft",
-      issue_date: new Date().toISOString().split("T")[0],
+      invoice_date: new Date().toISOString().split("T")[0],
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 30 days from now
       notes,
       created_by_id: user.id,
       created_by: user.email,
     }
 
-    const { data: receipt, error: receiptError } = await supabase
-      .from("receipts")
-      .insert([receiptData])
+    const { data: invoice, error: invoiceError } = await supabase
+      .from("invoices")
+      .insert([invoiceData])
       .select()
       .single()
 
-    if (receiptError) {
-      return NextResponse.json({ error: receiptError.message }, { status: 500 })
+    if (invoiceError) {
+      return NextResponse.json({ error: invoiceError.message }, { status: 500 })
     }
 
-    // Update jobs with receipt ID
-    await supabase.from("jobs").update({ receipt_id: receipt.id }).in("id", jobIds).eq("created_by_id", user.id)
+    // Create invoice line items for each job
+    const lineItems = jobs.map((job) => ({
+      invoice_id: invoice.id,
+      job_id: job.id,
+      description: `${job.work_type} - ${job.site}`,
+      quantity: 1,
+      unit_price: Number.parseFloat(job.total_amount) || 0,
+      line_total: Number.parseFloat(job.total_amount) || 0,
+      work_type: job.work_type,
+      job_date: job.job_date,
+      site_location: job.site
+    }))
+
+    const { error: lineItemsError } = await supabase
+      .from("invoice_line_items")
+      .insert(lineItems)
+
+    if (lineItemsError) {
+      console.error("Error creating invoice line items:", lineItemsError)
+      // Continue anyway - invoice was created successfully
+    }
 
     // Prepare invoice data for PDF generation
-    const invoiceData = {
+    const invoicePdfData = {
       invoiceNumber,
-      issueDate: receiptData.issue_date,
-      dueDate: receiptData.due_date,
+      issueDate: invoiceData.invoice_date,
+      dueDate: invoiceData.due_date,
       clientName: client.company_name,
       clientAddress: client.address || "",
       clientCity: client.city || "",
@@ -134,8 +153,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       data: {
-        receipt,
-        invoiceData,
+        invoice,
+        invoiceData: invoicePdfData,
       },
     })
   } catch (error) {

@@ -5,7 +5,7 @@ import path from 'path'
 
 export async function POST() {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Read the migration SQL file
     const migrationPath = path.join(process.cwd(), 'migrations', '001-multi-user-support.sql')

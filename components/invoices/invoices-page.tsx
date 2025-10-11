@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -47,16 +47,44 @@ interface JobLineItem {
   }
 }
 
-export default function InvoicesPage() {
+interface InvoicesPageProps {
+  showHeader?: boolean
+  showFilters?: boolean
+  searchTerm?: string
+  statusFilter?: string
+  onStatsCalculated?: (stats: {
+    totalRevenue: number
+    pendingInvoices: number
+    overdueInvoices: number
+    totalInvoicesThisMonth: number
+  }) => void
+}
+
+export default function InvoicesPage({ 
+  showHeader = true, 
+  showFilters = true, 
+  searchTerm: externalSearchTerm = "", 
+  statusFilter: externalStatusFilter = "all", 
+  onStatsCalculated 
+}: InvoicesPageProps) {
   const router = useRouter()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [searchTerm, setSearchTerm] = useState(externalSearchTerm)
+  const [statusFilter, setStatusFilter] = useState(externalStatusFilter)
   const [loading, setLoading] = useState(true)
   const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null)
   const [invoiceJobs, setInvoiceJobs] = useState<Record<string, JobLineItem[]>>({})
   const { toast } = useToast()
+
+  // Sync external props with internal state
+  useEffect(() => {
+    setSearchTerm(externalSearchTerm)
+  }, [externalSearchTerm])
+
+  useEffect(() => {
+    setStatusFilter(externalStatusFilter)
+  }, [externalStatusFilter])
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -153,18 +181,34 @@ export default function InvoicesPage() {
     }
   }
   
-  // Calculate statistics
-  const totalRevenue = filteredInvoices
-    .filter(inv => inv.status === "paid")
-    .reduce((sum, inv) => sum + inv.total_amount, 0)
-  
-  const pendingInvoices = filteredInvoices.filter(inv => inv.status === "sent").length
-  const overdueInvoices = filteredInvoices.filter(inv => isOverdue(inv.due_date, inv.status)).length
-  const totalInvoicesThisMonth = filteredInvoices.filter(inv => {
-    const invoiceDate = new Date(inv.issue_date)
-    const now = new Date()
-    return invoiceDate.getMonth() === now.getMonth() && invoiceDate.getFullYear() === now.getFullYear()
-  }).length
+  // Calculate statistics - memoized to prevent infinite loops
+  const stats = useMemo(() => {
+    const totalRevenue = filteredInvoices
+      .filter(inv => inv.status === "paid")
+      .reduce((sum, inv) => sum + inv.total_amount, 0)
+    
+    const pendingInvoices = filteredInvoices.filter(inv => inv.status === "sent").length
+    const overdueInvoices = filteredInvoices.filter(inv => isOverdue(inv.due_date, inv.status)).length
+    const totalInvoicesThisMonth = filteredInvoices.filter(inv => {
+      const invoiceDate = new Date(inv.issue_date)
+      const now = new Date()
+      return invoiceDate.getMonth() === now.getMonth() && invoiceDate.getFullYear() === now.getFullYear()
+    }).length
+
+    return {
+      totalRevenue,
+      pendingInvoices,
+      overdueInvoices,
+      totalInvoicesThisMonth
+    }
+  }, [filteredInvoices])
+
+  // Call stats callback when stats change - using memoized stats
+  useEffect(() => {
+    if (onStatsCalculated && !loading) {
+      onStatsCalculated(stats)
+    }
+  }, [stats, loading, onStatsCalculated])
 
   const isOverdue = (dueDate: string, status: string) => {
     return status !== "paid" && new Date(dueDate) < new Date()
@@ -205,15 +249,17 @@ export default function InvoicesPage() {
   if (loading) {
     return (
       <div className="space-y-6" dir="rtl">
-        <div className="relative pb-16">
-          <div className="absolute top-0 right-0">
-            <h1 className="text-2xl font-bold text-gray-900">חשבוניות</h1>
-            <p className="text-sm text-gray-600">נהל ועקב אחר חשבוניות וחיובים</p>
+        {showHeader && (
+          <div className="relative pb-16">
+            <div className="absolute top-0 right-0">
+              <h1 className="text-2xl font-bold text-gray-900">חשבוניות</h1>
+              <p className="text-sm text-gray-600">נהל ועקב אחר חשבוניות וחיובים</p>
+            </div>
+            <div className="absolute top-0 left-0">
+              <FileText className="h-6 w-6 text-gray-400" />
+            </div>
           </div>
-          <div className="absolute top-0 left-0">
-            <FileText className="h-6 w-6 text-gray-400" />
-          </div>
-        </div>
+        )}
         <div className="animate-pulse space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
@@ -231,51 +277,56 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="relative space-y-6" dir="rtl">
-      <div className="absolute top-0 right-0 text-right z-10">
-        <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">ארכיון חשבוניות</h1>
-        <p className="text-gray-600 font-hebrew">עקב אחר חשבוניות שהונפקו וסטטוס התשלומים</p>
-      </div>
-      
-      <div className="absolute top-0 left-0 z-10">
-        <FileText className="w-8 h-8 text-vazana-teal" />
-      </div>
-      
-      <div className="pt-16">
-        <div className="space-y-6">
-        {/* Statistics */}
+    <div className="space-y-6" dir="rtl">
+      {showHeader && (
+        <div className="relative pb-16">
+          <div className="absolute top-0 right-0 text-right z-10">
+            <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">ארכיון חשבוניות</h1>
+            <p className="text-gray-600 font-hebrew">עקב אחר חשבוניות שהונפקו וסטטוס התשלומים</p>
+          </div>
+          
+          <div className="absolute top-0 left-0 z-10">
+            <FileText className="w-8 h-8 text-vazana-teal" />
+          </div>
+        </div>
+      )}
+        
+      {showHeader && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatsContainer
             title="הכנסות חודשיות"
-            value={`₪${totalRevenue.toLocaleString()}`}
+            value={`₪${stats.totalRevenue.toLocaleString()}`}
             icon={DollarSign}
             color="green"
           />
           
           <StatsContainer
             title="חשבוניות ממתינות"
-            value={pendingInvoices}
+            value={stats.pendingInvoices}
             icon={Clock}
             color="yellow"
           />
           
           <StatsContainer
             title="חשבוניות באיחור"
-            value={overdueInvoices}
+            value={stats.overdueInvoices}
             icon={Calendar}
             color="red"
           />
           
           <StatsContainer
             title="סה״כ חשבוניות חודש"
-            value={totalInvoicesThisMonth}
+            value={stats.totalInvoicesThisMonth}
             icon={CheckCircle}
             color="blue"
           />
         </div>
+      )}
         
-        <div className="flex justify-between items-center gap-4">
-          <div className="relative flex-1 max-w-md">
+      {showFilters && (
+        <div className="flex items-center gap-4 mb-6">
+          {/* Search and Filter - adjacent to each other */}
+          <div className="relative flex-1 max-w-sm">
             <Input
               placeholder="חפש חשבוניות (מספר, לקוח)..."
               value={searchTerm}
@@ -286,7 +337,7 @@ export default function InvoicesPage() {
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           </div>
           
-          <Select value={statusFilter} onValueChange={setStatusFilter} dir="rtl">
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)} dir="rtl">
             <SelectTrigger className="w-48 text-right">
               <SelectValue placeholder="סנן לפי סטטוס" />
             </SelectTrigger>
@@ -298,16 +349,10 @@ export default function InvoicesPage() {
               <SelectItem value="overdue">באיחור</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Button asChild className="bg-teal-500 hover:bg-teal-600 text-white">
-            <Link href="/invoices/new">
-              <Plus className="ml-2 h-4 w-4" />
-              חשבונית חדשה
-            </Link>
-          </Button>
         </div>
+      )}
 
-        {filteredInvoices.length === 0 ? (
+      {filteredInvoices.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <div className="text-gray-500">
@@ -452,9 +497,7 @@ export default function InvoicesPage() {
               </Card>
             ))}
           </div>
-        )}
-        </div>
-      </div>
+      )}
     </div>
   )
 }

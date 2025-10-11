@@ -33,19 +33,30 @@ interface Client {
   city?: string
   po_box?: string
   payment_terms?: string
-  security_rate?: number
-  installation_rate?: number
+  payment_method?: string
+    security_rate?: number
+    installation_rate?: number
+    custom_rate_1?: number
+    custom_rate_2?: number
+    custom_rate_3?: number
+    custom_rate_4?: number
+    custom_rate_5?: number
+    custom_rate_1_label?: string
+    custom_rate_2_label?: string
+    custom_rate_3_label?: string
+    custom_rate_4_label?: string
+    custom_rate_5_label?: string
   notes?: string
   status?: string
   created_at?: string
   updated_at?: string
 }
 
-interface WorkTypeRate {
-  id: string
-  work_type_id: string
-  work_type_name: string
+interface CustomRate {
+  id: number
+  label: string
   rate: number
+  work_type_id?: string
 }
 
 interface PaymentLog {
@@ -57,6 +68,13 @@ interface PaymentLog {
   payment_received_date?: string
   amount?: number
   notes?: string
+}
+
+interface WorkTypeRate {
+  id: string
+  work_type_id: string
+  work_type_name: string
+  rate: number
 }
 
 interface ClientEditModalProps {
@@ -77,11 +95,21 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
     po_box: "",
     payment_terms: "immediate",
     notes: "",
+    security_rate: 0,
+    installation_rate: 0,
   })
   
-  const [workTypeRates, setWorkTypeRates] = useState<WorkTypeRate[]>([])
+  const [customRates, setCustomRates] = useState<CustomRate[]>([
+    { id: 1, label: "", rate: 0 },
+    { id: 2, label: "", rate: 0 },
+    { id: 3, label: "", rate: 0 },
+    { id: 4, label: "", rate: 0 },
+    { id: 5, label: "", rate: 0 }
+  ])
   const [paymentLogs, setPaymentLogs] = useState<PaymentLog[]>([])
+  const [workTypeRates, setWorkTypeRates] = useState<WorkTypeRate[]>([])
   const [availableWorkTypes, setAvailableWorkTypes] = useState<any[]>([])
+  const [isRatesExpanded, setIsRatesExpanded] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState("basic")
 
@@ -97,7 +125,18 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
         po_box: client.po_box || "",
         payment_terms: client.payment_terms || "immediate",
         notes: client.notes || "",
+        security_rate: client.security_rate || 0,
+        installation_rate: client.installation_rate || 0,
       })
+      
+      // Load custom rates
+      setCustomRates([
+        { id: 1, label: client.custom_rate_1_label || "", rate: client.custom_rate_1 || 0, work_type_id: "" },
+        { id: 2, label: client.custom_rate_2_label || "", rate: client.custom_rate_2 || 0, work_type_id: "" },
+        { id: 3, label: client.custom_rate_3_label || "", rate: client.custom_rate_3 || 0, work_type_id: "" },
+        { id: 4, label: client.custom_rate_4_label || "", rate: client.custom_rate_4 || 0, work_type_id: "" },
+        { id: 5, label: client.custom_rate_5_label || "", rate: client.custom_rate_5 || 0, work_type_id: "" }
+      ])
       
       loadClientData(client.id)
     }
@@ -141,19 +180,49 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
     }
   }
 
+  // Validation function
+  const validateRates = () => {
+    const hasSecurityRate = formData.security_rate > 0
+    const hasInstallationRate = formData.installation_rate > 0
+    const hasCustomRate = customRates.some(rate => rate.rate > 0 && rate.work_type_id)
+    
+    return hasSecurityRate || hasInstallationRate || hasCustomRate
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!client) return
+
+    // Validate that at least one rate is set
+    if (!validateRates()) {
+      alert("חובה למלא לפחות תעריף אחד עבור סוג עבודה")
+      return
+    }
 
     setIsSubmitting(true)
     try {
       const supabase = createClient()
       
-      // Update basic client info
+      // Prepare custom rates data
+      const customRatesData = {
+        custom_rate_1: customRates[0]?.rate || 0,
+        custom_rate_2: customRates[1]?.rate || 0,
+        custom_rate_3: customRates[2]?.rate || 0,
+        custom_rate_4: customRates[3]?.rate || 0,
+        custom_rate_5: customRates[4]?.rate || 0,
+        custom_rate_1_label: customRates[0]?.label || "",
+        custom_rate_2_label: customRates[1]?.label || "",
+        custom_rate_3_label: customRates[2]?.label || "",
+        custom_rate_4_label: customRates[3]?.label || "",
+        custom_rate_5_label: customRates[4]?.label || "",
+      }
+      
+      // Update client with all rates
       const { data: updatedClient, error } = await supabase
         .from("clients")
         .update({
           ...formData,
+          ...customRatesData,
           updated_at: new Date().toISOString(),
         })
         .eq("id", client.id)
@@ -161,26 +230,6 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
         .single()
 
       if (error) throw error
-
-      // Update work type rates
-      for (const rate of workTypeRates) {
-        if (rate.id.startsWith('new-')) {
-          // Create new rate
-          await supabase
-            .from("client_work_type_rates")
-            .insert({
-              client_id: client.id,
-              work_type_id: rate.work_type_id,
-              rate: rate.rate,
-            })
-        } else {
-          // Update existing rate
-          await supabase
-            .from("client_work_type_rates")
-            .update({ rate: rate.rate })
-            .eq("id", rate.id)
-        }
-      }
 
       onClientUpdated(updatedClient)
       onOpenChange(false)
@@ -191,14 +240,30 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
     setIsSubmitting(false)
   }
 
+  const updateCustomRate = (index: number, field: keyof CustomRate, value: string | number) => {
+    setCustomRates(prev => prev.map((rate, i) => 
+      i === index ? { ...rate, [field]: value } : rate
+    ))
+  }
+
+  const addCustomRate = () => {
+    const nextAvailableSlot = customRates.findIndex(rate => !rate.work_type_id && rate.rate === 0)
+    if (nextAvailableSlot === -1) {
+      alert("כל המקומות הפנויים לתעריפים מותאמים אישית בשימוש")
+      return
+    }
+    // Don't need to add anything, just expand the UI
+    setIsRatesExpanded(true)
+  }
+
   const addWorkTypeRate = () => {
-    const newId = `new-${Date.now()}`
-    setWorkTypeRates([...workTypeRates, {
-      id: newId,
-      work_type_id: "",
-      work_type_name: "",
+    const newRate = {
+      id: `new-${Date.now()}`,
+      work_type_id: '',
+      work_type_name: '',
       rate: 0
-    }])
+    }
+    setWorkTypeRates([...workTypeRates, newRate])
   }
 
   const updateWorkTypeRate = (id: string, field: string, value: any) => {

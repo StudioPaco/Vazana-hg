@@ -21,6 +21,7 @@ interface Client {
   city?: string
   po_box?: string
   payment_terms?: number
+  payment_method?: string
   security_rate?: number
   installation_rate?: number
   notes?: string
@@ -135,7 +136,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={getModalClasses("max-w-4xl")}>
+      <DialogContent className={getModalClasses("xl")}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-right">
             <UserIcon className="h-5 w-5 text-vazana-teal" />

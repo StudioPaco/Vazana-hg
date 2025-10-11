@@ -67,11 +67,9 @@ export default function MainDashboard() {
         .select(`
           id,
           job_date,
-          job_time,
-          job_location,
-          status,
           site,
           city,
+          job_status,
           payment_status,
           client_name,
           shift_type,
@@ -79,7 +77,7 @@ export default function MainDashboard() {
         `)
         .gte('job_date', today.toISOString().split('T')[0])
         .lte('job_date', nextWeek.toISOString().split('T')[0])
-        .in('status', ['scheduled', 'confirmed', 'active'])
+        .in('job_status', ['ממתין', 'בתהליך'])
         .order('job_date', { ascending: true })
         .limit(10)
 
@@ -93,11 +91,9 @@ export default function MainDashboard() {
         const diffTime = jobDate.getTime() - today.getTime()
         const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
         
-        // Create location string from job_location, site and city
+        // Create location string from site and city
         let location = 'מיקום לא צוין'
-        if (job.job_location) {
-          location = job.job_location
-        } else if (job.site && job.city) {
+        if (job.site && job.city) {
           location = `${job.site}, ${job.city}`
         } else if (job.site) {
           location = job.site
@@ -105,13 +101,8 @@ export default function MainDashboard() {
           location = job.city
         }
         
-        // Format time - use job_time if available, otherwise shift type
-        let timeDisplay = 'לא צוין'
-        if (job.job_time) {
-          timeDisplay = job.job_time
-        } else {
-          timeDisplay = getShiftTimeInHebrew(job.shift_type)
-        }
+        // Format shift type display
+        let timeDisplay = getShiftTimeInHebrew(job.shift_type)
         
         return {
           id: job.id,
@@ -119,7 +110,7 @@ export default function MainDashboard() {
           location: location,
           date: jobDate.toLocaleDateString('he-IL'),
           time: timeDisplay,
-          status: getJobStatusInHebrew(job.status), // Use job status, not payment status
+          status: getJobStatusInHebrew(job.job_status), // Use job_status column
           paymentStatus: getPaymentStatusInHebrew(job.payment_status),
           workType: job.work_type || '',
           daysUntil: daysUntil === 0 ? 'היום' : daysUntil === 1 ? 'מחר' : `בעוד ${daysUntil} ימים`,
@@ -138,28 +129,28 @@ export default function MainDashboard() {
   
   const getJobStatusInHebrew = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'מתוכנן'
-      case 'confirmed': return 'מאושר'
-      case 'active': return 'פעיל'
-      case 'completed': return 'הושלם'
-      case 'cancelled': return 'בוטל'
-      default: return status || 'מתוכנן'
+      case 'ממתין': return 'ממתין'
+      case 'בתהליך': return 'בתהליך'
+      case 'הושלם': return 'הושלם'
+      default: return status || 'ממתין'
     }
   }
   
   const getPaymentStatusInHebrew = (paymentStatus: string) => {
     switch (paymentStatus) {
-      case 'pending': return 'ממתין לתשלום'
-      case 'paid': return 'שולם'
-      case 'overdue': return 'באיחור'
-      default: return paymentStatus || 'ממתין'
+      case 'ממתין לתשלום': return 'ממתין לתשלום'
+      case 'שולם': return 'שולם'
+      case 'מאוחר': return 'מאוחר'
+      case 'לא רלוונטי': return 'לא רלוונטי'
+      default: return paymentStatus || 'ממתין לתשלום'
     }
   }
   
   const getShiftTimeInHebrew = (shiftType: string) => {
     switch (shiftType) {
-      case 'day': return 'משמרת יום'
-      case 'night': return 'משמרת לילה'
+      case 'יום': return 'משמרת יום'
+      case 'לילה': return 'משמרת לילה'
+      case 'כפול': return 'משמרת כפולה'
       default: return shiftType || 'לא צוין'
     }
   }
@@ -332,7 +323,7 @@ export default function MainDashboard() {
           value={stats.pendingApprovalJobs}
           subtitle="ממתינות לאישור"
           icon={Clock}
-          color="orange"
+          color="yellow"
         />
       </div>
       

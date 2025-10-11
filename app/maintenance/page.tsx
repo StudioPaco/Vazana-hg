@@ -54,10 +54,10 @@ interface FeatureStatus {
 }
 
 interface SystemHealth {
-  database: "healthy" | "warning" | "error"
-  api: "healthy" | "warning" | "error"
-  auth: "healthy" | "warning" | "error"
-  integrations: "healthy" | "warning" | "error"
+  database: "healthy" | "warning" | "error" | "unknown"
+  api: "healthy" | "warning" | "error" | "unknown"
+  auth: "healthy" | "warning" | "error" | "unknown"
+  integrations: "healthy" | "warning" | "error" | "unknown"
 }
 
 export default function MaintenancePage() {

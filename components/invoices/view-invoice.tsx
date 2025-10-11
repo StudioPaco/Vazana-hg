@@ -32,11 +32,23 @@ const INVOICE_FOOTER_KEY = "vazana-invoice-footer"
 const LOGO_URL =
   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/f12425d59_VazanaLogo-05.png"
 
+interface InvoiceItem {
+  id: string
+  receipt_number?: string
+  vat_percentage?: number
+  notes?: string
+  status?: string
+  issue_date?: string
+  client_id?: string
+  total_amount?: number
+  [key: string]: any
+}
+
 export default function ViewInvoice() {
   // Renamed from ViewReceipt
   const navigate = useNavigate()
-  const [item, setItem] = useState(null) // Generic 'item' for the current "invoice" (data from Receipt)
-  const [client, setClient] = useState(null)
+  const [item, setItem] = useState<InvoiceItem | null>(null) // Generic 'item' for the current "invoice" (data from Receipt)
+  const [client, setClient] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSavingNotes, setIsSavingNotes] = useState(false) // Changed from isSavingNotes
@@ -98,7 +110,7 @@ export default function ViewInvoice() {
       description: "Description",
       amount: "Amount (₪)",
       subtotal: "Subtotal",
-      vat: (rate) => `VAT (${rate}%)`,
+      vat: (rate: number) => `VAT (${rate}%)`,
       total: "Total Amount",
       notesLabel: "Notes",
       editNotes: "Edit Notes",
@@ -137,7 +149,7 @@ export default function ViewInvoice() {
       description: "תיאור / הערות",
       amount: "סכום (₪)",
       subtotal: "סכום ביניים",
-      vat: (rate) => `מע"מ (${rate}%)`,
+      vat: (rate: number) => `מע"מ (${rate}%)`,
       total: "סכום כולל",
       notesLabel: "הערות",
       editNotes: "ערוך הערות",
@@ -163,9 +175,10 @@ export default function ViewInvoice() {
       expectedPaymentDate: "תשלום צפוי",
     },
   }
+  const currentLang = language as keyof typeof texts
   const t = {
-    ...texts[language],
-    vat: texts[language].vat(item?.vat_percentage || vatPercentage), // Ensure item exists for vat_percentage
+    ...texts[currentLang],
+    vat: texts[currentLang].vat(item?.vat_percentage || vatPercentage), // Ensure item exists for vat_percentage
   }
 
   const statusTextMap = {
@@ -226,7 +239,7 @@ export default function ViewInvoice() {
         // Optionally update related jobs' payment_status if they were linked
         if (item.job_ids && item.job_ids.length > 0) {
           const jobUpdatePromises = item.job_ids.map(
-            (jobId) => Job.update(jobId, { payment_status: "לתשלום", receipt_id: null }), // Revert status
+            (jobId: string) => Job.update(jobId, { payment_status: "לתשלום", receipt_id: null }), // Revert status
           )
           await Promise.all(jobUpdatePromises)
         }
@@ -262,7 +275,7 @@ export default function ViewInvoice() {
       setItem(updatedItem) // Renamed
       // Optionally update related jobs' payment_status
       if (item.job_ids && item.job_ids.length > 0) {
-        const jobUpdatePromises = item.job_ids.map((jobId) => Job.update(jobId, { payment_status: "שולם" }))
+        const jobUpdatePromises = item.job_ids.map((jobId: string) => Job.update(jobId, { payment_status: "שולם" }))
         await Promise.all(jobUpdatePromises)
       }
       alert(t.invoicePaidSuccessfully)
@@ -443,9 +456,9 @@ export default function ViewInvoice() {
                 <div className={`mt-2 ${isHebrew ? "text-left" : "text-right"}`}>
                   <Badge
                     variant="outline"
-                    className={`text-sm ${statusColorMap[status] || "bg-neutral-100 text-neutral-800"}`}
+                    className={`text-sm ${statusColorMap[status as keyof typeof statusColorMap] || "bg-neutral-100 text-neutral-800"}`}
                   >
-                    {statusTextMap[status] || status}
+                    {statusTextMap[status as keyof typeof statusTextMap] || status}
                   </Badge>
                 </div>
               </div>

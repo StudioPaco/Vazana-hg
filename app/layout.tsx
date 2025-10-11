@@ -7,6 +7,7 @@ import { ThemeProvider as CustomThemeProvider } from "@/lib/theme-context"
 import { LanguageProvider } from "@/lib/language-context"
 import { LoadingProvider } from "@/components/layout/loading-overlay"
 import AppWrapper from "@/components/layout/app-wrapper"
+import GlobalAlertProvider from "@/components/layout/global-alert-provider"
 
 export const metadata: Metadata = {
   title: "Vazana Studio - וזאנה סטודיו",
@@ -33,7 +34,9 @@ export default function RootLayout({
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
               <LoadingProvider>
                 <SidebarProvider>
-                  <AppWrapper>{children}</AppWrapper>
+                  <GlobalAlertProvider>
+                    <AppWrapper>{children}</AppWrapper>
+                  </GlobalAlertProvider>
                 </SidebarProvider>
               </LoadingProvider>
             </ThemeProvider>
