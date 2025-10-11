@@ -30,6 +30,7 @@ import {
   Lock,
 } from "lucide-react"
 import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
+import { BackButton } from "@/components/ui/back-button"
 import { createClient } from "@/lib/supabase/client"
 import { clientAuth } from "@/lib/client-auth"
 import { useRouter } from "next/navigation"
@@ -598,12 +599,18 @@ export default function MaintenancePage() {
       <div className={`${isMinimized ? "mr-24" : "mr-64"} p-6 transition-all duration-300`}>
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="text-right">
-            <h1 className="text-3xl font-bold text-vazana-dark font-hebrew flex items-center gap-3">
-              <Activity className="w-8 h-8 text-vazana-teal" />
-              מרכז תחזוקה ומעקב
-            </h1>
-            <p className="text-gray-600 font-hebrew">מעקב בזמן אמת על בריאות המערכת ותפקודה</p>
+          <div className="relative mb-6">
+            <div className="absolute top-0 right-0 text-right z-10">
+              <h1 className="text-3xl font-bold text-vazana-dark font-hebrew flex items-center gap-3">
+                <Activity className="w-8 h-8 text-vazana-teal" />
+                מרכז תחזוקה ומעקב
+              </h1>
+              <p className="text-gray-600 font-hebrew">מעקב בזמן אמת על בריאות המערכת ותפקודה</p>
+            </div>
+            <div className="absolute top-0 left-0 z-10">
+              <BackButton href="/" />
+            </div>
+            <div className="h-20"></div>
           </div>
 
           {/* System Overview */}
