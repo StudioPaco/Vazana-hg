@@ -1,14 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+type RouteContext = { params: { id: string } };
+
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    const { id } = await params
+    const { id } = context.params
 
     const { data: client, error } = await supabase
       .from("clients")
@@ -26,14 +28,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    const { id } = await params
+    const { id } = context.params
     const body = await request.json()
 
     const updateData = {
@@ -58,14 +60,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    const { id } = await params
+    const { id } = context.params
 
     const { error } = await supabase.from("clients").delete().eq("id", id)
 

@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/client"
 import { verifyToken } from "@/lib/auth-custom"
 import { invoiceService } from "@/lib/invoice-service"
 
+type RouteContext = { params: { id: string } };
+
 async function getAuthenticatedUser(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value
   if (!token) {
@@ -11,14 +13,14 @@ async function getAuthenticatedUser(request: NextRequest) {
   return await verifyToken(token)
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id } = context.params
     const supabase = createClient()
 
     // Get receipt with related data

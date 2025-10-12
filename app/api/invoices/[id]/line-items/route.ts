@@ -1,9 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+type RouteContext = { params: { id: string } };
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: RouteContext
 ) {
   try {
     const supabase = await createClient()
@@ -16,7 +18,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id } = context.params
     const invoiceId = id
 
     // First try to fetch from invoice_line_items table (new structure)
