@@ -17,7 +17,7 @@ import { format } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
 
 // Helper to determine availability fields for a worker based on date and shift
-const getWorkerAvailabilityKeys = (dateString, shiftType) => {
+const getWorkerAvailabilityKeys = (dateString: string, shiftType: string) => {
   if (!dateString || !shiftType) return null
   try {
     const date = new Date(dateString)
@@ -55,11 +55,11 @@ export default function NewJob() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [useExistingClient, setUseExistingClient] = useState(true)
 
-  const [language, setLanguage] = useState(() => localStorage.getItem("vazana-language") || "he")
+  const [language, setLanguage] = useState<'en' | 'he'>(() => (localStorage.getItem("vazana-language") as 'en' | 'he') || "he")
 
   useEffect(() => {
     const handleStorageChange = () => {
-      const newLang = localStorage.getItem("vazana-language") || "he"
+      const newLang = (localStorage.getItem("vazana-language") as 'en' | 'he') || "he"
       if (newLang !== language) setLanguage(newLang)
     }
     window.addEventListener("storage", handleStorageChange)
@@ -241,7 +241,7 @@ export default function NewJob() {
     const availabilityKeys = getWorkerAvailabilityKeys(formData.job_date, formData.shift_type)
 
     if (availabilityKeys) {
-      filtered = filtered.filter((worker) => {
+      filtered = filtered.filter((worker: any) => {
         if (!worker.availability) return false // Worker might not have availability object yet
         const dayKey = availabilityKeys[0].split("_")[1] // e.g., 'sun' from 'available_sun_day'
         if (!worker.availability[dayKey]) return false
@@ -255,7 +255,7 @@ export default function NewJob() {
     }
 
     // Default sort by name ascending, then by rate ascending
-    filtered.sort((a, b) => {
+    filtered.sort((a: any, b: any) => {
       const nameComparison = a.name.localeCompare(b.name)
       if (nameComparison !== 0) return nameComparison
       return (a.shift_rate || 0) - (b.shift_rate || 0)
@@ -267,29 +267,29 @@ export default function NewJob() {
   // Effect for sorting vehicles (default sort: name ascending)
   useEffect(() => {
     const sorted = [...allVehicles]
-    sorted.sort((a, b) => a.name.localeCompare(b.name))
+    sorted.sort((a: any, b: any) => a.name.localeCompare(b.name))
     setDisplayVehicles(sorted)
   }, [allVehicles])
 
   // Effect for sorting carts (default sort: name ascending)
   useEffect(() => {
     const sorted = [...allCarts]
-    sorted.sort((a, b) => a.name.localeCompare(b.name))
+    sorted.sort((a: any, b: any) => a.name.localeCompare(b.name))
     setDisplayCarts(sorted)
   }, [allCarts])
 
   useEffect(() => {
     if (!useExistingClient && formData.work_type) {
-      const selectedWorkType = workTypes.find((wt) => wt.id === formData.work_type)
+      const selectedWorkType = workTypes.find((wt: any) => wt.id === formData.work_type)
       if (selectedWorkType) {
         const rate =
           (isHebrew
-            ? (selectedWorkType.name_he ?? selectedWorkType.name_en)
-            : (selectedWorkType.name_en ?? selectedWorkType.name_he)) === (isHebrew ? "אבטחה" : "Security")
+            ? ((selectedWorkType as any).name_he ?? (selectedWorkType as any).name_en)
+            : ((selectedWorkType as any).name_en ?? (selectedWorkType as any).name_he)) === (isHebrew ? "אבטחה" : "Security")
             ? formData.new_security_rate
             : (isHebrew
-                  ? (selectedWorkType.name_he ?? selectedWorkType.name_en)
-                  : (selectedWorkType.name_en ?? selectedWorkType.name_he)) === (isHebrew ? "התקנות" : "Installations")
+                  ? ((selectedWorkType as any).name_he ?? (selectedWorkType as any).name_en)
+                  : ((selectedWorkType as any).name_en ?? (selectedWorkType as any).name_he)) === (isHebrew ? "התקנות" : "Installations")
               ? formData.new_installation_rate
               : ""
         if (String(rate) !== String(formData.new_derived_job_rate)) {
