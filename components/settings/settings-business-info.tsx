@@ -25,7 +25,7 @@ const BANK_ACCOUNT_NUMBER_KEY = "vazana-bank-account-number"
 
 export default function SettingsBusinessInfo() {
   const navigate = useNavigate()
-  const [language, setLanguage] = useState(() => localStorage.getItem("vazana-language") || "he")
+  const [language, setLanguage] = useState<'en' | 'he'>(() => (localStorage.getItem("vazana-language") as 'en' | 'he') || "he")
 
   const [businessName, setBusinessName] = useState(() => localStorage.getItem(BUSINESS_NAME_KEY) || "")
   const [businessAddress, setBusinessAddress] = useState(() => localStorage.getItem(BUSINESS_ADDRESS_KEY) || "")
@@ -43,7 +43,7 @@ export default function SettingsBusinessInfo() {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      const newLang = localStorage.getItem("vazana-language") || "he"
+      const newLang = (localStorage.getItem("vazana-language") as 'en' | 'he') || "he"
       if (newLang !== language) setLanguage(newLang)
     }
     window.addEventListener("storage", handleStorageChange)
@@ -77,7 +77,7 @@ export default function SettingsBusinessInfo() {
       bankBranchLabel: "Branch",
       bankBranchPlaceholder: "e.g., Main Branch",
       bankAccountNumberLabel: "Account Number",
-      bankAccountNumberPlaceholder: "e.g., 123456789"
+      bankAccountNumberPlaceholder: "e.g., 123456789",
       saveInfo: "Save Business Info",
       infoSaved: "Business Info Saved!",
       backToSettings: "Back to Settings",
@@ -107,7 +107,7 @@ export default function SettingsBusinessInfo() {
       bankBranchLabel: "סניף",
       bankBranchPlaceholder: "לדוגמה, 123",
       bankAccountNumberLabel: "מספר חשבון",
-      bankAccountNumberPlaceholder: "לדוגמה, 12-345-678901"
+      bankAccountNumberPlaceholder: "לדוגמה, 12-345-678901",
       saveInfo: "שמור פרטי עסק",
       infoSaved: "פרטי העסק נשמרו!",
       backToSettings: "חזור להגדרות",
