@@ -127,7 +127,7 @@ export default function NewJobForm() {
         }
 
         // Filter out deleted jobs - only consider active jobs for numbering
-        const activeJobs = allJobs.filter(job => !job.is_deleted)
+        const activeJobs = allJobs.filter((job: any) => !job.is_deleted)
         
         if (activeJobs.length === 0) {
           setJobNumber("0001")
@@ -136,7 +136,7 @@ export default function NewJobForm() {
 
         // Get the highest job number among ACTIVE jobs only
         const highestActiveJobNumber = Math.max(
-          ...activeJobs.map(job => Number.parseInt(job.job_number) || 0)
+          ...activeJobs.map((job: any) => Number.parseInt(job.job_number) || 0)
         )
 
         // Always increment from the highest ACTIVE job number
@@ -706,6 +706,12 @@ export default function NewJobForm() {
                   clientPhone: "",
                   clientEmail: "",
                   clientAddress: "",
+                  clientCity: "",
+                  clientPostalCode: "",
+                  clientPaymentTerms: "immediate",
+                  clientHourlyRate: "",
+                  clientMaintenanceRate: "",
+                  clientNotes: "",
                   existingClientId: "",
                   employee: "",
                   vehicle: "",

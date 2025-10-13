@@ -29,6 +29,7 @@ interface Job {
   payment_status: string
   job_status: string
   notes: string
+  created_at: string
   client_id?: string
   worker_id?: string
   vehicle_id?: string
@@ -37,6 +38,7 @@ interface Job {
   add_to_calendar?: boolean
   job_specific_shift_rate?: number
   receipt_id?: string
+  is_deleted?: boolean
 }
 
 interface EditJobModalProps {
