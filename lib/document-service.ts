@@ -14,14 +14,13 @@ export interface Document {
 }
 
 export class DocumentService {
-  private supabase = createClient()
-
   async uploadDocument(file: File, entityType: Document["entity_type"], entityId?: string): Promise<Document> {
+    const supabase = await createClient()
     const filename = `${Date.now()}-${file.name}`
     const filePath = `documents/${entityType}/${filename}`
 
     // Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await this.supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from("documents")
       .upload(filePath, file)
 
@@ -30,7 +29,7 @@ export class DocumentService {
     }
 
     // Save document metadata to database
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from("documents")
       .insert({
         filename: file.name,
@@ -51,7 +50,8 @@ export class DocumentService {
   }
 
   async getDocuments(entityType?: string, entityId?: string): Promise<Document[]> {
-    let query = this.supabase.from("documents").select("*")
+    const supabase = await createClient()
+    let query = supabase.from("documents").select("*")
 
     if (entityType) {
       query = query.eq("entity_type", entityType)
@@ -70,8 +70,9 @@ export class DocumentService {
   }
 
   async deleteDocument(id: string): Promise<void> {
+    const supabase = await createClient()
     // Get document info first
-    const { data: doc, error: fetchError } = await this.supabase
+    const { data: doc, error: fetchError } = await supabase
       .from("documents")
       .select("file_path")
       .eq("id", id)
@@ -82,14 +83,14 @@ export class DocumentService {
     }
 
     // Delete from storage
-    const { error: storageError } = await this.supabase.storage.from("documents").remove([doc.file_path])
+    const { error: storageError } = await supabase.storage.from("documents").remove([doc.file_path])
 
     if (storageError) {
       throw new Error(`Storage deletion failed: ${storageError.message}`)
     }
 
     // Delete from database
-    const { error: dbError } = await this.supabase.from("documents").delete().eq("id", id)
+    const { error: dbError } = await supabase.from("documents").delete().eq("id", id)
 
     if (dbError) {
       throw new Error(`Database deletion failed: ${dbError.message}`)
@@ -97,7 +98,8 @@ export class DocumentService {
   }
 
   async getDownloadUrl(filePath: string): Promise<string> {
-    const { data, error } = await this.supabase.storage.from("documents").createSignedUrl(filePath, 3600) // 1 hour expiry
+    const supabase = await createClient()
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(filePath, 3600) // 1 hour expiry
 
     if (error) {
       throw new Error(`Failed to create download URL: ${error.message}`)

@@ -2,13 +2,14 @@
 import { createClient } from "@/lib/supabase/server"
 
 export async function setupRootUser() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   try {
     // Check if root user already exists
-    const { data: existingUser } = await supabase.auth.admin.getUserByEmail("amitkorach@gmail.com")
+    const { data: users } = await supabase.auth.admin.listUsers()
+    const existingUser = users.users.find(user => user.email === "amitkorach@gmail.com")
 
-    if (existingUser.user) {
+    if (existingUser) {
       console.log("Root user already exists in Supabase Auth")
       return { success: true, message: "Root user already exists" }
     }

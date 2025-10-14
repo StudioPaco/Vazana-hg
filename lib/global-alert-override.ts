@@ -150,7 +150,7 @@ export function enableGlobalAlertOverride() {
   };
 
   // Override confirm
-  window.confirm = function(message: string): boolean {
+  window.confirm = function(message?: string): boolean {
     // Note: This is synchronous but the custom modal is async
     // For now, we'll fall back to a styled native confirm
     const title = getAppTitle();

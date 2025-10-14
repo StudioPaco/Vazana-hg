@@ -30,7 +30,7 @@ function verifyPassword(inputPassword: string, storedPassword: string): boolean 
 
 // Verify token and return user if valid
 export async function verifyToken(token: string): Promise<User | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: session, error } = await supabase
     .from("user_sessions")
@@ -58,7 +58,7 @@ export async function verifyToken(token: string): Promise<User | null> {
 
 // Create a new session
 export async function createSession(userId: string): Promise<string> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const sessionToken = generateSessionToken()
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
@@ -77,14 +77,14 @@ export async function createSession(userId: string): Promise<string> {
 
 // Get current session
 export async function getCurrentSession(): Promise<Session | null> {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const sessionToken = cookieStore.get("session_token")?.value
 
   if (!sessionToken) {
     return null
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: session, error } = await supabase
     .from("user_sessions")
     .select(`
@@ -120,7 +120,7 @@ export async function signInWithUsername(
   username: string,
   password: string,
 ): Promise<{ success: boolean; error?: string; sessionToken?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Find user by username
   const { data: user, error: userError } = await supabase
@@ -154,7 +154,7 @@ export async function signInWithUsername(
 // Sign out
 export async function signOutUser(sessionToken?: string) {
   if (sessionToken) {
-    const supabase = createClient()
+    const supabase = await createClient()
     await supabase.from("user_sessions").delete().eq("session_token", sessionToken)
   }
 }

@@ -83,7 +83,7 @@ export default function WorkersPage() {
 
     const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    const availableDays = []
+    const availableDays: string[] = []
 
     days.forEach((day, index) => {
       if (availability[day]?.day || availability[day]?.night) {

@@ -290,6 +290,36 @@ class UnifiedAuth {
   }
 
   /**
+   * Verify a password against stored hash
+   */
+  async verifyPassword(username: string, password: string): Promise<boolean> {
+    try {
+      // Check for root user first (hardcoded password)
+      if (username === "root") {
+        return password === "10203040"
+      }
+
+      // Check database users
+      const { data: dbUser, error } = await this.supabase
+        .from('user_profiles')
+        .select('password_hash')
+        .eq('username', username)
+        .eq('is_active', true)
+        .single()
+
+      if (error || !dbUser || !dbUser.password_hash) {
+        return false
+      }
+
+      // Verify password using bcrypt
+      return await bcrypt.compare(password, dbUser.password_hash)
+    } catch (error) {
+      console.error('Password verification error:', error)
+      return false
+    }
+  }
+
+  /**
    * Check if user has admin privileges
    */
   isAdmin(): boolean {

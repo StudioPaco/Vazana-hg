@@ -234,7 +234,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     // Fetch counts from all tables
     const [clientsRes, jobsRes, workersRes, vehiclesRes, receiptsRes] = await Promise.all([
       supabase.from('clients').select('id, status'),
-      supabase.from('jobs').select('job_status, payment_status, total_amount, job_date, created_at').not('is_deleted', 'eq', true),
+      supabase.from('jobs').select('job_status, payment_status, total_amount, job_date, created_at, worker_id, vehicle_id').not('is_deleted', 'eq', true),
       supabase.from('workers').select('id, name'),
       supabase.from('vehicles').select('id, name'),
       supabase.from('receipts').select('id, status')

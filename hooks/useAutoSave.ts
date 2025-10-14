@@ -21,8 +21,8 @@ export function useAutoSave({
   debounceMs = 2000,
   timeoutMinutes = 15 
 }: AutoSaveOptions) {
-  const timeoutRef = useRef<NodeJS.Timeout>()
-  const lastSaveRef = useRef<string>()
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const lastSaveRef = useRef<string>("")
   
   // Load saved data from localStorage
   const loadSavedData = useCallback((): any | null => {
