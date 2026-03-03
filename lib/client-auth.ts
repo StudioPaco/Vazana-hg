@@ -122,39 +122,47 @@ class UnifiedAuth {
         }
       }
       
-      // Check for root user (credentials from env vars)
-      const rootUsername = process.env.NEXT_PUBLIC_ROOT_USERNAME || "root"
-      const rootPassword = process.env.NEXT_PUBLIC_ROOT_PASSWORD || "10203040"
-      if (username === rootUsername && password === rootPassword) {
-        const user: User = {
-          id: "root",
-          username: rootUsername,
-          email: "root@vazana.com",
-          role: "admin",
-          full_name: "מנהל מערכת",
-          loginTime: new Date().toISOString(),
-          sessionDuration: this.DEFAULT_SESSION_HOURS
+      // Authenticate via server-side API (root credentials never exposed to client)
+      const response = await fetch("/api/auth/simple-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          // Root user authenticated server-side
+          const user: User = {
+            id: data.user?.id || "root",
+            username: data.user?.username || username,
+            email: data.user?.email || `${username}@vazana.com`,
+            role: data.user?.role || "admin",
+            full_name: data.user?.full_name || "מנהל מערכת",
+            loginTime: new Date().toISOString(),
+            sessionDuration: this.DEFAULT_SESSION_HOURS,
+          }
+          this.clearLoginAttempts(username)
+          this.storeSession(user)
+          return { success: true, user }
         }
-        
-        this.clearLoginAttempts(username) // Clear failed attempts on successful login
-        this.storeSession(user)
-        return { success: true, user }
       }
 
-      // Check database users
+      // Check database users via Supabase client
       const { data: dbUsers, error } = await this.supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('username', username)
-        .eq('is_active', true)
+        .from("user_profiles")
+        .select("*")
+        .eq("username", username)
+        .eq("is_active", true)
         .single()
 
       if (error || !dbUsers) {
+        this.recordFailedAttempt(username)
         return { success: false, error: "שם משתמש או סיסמה שגויים" }
       }
 
       // Verify password using bcrypt
-      if (dbUsers.password_hash && await bcrypt.compare(password, dbUsers.password_hash)) {
+      if (dbUsers.password_hash && (await bcrypt.compare(password, dbUsers.password_hash))) {
         const user: User = {
           id: dbUsers.id,
           username: dbUsers.username,
@@ -162,10 +170,9 @@ class UnifiedAuth {
           role: dbUsers.role || "user",
           full_name: dbUsers.full_name || dbUsers.username,
           loginTime: new Date().toISOString(),
-          sessionDuration: this.DEFAULT_SESSION_HOURS
+          sessionDuration: this.DEFAULT_SESSION_HOURS,
         }
-        
-        this.clearLoginAttempts(username) // Clear failed attempts on successful login
+        this.clearLoginAttempts(username)
         this.storeSession(user)
         return { success: true, user }
       }
@@ -296,11 +303,15 @@ class UnifiedAuth {
    */
   async verifyPassword(username: string, password: string): Promise<boolean> {
     try {
-      // Check for root user (credentials from env vars)
-      const rootUsername = process.env.NEXT_PUBLIC_ROOT_USERNAME || "root"
-      const rootPassword = process.env.NEXT_PUBLIC_ROOT_PASSWORD || "10203040"
-      if (username === rootUsername) {
-        return password === rootPassword
+      // Verify root user via server-side API (credentials not exposed to client)
+      const response = await fetch("/api/auth/simple-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) return true
       }
 
       // Check database users

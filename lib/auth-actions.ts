@@ -21,8 +21,10 @@ export async function signIn(prevState: SignInState | null, formData: FormData):
   }
 
   try {
-    // Simple hardcoded authentication for now
-    if (username.toString() === "root" && password.toString() === "10203040") {
+    // Root auth from server-side env vars (not exposed to client)
+    const rootUser = process.env.ROOT_USERNAME || "root"
+    const rootPass = process.env.ROOT_PASSWORD || "10203040"
+    if (username.toString() === rootUser && password.toString() === rootPass) {
       // Set a simple session cookie
       const cookieStore = await cookies()
       cookieStore.set("vazana-session", "authenticated-root", {

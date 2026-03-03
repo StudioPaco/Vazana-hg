@@ -3,7 +3,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Custom Font Declarations */
+/* ============================================
+   Custom Font Declarations (local commercial fonts)
+   ============================================ */
 @font-face {
   font-family: "Alef";
   src: url("/fonts/Alef-Regular.ttf") format("truetype");
@@ -60,6 +62,9 @@
   font-display: swap;
 }
 
+/* ============================================
+   Design Tokens -- Light Mode
+   ============================================ */
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -95,21 +100,24 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Custom Vazana Studio colors */
+  /* Vazana Studio brand colors */
   --color-vazana-yellow: #ffcc00;
   --color-vazana-teal: #00dac0;
   --color-vazana-dark: #1a1a1a;
 
-  /* Dynamic color variables that can be updated by theme system */
+  /* Dynamic theme variables */
   --theme-primary: var(--color-vazana-yellow);
   --theme-secondary: var(--color-vazana-teal);
   --theme-accent: #ffffff;
 }
 
+/* ============================================
+   Design Tokens -- Dark Mode
+   ============================================ */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
+  --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
@@ -141,24 +149,15 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
-/* Enhanced dark mode text visibility fixes */
-.dark .text-gray-600,
-.dark .text-gray-500,
-.dark .text-gray-400 {
-  color: oklch(0.8 0 0) !important; /* Light gray for dark mode */
-}
-
-.dark .text-sm {
-  color: oklch(0.7 0 0); /* Slightly dimmer for small text */
-}
-
+/* ============================================
+   Tailwind v4 Theme Tokens
+   ============================================ */
 @theme inline {
   --font-hebrew: "Alef", sans-serif;
   --font-english: "Futura", sans-serif;
   --font-sans: var(--font-english);
-  --font-mono: var(--font-roboto-mono);
+  --font-mono: "Geist Mono", monospace;
 
-  /* Updated color palette to match user specifications */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -197,84 +196,96 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Hebrew text direction support */
+/* ============================================
+   RTL Support (consolidated)
+   ============================================ */
+
+/* Base RTL direction */
 [dir="rtl"] {
   direction: rtl;
 }
 
-/* RTL Support for Form Controls */
-.rtl input,
-.rtl textarea,
+/* Form controls in RTL context */
 [dir="rtl"] input,
-[dir="rtl"] textarea {
-  text-align: right;
-  direction: rtl;
-}
-
-.rtl select,
-[dir="rtl"] select {
-  text-align: right;
-  direction: rtl;
-}
-
-/* RTL Support for Shadcn/UI Components */
-.rtl [data-radix-select-trigger],
-[dir="rtl"] [data-radix-select-trigger] {
-  text-align: right;
-  justify-content: flex-end;
-}
-
-.rtl [data-radix-select-value],
-[dir="rtl"] [data-radix-select-value] {
-  text-align: right;
-}
-
-.rtl [data-radix-select-content],
-[dir="rtl"] [data-radix-select-content] {
-  text-align: right;
-}
-
-.rtl [data-radix-select-item],
-[dir="rtl"] [data-radix-select-item] {
-  text-align: right;
-  justify-content: flex-end;
-}
-
-/* RTL Support for Date Inputs */
-.rtl input[type="date"],
-.rtl input[type="time"],
-.rtl input[type="datetime-local"],
-[dir="rtl"] input[type="date"],
-[dir="rtl"] input[type="time"],
-[dir="rtl"] input[type="datetime-local"] {
-  text-align: right;
-  direction: rtl;
-}
-
-/* RTL Support for Combobox/Dropdown components */
-.rtl [role="combobox"],
-[dir="rtl"] [role="combobox"] {
-  text-align: right;
-}
-
-.rtl [role="option"],
-[dir="rtl"] [role="option"] {
-  text-align: right;
-}
-
-/* RTL Support for Button content alignment */
-.rtl .flex.items-center.justify-between,
-[dir="rtl"] .flex.items-center.justify-between {
-  flex-direction: row-reverse;
-}
-
-/* RTL Support for Labels */
-.rtl label,
+[dir="rtl"] textarea,
+[dir="rtl"] select,
 [dir="rtl"] label {
   text-align: right;
+  direction: rtl;
 }
 
-/* Custom font utility classes for Hebrew and English text */
+/* Exception: email and URL inputs should stay LTR */
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="url"] {
+  text-align: left;
+  direction: ltr;
+}
+
+/* Date/time inputs: right-aligned text, LTR internal formatting */
+[dir="rtl"] input[type="date"],
+[dir="rtl"] input[type="time"],
+[dir="rtl"] input[type="datetime-local"],
+[dir="rtl"] input[type="month"] {
+  text-align: right;
+  direction: ltr;
+  unicode-bidi: normal;
+}
+
+[dir="rtl"] input[type="date"]::-webkit-calendar-picker-indicator,
+[dir="rtl"] input[type="month"]::-webkit-calendar-picker-indicator {
+  margin-left: auto;
+  margin-right: 4px;
+}
+
+/* Radix Select components in RTL */
+[dir="rtl"] [data-radix-select-trigger],
+[dir="rtl"] [data-radix-select-value],
+[dir="rtl"] [data-radix-select-content],
+[dir="rtl"] [data-radix-select-item],
+[dir="rtl"] [data-radix-select-item-text],
+[dir="rtl"] [role="combobox"],
+[dir="rtl"] [role="option"] {
+  text-align: right;
+  direction: rtl;
+}
+
+[dir="rtl"] [data-radix-select-trigger] {
+  justify-content: flex-end;
+}
+
+[dir="rtl"] [data-radix-select-item] {
+  justify-content: flex-start;
+}
+
+/* Radix Select trigger children */
+[dir="rtl"] [data-radix-select-trigger] > span,
+[dir="rtl"] [data-radix-select-trigger] > div,
+[dir="rtl"] [data-radix-select-value] > span,
+[dir="rtl"] [data-radix-select-value] > div {
+  text-align: right;
+  direction: rtl;
+  width: 100%;
+  display: block;
+}
+
+/* Placeholders in RTL */
+[dir="rtl"] ::placeholder,
+[dir="rtl"] ::-webkit-input-placeholder {
+  text-align: right;
+  direction: rtl;
+}
+
+/* Hebrew text isolation */
+span:lang(he),
+span[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: isolate;
+}
+
+/* ============================================
+   Font utility classes
+   ============================================ */
 .font-hebrew {
   font-family: var(--font-hebrew);
 }
@@ -283,7 +294,9 @@
   font-family: var(--font-english);
 }
 
-/* Utility classes for RTL text alignment */
+/* ============================================
+   RTL text alignment utilities
+   ============================================ */
 .text-start-rtl {
   text-align: start;
 }
@@ -308,164 +321,24 @@
   text-align: right;
 }
 
-/* Additional RTL Support for Select Components with !important */
-[data-radix-select-content],
-[data-radix-select-content] * {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-[data-radix-select-item],
-[data-radix-select-item] * {
-  text-align: right !important;
-  direction: rtl !important;
-  justify-content: flex-start !important;
-}
-
-[data-radix-select-item-text] {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-[data-radix-select-value],
-[data-radix-select-value] * {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-[data-radix-select-trigger] {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-.dir-rtl,
-.dir-rtl * {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Super aggressive RTL styling for Select components */
-[data-state="open"] [data-radix-select-item],
-[data-state="open"] [data-radix-select-item] *,
-[data-radix-popper-content-wrapper] [data-radix-select-item],
-[data-radix-popper-content-wrapper] [data-radix-select-item] *,
-.select-item,
-.select-item * {
-  text-align: right !important;
-  direction: rtl !important;
-  justify-content: flex-start !important;
-}
-
-/* Force RTL on all Select-related elements */
-[role="option"],
-[role="option"] *,
-[data-radix-select-item-text],
-[data-radix-select-value] span {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Ensure database dropdown items are RTL */
-.database-dropdown [data-radix-select-item],
-.database-dropdown [data-radix-select-item] * {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Fix popup/modal text rendering and blur issues */
+/* ============================================
+   Dialog/Popup rendering fixes
+   ============================================ */
 [data-radix-dialog-content],
-[data-radix-dialog-content] *,
-.dialog-content,
-.dialog-content * {
-  -webkit-font-smoothing: antialiased !important;
-  -moz-osx-font-smoothing: grayscale !important;
-  text-rendering: optimizeLegibility !important;
-  transform: translateZ(0) !important;
-  backface-visibility: hidden !important;
-  will-change: auto !important;
+[data-radix-dialog-content] * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Ensure popups don't inherit any problematic transforms */
-[data-radix-dialog-overlay],
-[data-radix-dialog-content] {
-  transform: none !important;
-  filter: none !important;
-  backdrop-filter: none !important;
-}
-
-/* Fix font rendering specifically for Hebrew text in popups */
 [data-radix-dialog-content] .font-hebrew,
 [data-radix-dialog-content] [dir="rtl"] {
-  -webkit-font-smoothing: antialiased !important;
-  -moz-osx-font-smoothing: grayscale !important;
-  font-feature-settings: "liga" 1, "kern" 1 !important;
+  font-feature-settings: "liga" 1, "kern" 1;
 }
 
-/* Ultra-aggressive RTL for placeholders and all states */
-[data-radix-select-trigger][data-placeholder],
-[data-radix-select-trigger][data-placeholder] *,
-[data-radix-select-value][data-placeholder],
-[data-radix-select-value][data-placeholder] *,
-[data-placeholder] {
-  text-align: right !important;
-  direction: rtl !important;
-  justify-content: flex-end !important;
-}
-
-/* Force RTL on date inputs */
-input[type="date"],
-input[type="datetime-local"],
-input[type="time"] {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Force RTL on all Select trigger content */
-[data-radix-select-trigger] > span,
-[data-radix-select-trigger] > div,
-[data-radix-select-value] > span,
-[data-radix-select-value] > div {
-  text-align: right !important;
-  direction: rtl !important;
-  width: 100% !important;
-  display: block !important;
-}
-
-/* Specific targeting for placeholder text */
-[data-radix-select-trigger]:not([data-state="open"]):not([aria-expanded="true"]),
-[data-radix-select-trigger]:not([data-state="open"]):not([aria-expanded="true"]) * {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* RTL for empty select pseudo-elements */
-[data-radix-select-trigger]:not([data-state]):empty::before,
-[data-radix-select-value]:empty::before {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Target DatabaseDropdown specifically */
-.database-dropdown [data-radix-select-trigger],
-.database-dropdown [data-radix-select-value] {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-.database-dropdown [data-radix-select-trigger] > *,
-.database-dropdown [data-radix-select-value] > * {
-  text-align: right !important;
-  direction: rtl !important;
-  width: 100% !important;
-}
-
-/* Date input placeholder */
-input[type="date"]::placeholder {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Custom scrollbar styles */
+/* ============================================
+   Custom scrollbar styles
+   ============================================ */
 .scrollbar-thin {
   scrollbar-width: thin;
 }
@@ -493,175 +366,12 @@ input[type="date"]::placeholder {
   background: transparent;
 }
 
-/* RTL placeholder class for components */
-.rtl-placeholder,
-.rtl-placeholder *,
-.rtl-placeholder [data-radix-select-value],
-.rtl-placeholder [data-radix-select-trigger] {
-  text-align: right !important;
-  direction: rtl !important;
-  justify-content: flex-start !important;
-}
-
-.rtl-placeholder [data-radix-select-value]:empty::before {
-  content: attr(placeholder);
-  text-align: right !important;
-  direction: rtl !important;
-  width: 100%;
-  display: block;
-}
-
-/* Target specific Hebrew placeholders */
-[data-radix-select-value]:before,
-[data-radix-select-value]:after,
-[data-radix-select-trigger][aria-labelledby]:empty,
-[data-radix-select-trigger][data-placeholder="בחר סוג עבודה"],
-[data-radix-select-trigger][data-placeholder="בחר לקוח קיים"],
-[data-radix-select-trigger][data-placeholder="בחר עובד"],
-[data-radix-select-trigger][data-placeholder="בחר רכב"],
-[data-radix-select-trigger][data-placeholder="בחר עגלה"] {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Aggressive placeholder styling */
-::placeholder,
-::-webkit-input-placeholder,
-::-moz-placeholder,
-:-ms-input-placeholder {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Date input specific styling */
-input[type="date"]::-webkit-datetime-edit,
-input[type="date"]::-webkit-inner-spin-button,
-input[type="date"]::-webkit-calendar-picker-indicator {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Enhanced RTL support for date inputs based on user analysis */
-input[type="date"][dir="rtl"],
-input[id="date"][dir="rtl"],
-input.text-right[type="date"] {
-  text-align: right !important;
-  direction: rtl !important;
-  unicode-bidi: embed !important;
-}
-
-/* Force RTL on all date input internals */
-input[type="date"]::-webkit-datetime-edit-text,
-input[type="date"]::-webkit-datetime-edit-month-field,
-input[type="date"]::-webkit-datetime-edit-day-field,
-input[type="date"]::-webkit-datetime-edit-year-field {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Webkit date picker styling */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  margin-left: 0 !important;
-  margin-right: 8px !important;
-}
-
-/* Ultra-aggressive RTL date input fix */
-input[data-slot="input"][type="date"],
-input.text-right[type="date"],
-input[dir="rtl"][type="date"] {
-  text-align: right !important;
-  direction: rtl !important;
-  unicode-bidi: embed !important;
-  writing-mode: horizontal-tb !important;
-}
-
-/* Force RTL on all date input pseudo-elements */
-input[type="date"]::-webkit-datetime-edit {
-  direction: rtl !important;
-  text-align: right !important;
-  unicode-bidi: embed !important;
-  width: 100% !important;
-  display: flex !important;
-  flex-direction: row-reverse !important;
-}
-
-/* Date input placeholder when empty */
-input[type="date"]:invalid,
-input[type="date"]:placeholder-shown {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Fix for Hebrew select placeholders */
-button[role="combobox"] span[dir="rtl"],
-button.database-dropdown[role="combobox"] span,
-[data-radix-select-trigger] span[style*="pointer-events"] {
-  direction: rtl !important;
-  text-align: right !important;
-  unicode-bidi: embed !important;
-  writing-mode: horizontal-tb !important;
-}
-
-/* Proper RTL date input styling - align right but preserve format */
-input[type="date"],
-input[data-slot="input"][type="date"],
-input.text-right[type="date"],
-input[dir="rtl"][type="date"],
-input#job_date,
-input[id="job_date"],
-input[id*="date"],
-input[name*="date"] {
-  text-align: right !important;
-}
-
-/* Force calendar picker to right side */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  margin-left: auto !important;
-  margin-right: 0 !important;
-  order: -1 !important;
-}
-
-/* Target specific input with ID job_date */
-#job_date,
-input#job_date {
-  text-align: right !important;
-}
-
-/* Force RTL on modal date inputs */
-.scroll-content input[type="date"],
-.scroll-content input[type="month"],
-[dir="rtl"] input[type="date"],
-[dir="rtl"] input[type="month"] {
-  text-align: right !important;
-  direction: ltr !important;
-  unicode-bidi: normal !important;
-}
-
-/* RTL date input calendar icon positioning */
-.scroll-content input[type="date"]::-webkit-calendar-picker-indicator,
-.scroll-content input[type="month"]::-webkit-calendar-picker-indicator,
-[dir="rtl"] input[type="date"]::-webkit-calendar-picker-indicator,
-[dir="rtl"] input[type="month"]::-webkit-calendar-picker-indicator {
-  margin-left: auto !important;
-  margin-right: 4px !important;
-}
-
-/* Force all modal content to be RTL aligned */
-[dir="rtl"] .scroll-content,
-[dir="rtl"] .scroll-content *,
-.scroll-content[dir="rtl"],
-.scroll-content[dir="rtl"] * {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Rounded containers theme */
+/* ============================================
+   Rounded/Square container theme toggle
+   ============================================ */
 .rounded-theme .rounded-lg,
 .rounded-theme [class*="rounded"],
-.rounded-theme .card,
-.rounded-theme .bg-white,
-.rounded-theme .bg-gray-50,
-.rounded-theme .border {
+.rounded-theme .card {
   border-radius: 0.5rem !important;
 }
 
@@ -673,112 +383,70 @@ input#job_date {
   border-radius: 0.125rem !important;
 }
 
-/* Non-rounded theme - square containers */
 html:not(.rounded-theme) .rounded-lg,
 html:not(.rounded-theme) [class*="rounded"],
-html:not(.rounded-theme) .card,
-html:not(.rounded-theme) .bg-white,
-html:not(.rounded-theme) .bg-gray-50,
-html:not(.rounded-theme) .border {
+html:not(.rounded-theme) .card {
   border-radius: 0 !important;
 }
 
-/* Dark mode enhancements */
+/* ============================================
+   Dark mode overrides for hardcoded Tailwind colors
+   (interim -- components should migrate to design tokens)
+   ============================================ */
 .dark .bg-gray-50 {
-  background-color: #1e293b !important;
+  background-color: var(--muted);
 }
 
 .dark .bg-white {
-  background-color: #334155 !important;
-  color: #f1f5f9 !important;
+  background-color: var(--card);
+  color: var(--card-foreground);
 }
 
 .dark .border-gray-200 {
-  border-color: #475569 !important;
+  border-color: var(--border);
 }
 
 .dark .text-gray-900 {
-  color: #f1f5f9 !important;
-}
-
-.dark .text-gray-600 {
-  color: #cbd5e1 !important;
-}
-
-.dark .text-gray-700 {
-  color: #e2e8f0 !important;
-}
-
-.dark .text-gray-500 {
-  color: #94a3b8 !important;
+  color: var(--foreground);
 }
 
 .dark .text-gray-800 {
-  color: #f8fafc !important;
+  color: var(--foreground);
+}
+
+.dark .text-gray-700 {
+  color: var(--muted-foreground);
+}
+
+.dark .text-gray-600 {
+  color: var(--muted-foreground);
+}
+
+.dark .text-gray-500 {
+  color: var(--muted-foreground);
 }
 
 .dark .text-gray-400 {
-  color: #cbd5e1 !important;
+  color: var(--muted-foreground);
 }
 
 .dark .text-black {
-  color: #f1f5f9 !important;
+  color: var(--foreground);
 }
 
-/* Fix button text in dark mode */
 .dark button {
   color: inherit;
 }
 
 .dark .bg-vazana-teal {
-  background-color: #06B6D4 !important;
-  color: #1e293b !important;
+  background-color: #06B6D4;
+  color: var(--card-foreground);
 }
 
 .dark .text-vazana-teal {
-  color: #06B6D4 !important;
+  color: #06B6D4;
 }
 
 .dark .text-vazana-dark {
-  color: #f1f5f9 !important;
-}
-
-/* Exception for email inputs */
-[dir="rtl"] .scroll-content input[type="email"],
-.scroll-content[dir="rtl"] input[type="email"] {
-  text-align: left !important;
-  direction: ltr !important;
-}
-
-/* Force RTL on form elements in modals */
-[dir="rtl"] .scroll-content input,
-[dir="rtl"] .scroll-content textarea,
-[dir="rtl"] .scroll-content select,
-.scroll-content[dir="rtl"] input,
-.scroll-content[dir="rtl"] textarea,
-.scroll-content[dir="rtl"] select {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Force RTL on Hebrew placeholder spans */
-span:lang(he),
-span[dir="rtl"] {
-  direction: rtl !important;
-  text-align: right !important;
-  unicode-bidi: isolate !important;
-}
-
-/* Override any conflicting LTR styles for Hebrew text */
-button.database-dropdown.rtl-placeholder,
-button.database-dropdown.rtl-placeholder * {
-  direction: rtl !important;
-  text-align: right !important;
-}
-
-/* Ensure flex containers don't override text alignment */
-.flex.items-center.justify-between span[dir="rtl"] {
-  flex: 1;
-  text-align: right !important;
-  direction: rtl !important;
+  color: var(--foreground);
 }
