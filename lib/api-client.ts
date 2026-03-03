@@ -1,13 +1,9 @@
+import type { Client, Job, Worker, Vehicle, Cart } from "@/lib/types"
+
 // Custom SDK to replace Base44 SDK calls
 class ApiClient {
-  private baseUrl: string
-
-  constructor() {
-    this.baseUrl = process.env.NODE_ENV === "production" ? "https://your-domain.com" : "http://localhost:3000"
-  }
-
-  private async request(endpoint: string, options: RequestInit = {}) {
-    const url = `${this.baseUrl}/api${endpoint}`
+  private async request<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = `/api${endpoint}`
 
     const authToken = typeof window !== "undefined" ? localStorage.getItem("vazana_auth_token") : null
 
@@ -29,69 +25,65 @@ class ApiClient {
   }
 
   // Client methods
-  async getClients() {
+  async getClients(): Promise<{ data: Client[] }> {
     return this.request("/clients")
   }
 
-  async getClient(id: string) {
+  async getClient(id: string): Promise<{ data: Client }> {
     return this.request(`/clients/${id}`)
   }
 
-  async createClient(data: any) {
+  async createClient(data: Partial<Client>): Promise<{ data: Client }> {
     return this.request("/clients", {
       method: "POST",
       body: JSON.stringify(data),
     })
   }
 
-  async updateClient(id: string, data: any) {
+  async updateClient(id: string, data: Partial<Client>): Promise<{ data: Client }> {
     return this.request(`/clients/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     })
   }
 
-  async deleteClient(id: string) {
-    return this.request(`/clients/${id}`, {
-      method: "DELETE",
-    })
+  async deleteClient(id: string): Promise<void> {
+    return this.request(`/clients/${id}`, { method: "DELETE" })
   }
 
   // Job methods
-  async getJobs() {
+  async getJobs(): Promise<{ data: Job[] }> {
     return this.request("/jobs")
   }
 
-  async getJob(id: string) {
+  async getJob(id: string): Promise<{ data: Job }> {
     return this.request(`/jobs/${id}`)
   }
 
-  async createJob(data: any) {
+  async createJob(data: Partial<Job>): Promise<{ data: Job }> {
     return this.request("/jobs", {
       method: "POST",
       body: JSON.stringify(data),
     })
   }
 
-  async updateJob(id: string, data: any) {
+  async updateJob(id: string, data: Partial<Job>): Promise<{ data: Job }> {
     return this.request(`/jobs/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     })
   }
 
-  async deleteJob(id: string) {
-    return this.request(`/jobs/${id}`, {
-      method: "DELETE",
-    })
+  async deleteJob(id: string): Promise<void> {
+    return this.request(`/jobs/${id}`, { method: "DELETE" })
   }
 
   // Worker methods
-  async getWorkers() {
+  async getWorkers(): Promise<{ data: Worker[] }> {
     return this.request("/workers")
   }
 
-  async createWorker(data: any) {
+  async createWorker(data: Partial<Worker>): Promise<{ data: Worker }> {
     return this.request("/workers", {
       method: "POST",
       body: JSON.stringify(data),
@@ -99,11 +91,11 @@ class ApiClient {
   }
 
   // Vehicle methods
-  async getVehicles() {
+  async getVehicles(): Promise<{ data: Vehicle[] }> {
     return this.request("/vehicles")
   }
 
-  async createVehicle(data: any) {
+  async createVehicle(data: Partial<Vehicle>): Promise<{ data: Vehicle }> {
     return this.request("/vehicles", {
       method: "POST",
       body: JSON.stringify(data),
@@ -111,11 +103,11 @@ class ApiClient {
   }
 
   // Cart methods
-  async getCarts() {
+  async getCarts(): Promise<{ data: Cart[] }> {
     return this.request("/carts")
   }
 
-  async createCart(data: any) {
+  async createCart(data: Partial<Cart>): Promise<{ data: Cart }> {
     return this.request("/carts", {
       method: "POST",
       body: JSON.stringify(data),

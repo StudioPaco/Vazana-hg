@@ -438,30 +438,7 @@ input[type="time"] {
   direction: rtl !important;
 }
 
-/* Ultra-aggressive Hebrew placeholder text alignment */
-[data-radix-select-trigger] span:contains("בחר"),
-[data-radix-select-trigger] span[aria-label*="בחר"],
-[data-radix-select-value] span:contains("בחר"),
-[data-radix-select-value] span[title*="בחר"],
-[data-radix-select-trigger]:has-text("בחר"),
-[data-radix-select-value]:has-text("בחר") {
-  text-align: right !important;
-  direction: rtl !important;
-  justify-content: flex-end !important;
-  width: 100% !important;
-}
-
-/* Force RTL on any element containing Hebrew text */
-*:contains("בחר סוג עבודה"),
-*:contains("בחר לקוח קיים"),
-*:contains("בחר עובד"),
-*:contains("בחר רכב"),
-*:contains("בחר עגלה") {
-  text-align: right !important;
-  direction: rtl !important;
-}
-
-/* Direct Hebrew text targeting */
+/* RTL for empty select pseudo-elements */
 [data-radix-select-trigger]:not([data-state]):empty::before,
 [data-radix-select-value]:empty::before {
   text-align: right !important;
@@ -615,9 +592,8 @@ input[type="date"]:placeholder-shown {
   direction: rtl !important;
 }
 
-/* Ultra-specific fix for Hebrew select placeholders based on user analysis */
+/* Fix for Hebrew select placeholders */
 button[role="combobox"] span[dir="rtl"],
-button[role="combobox"] span:contains("בחר"),
 button.database-dropdown[role="combobox"] span,
 [data-radix-select-trigger] span[style*="pointer-events"] {
   direction: rtl !important;
@@ -785,14 +761,9 @@ html:not(.rounded-theme) .border {
   direction: rtl !important;
 }
 
-/* Force RTL on all Hebrew placeholder spans */
+/* Force RTL on Hebrew placeholder spans */
 span:lang(he),
-span[dir="rtl"],
-span:contains("בחר סוג עבודה"),
-span:contains("בחר לקוח קיים"),
-span:contains("בחר עובד"),
-span:contains("בחר רכב"),
-span:contains("בחר עגלה") {
+span[dir="rtl"] {
   direction: rtl !important;
   text-align: right !important;
   unicode-bidi: isolate !important;

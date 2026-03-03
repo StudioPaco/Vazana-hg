@@ -122,11 +122,13 @@ class UnifiedAuth {
         }
       }
       
-      // Check for root user first (hardcoded as requested)
-      if (username === "root" && password === "10203040") {
+      // Check for root user (credentials from env vars)
+      const rootUsername = process.env.NEXT_PUBLIC_ROOT_USERNAME || "root"
+      const rootPassword = process.env.NEXT_PUBLIC_ROOT_PASSWORD || "10203040"
+      if (username === rootUsername && password === rootPassword) {
         const user: User = {
           id: "root",
-          username: "root",
+          username: rootUsername,
           email: "root@vazana.com",
           role: "admin",
           full_name: "מנהל מערכת",
@@ -294,9 +296,11 @@ class UnifiedAuth {
    */
   async verifyPassword(username: string, password: string): Promise<boolean> {
     try {
-      // Check for root user first (hardcoded password)
-      if (username === "root") {
-        return password === "10203040"
+      // Check for root user (credentials from env vars)
+      const rootUsername = process.env.NEXT_PUBLIC_ROOT_USERNAME || "root"
+      const rootPassword = process.env.NEXT_PUBLIC_ROOT_PASSWORD || "10203040"
+      if (username === rootUsername) {
+        return password === rootPassword
       }
 
       // Check database users

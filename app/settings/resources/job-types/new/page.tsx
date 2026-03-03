@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
-import { MainContent } from "@/components/layout/main-content"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 
 export default function NewJobTypePage() {
   const router = useRouter()

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Link, useNavigate } from "react-router-dom"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { createPageUrl } from "@/utils"
 import { format, parseISO } from "date-fns"
 import {
@@ -46,7 +47,8 @@ interface InvoiceItem {
 
 export default function ViewInvoice() {
   // Renamed from ViewReceipt
-  const navigate = useNavigate()
+  const router = useRouter()
+  const navigate = (path: string) => router.push(path)
   const [item, setItem] = useState<InvoiceItem | null>(null) // Generic 'item' for the current "invoice" (data from Receipt)
   const [client, setClient] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -349,7 +351,7 @@ export default function ViewInvoice() {
         dir={isHebrew ? "rtl" : "ltr"}
       >
         <h1 className="text-2xl font-bold text-neutral-900 mb-4">{t.notFound}</h1>
-        <Link to={createPageUrl("Invoices")}>
+        <Link href={createPageUrl("Invoices")}>
           <Button variant="outline" className="flex items-center gap-1 bg-transparent">
             <ChevronLeft className={`w-4 h-4 ${isHebrew ? "transform scale-x-[-1] ml-1" : "mr-1"}`} /> {t.backToArchive}
           </Button>
@@ -382,7 +384,7 @@ export default function ViewInvoice() {
         {/* Back Button */}
         <div className="mb-6">
           <Link
-            to={createPageUrl("Invoices")}
+            href={createPageUrl("Invoices")}
             className="inline-flex items-center text-primary hover:text-primary-dark"
           >
             <ChevronLeft className={`w-5 h-5 ${isHebrew ? "transform scale-x-[-1] ml-1" : "mr-1"}`} />

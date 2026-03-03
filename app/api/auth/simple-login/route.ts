@@ -5,8 +5,10 @@ export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json()
 
-    // Simple hardcoded authentication for now
-    if (username === "root" && password === "10203040") {
+    // Root auth from env vars
+    const rootUser = process.env.NEXT_PUBLIC_ROOT_USERNAME || "root"
+    const rootPass = process.env.NEXT_PUBLIC_ROOT_PASSWORD || "10203040"
+    if (username === rootUser && password === rootPass) {
       // Set a simple session cookie
       const cookieStore = await cookies()
       cookieStore.set("vazana-session", "authenticated-root", {

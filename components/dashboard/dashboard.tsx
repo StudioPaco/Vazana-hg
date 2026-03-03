@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Users, Briefcase, Truck, Plus, TrendingUp, Clock, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { apiClient } from "@/lib/api-client"
+import type { Job } from "@/lib/types"
 
 interface DashboardStats {
   totalClients: number
@@ -16,18 +17,6 @@ interface DashboardStats {
   pendingJobs: number
   completedJobs: number
   monthlyRevenue: number
-}
-
-interface JobData {
-  id: string
-  job_number: string
-  client_name: string
-  site: string
-  work_type: string
-  worker_name: string
-  total_amount: string
-  payment_status: "pending" | "paid" | "overdue"
-  job_date: string
 }
 
 export default function Dashboard() {
@@ -40,7 +29,7 @@ export default function Dashboard() {
     completedJobs: 0,
     monthlyRevenue: 0,
   })
-  const [recentJobs, setRecentJobs] = useState<JobData[]>([])
+  const [recentJobs, setRecentJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -54,11 +43,11 @@ export default function Dashboard() {
         ])
 
         const jobs = jobsRes.data || []
-        const pendingJobs = jobs.filter((job: JobData) => job.payment_status === "pending").length
-        const completedJobs = jobs.filter((job: JobData) => job.payment_status === "paid").length
+        const pendingJobs = jobs.filter((job) => job.payment_status === "pending").length
+        const completedJobs = jobs.filter((job) => job.payment_status === "paid").length
         const monthlyRevenue = jobs
-          .filter((job: JobData) => job.payment_status === "paid")
-          .reduce((sum: number, job: JobData) => sum + (Number.parseFloat(job.total_amount) || 0), 0)
+          .filter((job) => job.payment_status === "paid")
+          .reduce((sum: number, job) => sum + (Number(job.total_amount) || 0), 0)
 
         setStats({
           totalClients: clientsRes.data?.length || 0,
@@ -70,7 +59,7 @@ export default function Dashboard() {
           monthlyRevenue,
         })
 
-        setRecentJobs(jobs.slice(0, 5) as JobData[])
+        setRecentJobs(jobs.slice(0, 5))
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
       } finally {
@@ -271,7 +260,7 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-600 mt-1">
                       {job.client_name} • {job.site} • {job.work_type}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">{new Date(job.job_date).toLocaleDateString("he-IL")}</p>
+                    <p className="text-xs text-gray-400 mt-1">{job.job_date ? new Date(job.job_date).toLocaleDateString("he-IL") : "—"}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-vazana-dark">₪{job.total_amount}</p>

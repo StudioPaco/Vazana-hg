@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Save, Briefcase, ArrowLeft, AlertTriangle } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useRouter } from "next/navigation"
 import { createPageUrl } from "@/utils"
 // Import Receipt entity if we were to implement the "Apply to Active Invoices"
 // For now, it's not strictly needed for the mock button.
@@ -24,7 +24,8 @@ const BANK_BRANCH_KEY = "vazana-bank-branch"
 const BANK_ACCOUNT_NUMBER_KEY = "vazana-bank-account-number"
 
 export default function SettingsBusinessInfo() {
-  const navigate = useNavigate()
+  const router = useRouter()
+  const navigate = (path: string) => router.push(path)
   const [language, setLanguage] = useState<'en' | 'he'>(() => (localStorage.getItem("vazana-language") as 'en' | 'he') || "he")
 
   const [businessName, setBusinessName] = useState(() => localStorage.getItem(BUSINESS_NAME_KEY) || "")
