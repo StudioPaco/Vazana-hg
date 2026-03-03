@@ -1,3 +1,5 @@
+"use client"
+
 import CartsPage from "@/components/carts/carts-page"
 
 export default function Carts() {

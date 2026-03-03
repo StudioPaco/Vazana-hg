@@ -2,6 +2,8 @@ import { getCurrentSession } from "@/lib/auth-custom"
 import { redirect } from "next/navigation"
 import SignUpForm from "@/components/auth/sign-up-form"
 
+export const dynamic = "force-dynamic"
+
 export default async function SignUpPage() {
   // Check if user is already logged in
   const session = await getCurrentSession()

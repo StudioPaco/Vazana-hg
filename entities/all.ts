@@ -1,7 +1,19 @@
 // Entity classes for Vazana Studio business management system
 import { createClient } from "@/lib/supabase/client"
 
-const supabase = createClient()
+// Lazy-initialize supabase client to avoid issues during SSR/build
+let _supabase: ReturnType<typeof createClient> | null = null
+function getSupabase() {
+  if (!_supabase) {
+    _supabase = createClient()
+  }
+  return _supabase
+}
+const supabase = typeof window !== "undefined" ? createClient() : (new Proxy({} as any, { get: (_, prop) => {
+  // During SSR, return a proxy that defers to actual client
+  const client = getSupabase()
+  return (client as any)[prop]
+}}))
 
 interface ClientData {
   company_name: string

@@ -1,3 +1,5 @@
+"use client"
+
 import SidebarNavigation from "@/components/layout/sidebar-navigation"
 import AppNavigation from "@/components/layout/app-navigation"
 import { DocumentsPage } from "@/components/documents/documents-page"
