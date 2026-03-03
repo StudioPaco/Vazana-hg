@@ -183,7 +183,17 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
 
   const handleDeleteClient = async (id: string) => {
     if (confirm("האם אתה בטוח שברצונך למחוק לקוח זה?")) {
-      setClients(clients.filter((client) => client.id !== id))
+      try {
+        const response = await fetch(`/api/clients/${id}`, { method: "DELETE" })
+        if (!response.ok) {
+          const result = await response.json()
+          throw new Error(result.error || "Failed to delete client")
+        }
+        setClients(clients.filter((client) => client.id !== id))
+      } catch (error) {
+        console.error("[v0] Failed to delete client:", error)
+        alert("שגיאה במחיקת הלקוח. נסה שוב.")
+      }
     }
   }
 

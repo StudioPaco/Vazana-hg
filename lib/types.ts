@@ -44,7 +44,7 @@ export interface Job {
   vehicle_name?: string
   job_specific_shift_rate?: number
   total_amount?: number
-  payment_status?: "pending" | "paid" | "overdue"
+  payment_status?: "ממתין לתשלום" | "שולם" | "מאוחר"
   receipt_id?: string
   notes?: string
   add_to_calendar?: boolean

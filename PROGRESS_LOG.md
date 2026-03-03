@@ -1,76 +1,117 @@
 # Vazana Studio — Progress Log
+> Last updated: 2026-03-03 | Branch: main | Commit: 43567d6
 
-## Audit & Fix Round (2025)
-
-### 1. Build Fix — Initial
-- Created `.env.example` and `.env.local` with placeholder Supabase values
-- Made Supabase client/server initialization resilient to missing env vars
-- Added `"use client"` directive to 5 pages that were missing it
-- Added `force-dynamic` to sign-up page
-- Lazy-initialized entities in `entities/all.ts`
-- **PR #1 merged** on `fix/build-and-audit`
-
-### 2. Supabase Connection
-- Updated `.env.local` with correct Supabase URL (`https://udxvtbwqmfwzghmubfdi.supabase.co`)
-- Anon key placeholder added — user must paste their real key on line 5
-
-### 3. Hardcoded Credentials → Env Vars
-- Moved root username/password from hardcoded strings to `NEXT_PUBLIC_ROOT_USERNAME` / `NEXT_PUBLIC_ROOT_PASSWORD`
-- Updated `lib/client-auth.ts` (login check + register check)
-- Updated `app/api/auth/simple-login/route.ts`
-- Added defaults in `.env.local` and `.env.example`
-
-### 4. Route Protection Middleware
-- Created new `middleware.ts` protecting `/api/*` routes (except `/api/auth/*`)
-- Checks for `vazana-session` or `session_token` cookies
-- Old `middleware.ts.backup` moved to `_backups/`
-
-### 5. Pin Dependency Versions
-- Replaced all `"latest"` versions in `package.json` with exact installed versions from `node_modules`
-
-### 6. Remove react-router-dom
-- Removed `react-router-dom` from `package.json`
-- Migrated `components/invoices/view-invoice.tsx` — changed `Link to=` → `Link href=`, replaced `useNavigate` with Next.js `useRouter`
-- Migrated `components/settings/settings-business-info.tsx` — same pattern
-
-### 7. Organize Backup Files
-- Moved 6 backup/temp files to `_backups/` directory:
-  - `globals.css.backup`, `middleware.ts.backup`, `temp_settings_backup.tsx`
-  - `new-job.tsx.backup`, `dashboard.tsx.backup`, `settings-users.tsx.backup`
-
-### 8. Consolidate MainContent Export
-- `sidebar-navigation.tsx` is the canonical `MainContent` (used by 14+ files)
-- `main-content.tsx` now re-exports from `sidebar-navigation.tsx`
-- Updated `app/settings/resources/job-types/new/page.tsx` import
-
-### 9. Add Vitest + React Testing Library
-- Installed `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`
-- Created `vitest.config.ts` and `vitest.setup.ts`
-- Created `__tests__/utils.test.ts` with 12 tests covering utility functions
-- All 12 tests passing
-- Added `test` and `test:watch` scripts to `package.json`
-
-### 10. Improve Type Safety
-- Created `lib/types.ts` with TypeScript interfaces for all DB tables:
-  Client, Job, Worker, Vehicle, Cart, WorkType, Receipt, UserProfile, BusinessSettings, Document
-- Updated `lib/api-client.ts` with proper generic types
-
-### 11. Simplify globals.css RTL Overrides
-- Removed invalid CSS selectors (`:contains()`, `:has-text()`) from `app/globals.css`
-- Kept all valid functional RTL rules
-
-### 12. Fix api-client.ts Base URL
-- Replaced hardcoded `https://your-domain.com` with relative `/api` URLs
-
-### Additional Fixes (during build verification)
-- Fixed type error in `components/dashboard/dashboard.tsx:263` — added fallback for optional `job.job_date`
-- Fixed remaining `<Link to=...>` → `<Link href=...>` in `components/invoices/view-invoice.tsx` (lines 354, 387)
+## Quick Status Dashboard
+| Module | Health | DB Connected | Notes |
+|--------|--------|-------------|-------|
+| Auth (Login) | ✅ Working | No (hardcoded) | Simple but functional |
+| Sidebar/Navigation | ✅ Working | No | All routes valid |
+| Dashboard | ⚠️ Partial | Yes | Revenue/pending stats broken (status mismatch) |
+| Clients - List | ✅ Working | Yes (API) | |
+| Clients - Create | ✅ Working | Yes (API) | |
+| Clients - Edit | ⚠️ Partial | Yes (direct) | Rates/payment-log APIs missing |
+| Clients - Delete | ❌ Broken | No | Only removes from React state |
+| Jobs - List | ✅ Working | Yes (API) | |
+| Jobs - Create | ✅ Working | Yes (direct) | Bypasses API route |
+| Jobs - Edit | ✅ Working | Yes (API) | |
+| Jobs - Delete/Restore | ✅ Working | Yes (API) | Soft-delete pattern |
+| Invoices | ❌ Broken | Yes (wrong auth) | Requires Supabase Auth |
+| Workers | ⚠️ Partial | Yes (direct) | No edit route, English UI |
+| Vehicles | ⚠️ Partial | Yes (direct) | Fake sample data fallback |
+| Carts | ⚠️ Partial | Yes (direct) | Similar to vehicles |
+| Settings - Business | ⚠️ Partial | No (localStorage) | Not persisted to DB |
+| Settings - Resources | ✅ Working | Yes | CRUD for work types etc |
+| Documents | ⚠️ Unknown | Unknown | Not fully audited |
+| Calendar | 🔲 Not implemented | No | Toggle exists but no integration |
 
 ---
 
-## Known Issues / Next Steps
-- **Supabase anon key**: User must paste real key into `.env.local` line 5
-- **Test coverage**: Only utility functions tested so far — add component tests next
-- **react-router-dom**: Fully removed from package.json; all navigation uses Next.js router
-- **Entity typing**: `entities/all.ts` still uses `any` internally — consider typing with `lib/types.ts` interfaces
-- **Authentication**: Still uses simple hardcoded auth — consider implementing proper auth (Supabase Auth or NextAuth)
+## Completed Work
+
+### Phase 0: Initial Migration (pre-2026-03-03)
+- Migrated from v0/Base44 platform to standalone Next.js 15 + Supabase
+- Set up entity classes (entities/all.ts) with BaseEntity CRUD pattern
+- Built full sidebar navigation with Hebrew RTL layout
+- Created all page routes and component structure
+- Implemented client, job, worker, vehicle, cart modules
+- Added invoice creation and PDF generation system
+- Set up Radix UI component library with shadcn/ui patterns
+- Implemented custom theme system (Vazana brand colors)
+
+### Phase 1: Build & Deployment Fixes (2026-03-03 morning)
+**Commit 35d6636** — fix: resolve build failure from missing Supabase env vars
+- Created .env.example with required variables
+- Made Supabase client/server resilient to missing env vars
+- Added 'use client' to 5 pages missing it
+- Added force-dynamic to sign-up page
+- Lazy-initialized entities in entities/all.ts
+
+### Phase 2: Comprehensive Audit & Fixes (2026-03-03)
+**Commit 43567d6** — audit: comprehensive codebase fixes and improvements
+- Moved hardcoded credentials to env vars (NEXT_PUBLIC_ROOT_USERNAME/PASSWORD)
+- Added route protection middleware (middleware.ts)
+- Pinned all dependency versions in package.json
+- Removed react-router-dom, migrated all Link/navigation to Next.js
+- Organized backup files into _backups/
+- Consolidated MainContent exports
+- Added Vitest + React Testing Library (12 passing tests)
+- Created TypeScript interfaces for all DB tables (lib/types.ts)
+- Fixed CSS invalid selectors in globals.css
+- Fixed api-client.ts hardcoded base URL → relative /api
+- Fixed dashboard.tsx optional job_date type error
+- Fixed remaining Link to→href in view-invoice.tsx
+
+### Phase 3: Cleanup (2026-03-03)
+- Removed all Vercel references (VERCEL_DEPLOYMENT_GUIDE.md, .gitignore, WARP.md)
+- Deleted stale remote branches (vercel-test, v0/main-f4dd75b5, fix/build-and-audit)
+- Created CODEBASE_AUDIT.md — full interactive element catalog
+
+---
+
+## Current Priorities (Next Steps)
+
+### 🔴 Critical Fixes (do first)
+1. **Fix dashboard status mismatch** — change English filters ("paid","pending") to Hebrew ("שולם","ממתין לתשלום")
+2. **Fix client delete** — add actual Supabase delete call (or soft-delete like jobs)
+3. **Fix invoice API auth** — switch from supabase.auth.getUser() to hardcoded userId pattern (matching clients/jobs routes)
+4. **Move business settings to DB** — use BusinessSettings type from lib/types.ts, create API route
+
+### 🟡 High Priority
+5. Standardize data access — pick one pattern (API routes vs direct Supabase) and apply consistently
+6. Remove fake sample data fallback from vehicles page
+7. Make "new client" from job form actually create a client record
+8. Remove all [v0] console.log debug statements
+9. Translate remaining English UI strings to Hebrew (workers, vehicles, dashboard)
+
+### 🟢 Medium Priority
+10. Create missing edit routes for workers and vehicles
+11. Fix client edit modal — either create /api/clients/{id}/rates route or remove the tab
+12. Fix misleading form labels (hourly rate → security rate)
+13. Standardize payment status values (Hebrew everywhere)
+14. Add proper error handling and user-facing error messages
+
+### 🔵 Enhancements (after fixes)
+15. Implement Google Calendar integration (or remove the toggle)
+16. Add proper authentication system (replace hardcoded auth)
+17. Add more test coverage (component tests)
+18. Implement "Apply to Invoices" in business settings
+19. Add data export/import functionality
+20. Add proper loading states to all modals
+
+---
+
+## Architecture Notes
+- **Framework**: Next.js 15 (App Router) + React 19 + TypeScript
+- **Database**: Supabase (PostgreSQL)
+- **Styling**: Tailwind CSS v4 + Radix UI + shadcn/ui
+- **Auth**: Hardcoded simple auth (env vars) — NOT Supabase Auth
+- **Package Manager**: pnpm
+- **Testing**: Vitest + React Testing Library
+- **Fonts**: Alef (Hebrew) + Futura (English)
+- **Direction**: RTL (Hebrew-first)
+
+## File Reference
+- `CODEBASE_AUDIT.md` — Detailed element-by-element audit with DB connection status
+- `WARP.md` — Development guidance for AI assistants
+- `lib/types.ts` — TypeScript interfaces for all DB tables
+- `entities/all.ts` — Database entity classes with CRUD operations

@@ -1,18 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 import { invoiceService } from "@/lib/invoice-service"
+
+// Hardcoded auth — matches clients/jobs API pattern
+const defaultUser = { id: "00000000-0000-0000-0000-000000000001", email: "admin@example.com" }
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
     const { data: invoices, error } = await supabase
       .from("invoices")
@@ -20,14 +18,13 @@ export async function GET(request: NextRequest) {
         *,
         clients:client_id(company_name, contact_person, email, address, city)
       `)
-      .eq("created_by_id", user.id)
       .order("invoice_date", { ascending: false })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ data: invoices })
+    return NextResponse.json({ data: invoices || [] })
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
@@ -35,15 +32,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
     const body = await request.json()
     const { clientId, jobIds, notes } = body
@@ -53,7 +45,6 @@ export async function POST(request: NextRequest) {
       .from("clients")
       .select("*")
       .eq("id", clientId)
-      .eq("created_by_id", user.id)
       .single()
 
     if (clientError || !client) {
@@ -68,7 +59,6 @@ export async function POST(request: NextRequest) {
         workers:worker_id(name)
       `)
       .in("id", jobIds)
-      .eq("created_by_id", user.id)
 
     if (jobsError || !jobs || jobs.length === 0) {
       return NextResponse.json({ error: "Jobs not found" }, { status: 404 })
@@ -90,8 +80,8 @@ export async function POST(request: NextRequest) {
       invoice_date: new Date().toISOString().split("T")[0],
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 30 days from now
       notes,
-      created_by_id: user.id,
-      created_by: user.email,
+      created_by_id: defaultUser.id,
+      created_by: defaultUser.email,
     }
 
     const { data: invoice, error: invoiceError } = await supabase

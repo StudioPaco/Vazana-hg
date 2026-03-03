@@ -6,7 +6,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 Vazana Studio is a Hebrew/English bilingual business management system built with Next.js 15, TypeScript, and Supabase. The application manages clients, jobs, workers, vehicles, carts, invoices, and documents for a construction/maintenance business.
 
-This is a v0.app project that syncs automatically with deployments on Vercel.
+This is a Next.js project managed locally with pnpm.
 
 ## Development Commands
 
