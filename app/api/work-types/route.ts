@@ -18,14 +18,13 @@ export async function GET(request: NextRequest) {
       .order("name_he", { ascending: true })
 
     if (error) {
-      console.error("[v0] Error fetching work types:", error)
+      console.error("Error fetching work types:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log("[v0] Work types fetched successfully:", workTypes?.length || 0, "records")
     return NextResponse.json({ data: workTypes || [] })
   } catch (error) {
-    console.error("[v0] Internal error fetching work types:", error)
+    console.error("Internal error fetching work types:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -50,21 +49,20 @@ export async function POST(request: NextRequest) {
           name_en: body.name_en,
           created_by_id: defaultUser.id,
           is_active: true,
-          is_sample: true,
+          is_sample: false,
         },
       ])
       .select()
       .single()
 
     if (error) {
-      console.error("[v0] Error creating work type:", error)
+      console.error("Error creating work type:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log("[v0] Work type created successfully:", workType)
     return NextResponse.json({ data: workType })
   } catch (error) {
-    console.error("[v0] Internal error creating work type:", error)
+    console.error("Internal error creating work type:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -88,14 +86,13 @@ export async function PUT(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error("[v0] Error updating work type:", error)
+      console.error("Error updating work type:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log("[v0] Work type updated successfully:", workType)
     return NextResponse.json({ data: workType })
   } catch (error) {
-    console.error("[v0] Internal error updating work type:", error)
+    console.error("Internal error updating work type:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -118,14 +115,13 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase.from("work_types").delete().eq("id", id)
 
     if (error) {
-      console.error("[v0] Error deleting work type:", error)
+      console.error("Error deleting work type:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log("[v0] Work type deleted successfully")
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Internal error deleting work type:", error)
+    console.error("Internal error deleting work type:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

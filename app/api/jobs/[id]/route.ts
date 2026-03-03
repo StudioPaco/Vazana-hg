@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         workers:worker_id(name, phone_number),
         vehicles:vehicle_id(name, license_plate),
         carts:cart_id(name, details),
-        receipts:receipt_id(receipt_number, status, total_amount)
+        invoices:receipt_id(invoice_number, status, total_amount)
       `)
       .eq("id", id)
       .eq("created_by_id", user.id)
@@ -56,8 +56,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updated_date: new Date().toISOString(),
     }
 
-    console.log(`[v0] Updating job ${id} with:`, updateData)
-
     const { data: job, error } = await supabase
       .from("jobs")
       .update(updateData)
@@ -66,7 +64,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       .single()
 
     if (error) {
-      console.error("[v0] Supabase error updating job:", error)
+      console.error("Supabase error updating job:", error)
       return NextResponse.json({ 
         error: error.message,
         details: error.details,
@@ -75,10 +73,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }, { status: 500 })
     }
 
-    console.log(`[v0] Successfully updated job:`, job)
     return NextResponse.json({ data: job })
   } catch (error) {
-    console.error("[v0] Error in PUT /api/jobs/[id]:", error)
+    console.error("Error in PUT /api/jobs/[id]:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -45,7 +45,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
     address: "",
     city: "",
     postalCode: "",
-    paymentTerms: "immediate",
+    paymentTerms: "מיידי",
     hourlyRate: "",
     maintenanceRate: "",
     notes: "",
@@ -58,7 +58,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
 
     setIsSubmitting(true)
     try {
-      console.log("[v0] Submitting client form with data:", formData)
+      console.log("Submitting client form with data:", formData)
 
       const response = await fetch("/api/clients", {
         method: "POST",
@@ -83,13 +83,13 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error("[v0] Error creating client:", errorData)
+        console.error("Error creating client:", errorData)
         alert("שגיאה ביצירת הלקוח: " + (errorData.error || "שגיאה לא ידועה"))
         return
       }
 
       const result = await response.json()
-      console.log("[v0] Client created successfully:", result)
+      console.log("Client created successfully:", result)
       
       // Reset form
       setFormData({
@@ -100,7 +100,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
         address: "",
         city: "",
         postalCode: "",
-        paymentTerms: "immediate",
+        paymentTerms: "מיידי",
         hourlyRate: "",
         maintenanceRate: "",
         notes: "",
@@ -110,7 +110,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
       onOpenChange(false)
       alert("הלקוח נוצר בהצלחה!")
     } catch (error) {
-      console.error("[v0] Failed to create client:", error)
+      console.error("Failed to create client:", error)
       alert("שגיאה ביצירת הלקוח: בעיית רשת או שרת")
     }
     setIsSubmitting(false)
@@ -126,7 +126,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
       address: "",
       city: "",
       postalCode: "",
-      paymentTerms: "immediate",
+      paymentTerms: "מיידי",
       hourlyRate: "",
       maintenanceRate: "",
       notes: "",
@@ -254,17 +254,17 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
                     <SelectValue placeholder="בחר אופן תשלום" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="immediate">מיידי</SelectItem>
-                    <SelectItem value="current+15">שוטף +15</SelectItem>
-                    <SelectItem value="current+30">שוטף +30</SelectItem>
-                    <SelectItem value="current+60">שוטף +60</SelectItem>
-                    <SelectItem value="current+90">שוטף +90</SelectItem>
+                    <SelectItem value="מיידי">מיידי</SelectItem>
+                    <SelectItem value="שוטף +15">שוטף +15</SelectItem>
+                    <SelectItem value="שוטף +30">שוטף +30</SelectItem>
+                    <SelectItem value="שוטף +60">שוטף +60</SelectItem>
+                    <SelectItem value="שוטף +90">שוטף +90</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="hourlyRate" className="text-right block">
-                  תעריף שעתי (₪)
+                  תעריף אבטחה (₪)
                 </Label>
                 <Input
                   id="hourlyRate"
@@ -277,7 +277,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maintenanceRate" className="text-right block">
-                  תעריף הערכה (₪)
+                  תעריף התקנה (₪)
                 </Label>
                 <Input
                   id="maintenanceRate"

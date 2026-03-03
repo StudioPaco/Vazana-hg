@@ -83,7 +83,7 @@ export default function JobsPage() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        console.log("[v0] Fetching jobs from API...")
+        console.log("Fetching jobs from API...")
         
         const response = await fetch('/api/jobs')
         
@@ -94,15 +94,15 @@ export default function JobsPage() {
         const result = await response.json()
         const allJobs = result.data || []
         
-        console.log("[v0] Successfully fetched jobs:", allJobs)
+        console.log("Successfully fetched jobs:", allJobs)
         
         // Use jobs exactly as they come from the database - no status calculation
-        console.log("[v0] Using job statuses directly from database")
+        console.log("Using job statuses directly from database")
         
         setJobs(allJobs)
         setFilteredJobs(allJobs)
       } catch (error) {
-        console.error("[v0] Failed to fetch jobs:", error)
+        console.error("Failed to fetch jobs:", error)
         // Don't show sample data - just show empty state
         setJobs([])
         setFilteredJobs([])

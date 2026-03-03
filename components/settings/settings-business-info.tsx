@@ -5,42 +5,74 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Save, Briefcase, ArrowLeft, AlertTriangle } from "lucide-react"
+import { Save, Briefcase, ArrowLeft, AlertTriangle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { createPageUrl } from "@/utils"
-// Import Receipt entity if we were to implement the "Apply to Active Invoices"
-// For now, it's not strictly needed for the mock button.
-// import { Receipt } from "@/entities/Receipt";
 
-// localStorage keys
-const BUSINESS_NAME_KEY = "vazana-business-name"
-const BUSINESS_ADDRESS_KEY = "vazana-business-address"
-const BUSINESS_PHONE_KEY = "vazana-business-phone"
-const BUSINESS_VAT_ID_KEY = "vazana-business-vat-id"
-const BUSINESS_EMAIL_KEY = "vazana-business-email" // New
-const BANK_ACCOUNT_NAME_KEY = "vazana-bank-account-name"
-const BANK_NAME_KEY = "vazana-bank-name"
-const BANK_BRANCH_KEY = "vazana-bank-branch"
-const BANK_ACCOUNT_NUMBER_KEY = "vazana-bank-account-number"
+// localStorage keys (kept as fallback cache)
+const LS_PREFIX = "vazana-business-"
 
 export default function SettingsBusinessInfo() {
   const router = useRouter()
   const navigate = (path: string) => router.push(path)
-  const [language, setLanguage] = useState<'en' | 'he'>(() => (localStorage.getItem("vazana-language") as 'en' | 'he') || "he")
+  const [language, setLanguage] = useState<'en' | 'he'>('he')
 
-  const [businessName, setBusinessName] = useState(() => localStorage.getItem(BUSINESS_NAME_KEY) || "")
-  const [businessAddress, setBusinessAddress] = useState(() => localStorage.getItem(BUSINESS_ADDRESS_KEY) || "")
-  const [businessPhone, setBusinessPhone] = useState(() => localStorage.getItem(BUSINESS_PHONE_KEY) || "")
-  const [businessVatId, setBusinessVatId] = useState(() => localStorage.getItem(BUSINESS_VAT_ID_KEY) || "")
-  const [businessEmail, setBusinessEmail] = useState(() => localStorage.getItem(BUSINESS_EMAIL_KEY) || "") // New
+  const [businessName, setBusinessName] = useState("")
+  const [businessAddress, setBusinessAddress] = useState("")
+  const [businessPhone, setBusinessPhone] = useState("")
+  const [businessVatId, setBusinessVatId] = useState("")
+  const [businessEmail, setBusinessEmail] = useState("")
   
   // Bank account information
-  const [bankAccountName, setBankAccountName] = useState(() => localStorage.getItem(BANK_ACCOUNT_NAME_KEY) || "")
-  const [bankName, setBankName] = useState(() => localStorage.getItem(BANK_NAME_KEY) || "")
-  const [bankBranch, setBankBranch] = useState(() => localStorage.getItem(BANK_BRANCH_KEY) || "")
-  const [bankAccountNumber, setBankAccountNumber] = useState(() => localStorage.getItem(BANK_ACCOUNT_NUMBER_KEY) || "")
+  const [bankAccountName, setBankAccountName] = useState("")
+  const [bankName, setBankName] = useState("")
+  const [bankBranch, setBankBranch] = useState("")
+  const [bankAccountNumber, setBankAccountNumber] = useState("")
   
   const [isSaved, setIsSaved] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Load settings from API on mount, fall back to localStorage cache
+  useEffect(() => {
+    const lang = (localStorage.getItem("vazana-language") as 'en' | 'he') || "he"
+    setLanguage(lang)
+
+    const loadSettings = async () => {
+      try {
+        const res = await fetch("/api/business-settings")
+        if (res.ok) {
+          const { data } = await res.json()
+          if (data) {
+            setBusinessName(data.company_name || "")
+            setBusinessAddress(data.address || "")
+            setBusinessPhone(data.phone || "")
+            setBusinessVatId(data.registration_number || "")
+            setBusinessEmail(data.company_email || "")
+            setBankAccountName(data.bank_account_name || "")
+            setBankName(data.bank_name || "")
+            setBankBranch(data.bank_branch || "")
+            setBankAccountNumber(data.bank_account_number || "")
+            setIsLoading(false)
+            return
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load business settings from API:", e)
+      }
+      // Fallback: load from localStorage cache
+      setBusinessName(localStorage.getItem(`${LS_PREFIX}name`) || "")
+      setBusinessAddress(localStorage.getItem(`${LS_PREFIX}address`) || "")
+      setBusinessPhone(localStorage.getItem(`${LS_PREFIX}phone`) || "")
+      setBusinessVatId(localStorage.getItem(`${LS_PREFIX}vat-id`) || "")
+      setBusinessEmail(localStorage.getItem(`${LS_PREFIX}email`) || "")
+      setBankAccountName(localStorage.getItem(`${LS_PREFIX}bank-account-name`) || "")
+      setBankName(localStorage.getItem(`${LS_PREFIX}bank-name`) || "")
+      setBankBranch(localStorage.getItem(`${LS_PREFIX}bank-branch`) || "")
+      setBankAccountNumber(localStorage.getItem(`${LS_PREFIX}bank-account-number`) || "")
+      setIsLoading(false)
+    }
+    loadSettings()
+  }, [])
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -119,21 +151,50 @@ export default function SettingsBusinessInfo() {
   }
   const t = texts[language]
 
-  const handleSave = () => {
-    localStorage.setItem(BUSINESS_NAME_KEY, businessName)
-    localStorage.setItem(BUSINESS_ADDRESS_KEY, businessAddress)
-    localStorage.setItem(BUSINESS_PHONE_KEY, businessPhone)
-    localStorage.setItem(BUSINESS_VAT_ID_KEY, businessVatId)
-    localStorage.setItem(BUSINESS_EMAIL_KEY, businessEmail)
-    
-    // Save bank account information
-    localStorage.setItem(BANK_ACCOUNT_NAME_KEY, bankAccountName)
-    localStorage.setItem(BANK_NAME_KEY, bankName)
-    localStorage.setItem(BANK_BRANCH_KEY, bankBranch)
-    localStorage.setItem(BANK_ACCOUNT_NUMBER_KEY, bankAccountNumber)
-    
-    setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 3000)
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      const payload = {
+        company_name: businessName,
+        address: businessAddress,
+        phone: businessPhone,
+        registration_number: businessVatId,
+        company_email: businessEmail,
+        bank_account_name: bankAccountName,
+        bank_name: bankName,
+        bank_branch: bankBranch,
+        bank_account_number: bankAccountNumber,
+      }
+
+      const res = await fetch("/api/business-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        throw new Error("API save failed")
+      }
+
+      // Also update localStorage cache
+      localStorage.setItem(`${LS_PREFIX}name`, businessName)
+      localStorage.setItem(`${LS_PREFIX}address`, businessAddress)
+      localStorage.setItem(`${LS_PREFIX}phone`, businessPhone)
+      localStorage.setItem(`${LS_PREFIX}vat-id`, businessVatId)
+      localStorage.setItem(`${LS_PREFIX}email`, businessEmail)
+      localStorage.setItem(`${LS_PREFIX}bank-account-name`, bankAccountName)
+      localStorage.setItem(`${LS_PREFIX}bank-name`, bankName)
+      localStorage.setItem(`${LS_PREFIX}bank-branch`, bankBranch)
+      localStorage.setItem(`${LS_PREFIX}bank-account-number`, bankAccountNumber)
+
+      setIsSaved(true)
+      setTimeout(() => setIsSaved(false), 3000)
+    } catch (error) {
+      console.error("Failed to save business settings:", error)
+      alert(isHebrew ? "שגיאה בשמירת ההגדרות. נסה שוב." : "Failed to save settings. Please try again.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleApplyToInvoices = async () => {
@@ -167,7 +228,7 @@ export default function SettingsBusinessInfo() {
             </div>
             <Button
               variant="outline"
-              onClick={() => navigate(createPageUrl("Settings"))}
+              onClick={() => navigate("/settings")}
               className="border-neutral-300 text-neutral-700 hover:bg-neutral-100"
             >
               <ArrowLeft className={`w-4 h-4 ${isHebrew ? "ml-2" : "mr-2"}`} />
@@ -325,8 +386,8 @@ export default function SettingsBusinessInfo() {
                 </div>
                 <div className="flex items-center gap-2">
                   {isSaved && <p className="text-sm text-green-600 animate-pulse">{t.infoSaved}</p>}
-                  <Button onClick={handleSave} className="bg-primary hover:bg-primary-dark text-primary-foreground">
-                    <Save className={`w-4 h-4 ${isHebrew ? "ml-2" : "mr-2"}`} />
+                  <Button onClick={handleSave} disabled={isSaving} className="bg-primary hover:bg-primary-dark text-primary-foreground">
+                    {isSaving ? <Loader2 className={`w-4 h-4 animate-spin ${isHebrew ? "ml-2" : "mr-2"}`} /> : <Save className={`w-4 h-4 ${isHebrew ? "ml-2" : "mr-2"}`} />}
                     {t.saveInfo}
                   </Button>
                 </div>

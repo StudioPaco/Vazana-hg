@@ -16,14 +16,13 @@ export async function GET(request: NextRequest) {
       .select("*")
       .order("created_date", { ascending: false })
     if (error) {
-      console.error("[v0] Error fetching clients:", error)
+      console.error("Error fetching clients:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log("[v0] Clients fetched successfully:", clients?.length || 0, "records")
     return NextResponse.json({ data: clients || [] })
   } catch (error) {
-    console.error("[v0] Internal error fetching clients:", error)
+    console.error("Internal error fetching clients:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -63,15 +62,11 @@ export async function POST(request: NextRequest) {
       is_sample: false,
     }
 
-    console.log("[v0] Creating client with sanitized data:", clientData)
-
-    console.log("[v0] Creating client with data:", clientData)
-
     const { data: client, error } = await supabase.from("clients").insert([clientData]).select().single()
 
     if (error) {
-      console.error("[v0] Error creating client in Supabase:", error)
-      console.error("[v0] Full error details:", JSON.stringify(error, null, 2))
+      console.error("Error creating client in Supabase:", error)
+      console.error("Full error details:", JSON.stringify(error, null, 2))
       return NextResponse.json({ 
         error: `Supabase error: ${error.message}`, 
         details: error.details || error.hint || 'No additional details',
@@ -79,10 +74,9 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    console.log("[v0] Client created successfully:", client)
     return NextResponse.json({ data: client }, { status: 201 })
   } catch (error: any) {
-    console.error("[v0] Internal error creating client:", error)
+    console.error("Internal error creating client:", error)
     // Ensure a valid JSON response is always sent
     return NextResponse.json(
       { error: "Internal server error.", details: error.message || "Unknown error" },

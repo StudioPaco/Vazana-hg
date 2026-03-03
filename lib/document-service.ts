@@ -1,4 +1,11 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 export interface Document {
   id: string
@@ -15,7 +22,7 @@ export interface Document {
 
 export class DocumentService {
   async uploadDocument(file: File, entityType: Document["entity_type"], entityId?: string): Promise<Document> {
-    const supabase = await createClient()
+    const supabase = getSupabase()
     const filename = `${Date.now()}-${file.name}`
     const filePath = `documents/${entityType}/${filename}`
 
@@ -50,7 +57,7 @@ export class DocumentService {
   }
 
   async getDocuments(entityType?: string, entityId?: string): Promise<Document[]> {
-    const supabase = await createClient()
+    const supabase = getSupabase()
     let query = supabase.from("documents").select("*")
 
     if (entityType) {
@@ -70,7 +77,7 @@ export class DocumentService {
   }
 
   async deleteDocument(id: string): Promise<void> {
-    const supabase = await createClient()
+    const supabase = getSupabase()
     // Get document info first
     const { data: doc, error: fetchError } = await supabase
       .from("documents")
@@ -98,8 +105,8 @@ export class DocumentService {
   }
 
   async getDownloadUrl(filePath: string): Promise<string> {
-    const supabase = await createClient()
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(filePath, 3600) // 1 hour expiry
+    const supabase = getSupabase()
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(filePath, 3600)
 
     if (error) {
       throw new Error(`Failed to create download URL: ${error.message}`)

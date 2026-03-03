@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, Truck, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import VehicleEditModal from "@/components/vehicles/vehicle-edit-modal"
 
 interface Vehicle {
   id: string
@@ -20,6 +21,8 @@ export default function VehiclesPage() {
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -28,35 +31,17 @@ export default function VehiclesPage() {
         const { data, error } = await supabase.from("vehicles").select("*").order("name")
 
         if (error) {
-          console.error("[v0] Error fetching vehicles:", error)
-          const sampleVehicles = [
-            {
-              id: "vehicle-1",
-              name: "טנדר - טויוטה קمري לבן",
-              license_plate: "345-67-890",
-              details: "רכב עבודה ראשי",
-            },
-            {
-              id: "vehicle-2",
-              name: "משאית - פורד טרנזיט",
-              license_plate: "123-45-678",
-              details: "משאית להובלת ציוד כבד",
-            },
-            {
-              id: "vehicle-3",
-              name: "רכב פרטי - הונדה סיוויק",
-              license_plate: "234-56-789",
-              details: "רכב קל",
-            },
-          ]
-          setVehicles(sampleVehicles)
-          setFilteredVehicles(sampleVehicles)
+          console.error("Error fetching vehicles:", error)
+          setVehicles([])
+          setFilteredVehicles([])
         } else {
           setVehicles(data || [])
           setFilteredVehicles(data || [])
         }
       } catch (error) {
         console.error("Failed to fetch vehicles:", error)
+        setVehicles([])
+        setFilteredVehicles([])
       } finally {
         setLoading(false)
       }
@@ -75,17 +60,20 @@ export default function VehiclesPage() {
   }, [searchTerm, vehicles])
 
   const handleDeleteVehicle = async (id: string) => {
-    if (confirm("Are you sure you want to delete this vehicle?")) {
+    if (confirm("האם אתה בטוח שברצונך למחוק רכב זה?")) {
       try {
         const supabase = createClient()
         const { error } = await supabase.from("vehicles").delete().eq("id", id)
 
         if (error) {
-          console.error("[v0] Error deleting vehicle:", error)
+          console.error("Error deleting vehicle:", error)
+          alert("שגיאה במחיקת הרכב. נסה שוב.")
+          return
         }
         setVehicles(vehicles.filter((vehicle) => vehicle.id !== id))
       } catch (error) {
         console.error("Failed to delete vehicle:", error)
+        alert("שגיאה במחיקת הרכב. נסה שוב.")
       }
     }
   }
@@ -125,7 +113,7 @@ export default function VehiclesPage() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input
-          placeholder="Search vehicles..."
+          placeholder="חפש רכבים..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
@@ -138,9 +126,9 @@ export default function VehiclesPage() {
           <CardContent className="text-center py-12">
             <div className="text-gray-500">
               <Truck className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-lg font-medium mb-2">No vehicles found</p>
+              <p className="text-lg font-medium mb-2">לא נמצאו רכבים</p>
               <p className="text-sm">
-                {searchTerm ? "Try adjusting your search terms" : "Add your first vehicle to get started"}
+                {searchTerm ? "נסה לשנות את מילות החיפוש" : "הוסף את הרכב הראשון שלך כדי להתחיל"}
               </p>
             </div>
           </CardContent>
@@ -163,17 +151,23 @@ export default function VehiclesPage() {
               <CardContent className="space-y-4">
                 {vehicle.details && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Details:</p>
+                    <p className="text-sm text-gray-500 mb-1">פרטים:</p>
                     <p className="text-sm text-gray-700">{vehicle.details}</p>
                   </div>
                 )}
 
-                <div className="flex space-x-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
-                    <Link href={`/settings/resources/vehicles/${vehicle.id}/edit`}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Link>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-transparent"
+                    onClick={() => {
+                      setEditingVehicle(vehicle)
+                      setEditModalOpen(true)
+                    }}
+                  >
+                    <Edit className="ml-2 h-4 w-4" />
+                    ערוך
                   </Button>
                   <Button
                     variant="outline"
@@ -189,6 +183,14 @@ export default function VehiclesPage() {
           ))}
         </div>
       )}
+      <VehicleEditModal
+        vehicle={editingVehicle}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onVehicleUpdated={(updated) => {
+          setVehicles(prev => prev.map(v => v.id === updated.id ? updated : v))
+        }}
+      />
     </div>
   )
 }

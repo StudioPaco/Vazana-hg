@@ -50,8 +50,6 @@ export async function POST(request: NextRequest) {
 
     // For now, just return the updated data as confirmation
     // TODO: Store in a persistent way when authentication is implemented
-    console.log('User preferences updated:', updateData);
-    
     return NextResponse.json(updateData);
   } catch (error) {
     console.error('Error in user preferences POST:', error);

@@ -34,7 +34,7 @@ export default function EditUserPage() {
   }, [params.id])
 
   const handleSave = () => {
-    console.log("[v0] Saving user data:", userData)
+    console.log("Saving user data:", userData)
     alert("פרטי המשתמש נשמרו בהצלחה!")
     router.push("/settings")
   }

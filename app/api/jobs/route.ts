@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const missingFields = requiredFields.filter(field => !body[field] || body[field] === '')
     
     if (missingFields.length > 0) {
-      console.error('[v0] Missing required fields:', missingFields)
+      console.error('Missing required fields:', missingFields)
       return NextResponse.json({ 
         error: `Missing required fields: ${missingFields.join(', ')}`,
         missing_fields: missingFields 
@@ -74,15 +74,13 @@ export async function POST(request: NextRequest) {
       // created_by_id: defaultUser.id, // Temporarily removed to avoid foreign key constraint
       created_by: defaultUser.email,
       // Let database handle timestamps with DEFAULT NOW()
-      is_sample: true,
+      is_sample: false,
     }
-
-    console.log('[v0] Creating job with data:', JSON.stringify(jobData, null, 2))
 
     const { data: job, error } = await supabase.from("jobs").insert([jobData]).select().single()
 
     if (error) {
-      console.error('[v0] Supabase error creating job:', error)
+      console.error('Supabase error creating job:', error)
       return NextResponse.json({ 
         error: error.message,
         details: error.details,

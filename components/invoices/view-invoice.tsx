@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { createPageUrl } from "@/utils"
 import { format, parseISO } from "date-fns"
 import {
   Trash2,
@@ -245,7 +244,7 @@ export default function ViewInvoice() {
           )
           await Promise.all(jobUpdatePromises)
         }
-        navigate(createPageUrl("Invoices")) // Navigate to Invoices archive
+        navigate("/invoices") // Navigate to Invoices archive
       } catch (error) {
         console.error("Error deleting item:", error)
         alert(t.deleteFailed)
@@ -351,7 +350,7 @@ export default function ViewInvoice() {
         dir={isHebrew ? "rtl" : "ltr"}
       >
         <h1 className="text-2xl font-bold text-neutral-900 mb-4">{t.notFound}</h1>
-        <Link href={createPageUrl("Invoices")}>
+        <Link href="/invoices">
           <Button variant="outline" className="flex items-center gap-1 bg-transparent">
             <ChevronLeft className={`w-4 h-4 ${isHebrew ? "transform scale-x-[-1] ml-1" : "mr-1"}`} /> {t.backToArchive}
           </Button>
@@ -384,7 +383,7 @@ export default function ViewInvoice() {
         {/* Back Button */}
         <div className="mb-6">
           <Link
-            href={createPageUrl("Invoices")}
+            href="/invoices"
             className="inline-flex items-center text-primary hover:text-primary-dark"
           >
             <ChevronLeft className={`w-5 h-5 ${isHebrew ? "transform scale-x-[-1] ml-1" : "mr-1"}`} />

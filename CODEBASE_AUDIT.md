@@ -1,9 +1,9 @@
-# Vazana Studio — Codebase Audit
+﻿# Vazana Studio ג€” Codebase Audit
 > Generated: 2026-03-03 | Audited against: commit 43567d6 (main)
 
 ## Legend
-- **Health**: ✅ Working | ⚠️ Has Issues | ❌ Broken | 🔲 Not Implemented
-- **DB**: 🟢 Connected & Correct | 🟡 Connected but Suspect | 🔴 Not Connected | ⬜ N/A (no DB needed)
+- **Health**: ג… Working | ג ן¸ Has Issues | ג Broken | נ”² Not Implemented
+- **DB**: נ¢ Connected & Correct | נ¡ Connected but Suspect | נ”´ Not Connected | ג¬ N/A (no DB needed)
 
 ---
 
@@ -12,20 +12,20 @@
 ### Login Page (app/auth/login/page.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Username field | Input | Enter username | ⬜ | ✅ | Hardcoded auth via env vars |
-| Password field | Input | Enter password | ⬜ | ✅ | Uses NEXT_PUBLIC_ROOT_PASSWORD |
-| Login button | Button | Submit credentials | ⬜ | ✅ | Sets localStorage + cookie |
-| Session cookie | Cookie | vazana-session | ⬜ | ⚠️ | Simple string, not JWT — no expiry logic |
+| Username field | Input | Enter username | ג¬ | ג… | Hardcoded auth via env vars |
+| Password field | Input | Enter password | ג¬ | ג… | Uses NEXT_PUBLIC_ROOT_PASSWORD |
+| Login button | Button | Submit credentials | ג¬ | ג… | Sets localStorage + cookie |
+| Session cookie | Cookie | vazana-session | ג¬ | ג ן¸ | Simple string, not JWT ג€” no expiry logic |
 
 ### Sign-Up Page (app/auth/sign-up/page.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Sign-up form | Form | User registration | 🔴 | ⚠️ | Uses Supabase Auth but app uses hardcoded auth — conflicting auth models |
+| Sign-up form | Form | User registration | נ”´ | ג ן¸ | Uses Supabase Auth but app uses hardcoded auth ג€” conflicting auth models |
 
 **Issues Found:**
 - Two conflicting auth systems: simple hardcoded auth (client-auth.ts) vs Supabase Auth (sign-up page)
-- Session management uses localStorage — not secure for production
-- Middleware checks for cookie but login sets localStorage — potential mismatch
+- Session management uses localStorage ג€” not secure for production
+- Middleware checks for cookie but login sets localStorage ג€” potential mismatch
 
 ---
 
@@ -33,18 +33,18 @@
 
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| ניווט (Home) | NavLink | Dashboard → / | ⬜ | ✅ | |
-| עבודות (Jobs) | NavLink | Jobs list → /jobs | ⬜ | ✅ | |
-| עבודה חדשה | NavLink | New job → /jobs/new | ⬜ | ✅ | |
-| לקוחות (Clients) | NavLink | Clients → /clients | ⬜ | ✅ | |
-| הפקת חשבוניות | NavLink | New invoice → /invoices/new | ⬜ | ✅ | |
-| ארכיון חשבוניות | NavLink | Invoice archive → /invoices/archive | ⬜ | ✅ | |
-| ארכיון מסמכים | NavLink | Documents → /documents | ⬜ | ✅ | |
-| מרכז תחזוקה | NavLink | Maintenance → /maintenance | ⬜ | ✅ | |
-| הגדרות (Settings) | NavLink | Settings → /settings | ⬜ | ✅ | |
-| Minimize toggle | Button | Collapse sidebar | ⬜ | ✅ | Persists via localStorage theme settings |
-| Logout button | Button | Clear session, redirect | ⬜ | ✅ | Clears localStorage, redirects to /auth/login |
-| User display | Text | Shows current user name | ⬜ | ✅ | From localStorage via clientAuth |
+| ׳ ׳™׳•׳•׳˜ (Home) | NavLink | Dashboard ג†’ / | ג¬ | ג… | |
+| ׳¢׳‘׳•׳“׳•׳× (Jobs) | NavLink | Jobs list ג†’ /jobs | ג¬ | ג… | |
+| ׳¢׳‘׳•׳“׳” ׳—׳“׳©׳” | NavLink | New job ג†’ /jobs/new | ג¬ | ג… | |
+| ׳׳§׳•׳—׳•׳× (Clients) | NavLink | Clients ג†’ /clients | ג¬ | ג… | |
+| ׳”׳₪׳§׳× ׳—׳©׳‘׳•׳ ׳™׳•׳× | NavLink | New invoice ג†’ /invoices/new | ג¬ | ג… | |
+| ׳׳¨׳›׳™׳•׳ ׳—׳©׳‘׳•׳ ׳™׳•׳× | NavLink | Invoice archive ג†’ /invoices/archive | ג¬ | ג… | |
+| ׳׳¨׳›׳™׳•׳ ׳׳¡׳׳›׳™׳ | NavLink | Documents ג†’ /documents | ג¬ | ג… | |
+| ׳׳¨׳›׳– ׳×׳—׳–׳•׳§׳” | NavLink | Maintenance ג†’ /maintenance | ג¬ | ג… | |
+| ׳”׳’׳“׳¨׳•׳× (Settings) | NavLink | Settings ג†’ /settings | ג¬ | ג… | |
+| Minimize toggle | Button | Collapse sidebar | ג¬ | ג… | Persists via localStorage theme settings |
+| Logout button | Button | Clear session, redirect | ג¬ | ג… | Clears localStorage, redirects to /auth/login |
+| User display | Text | Shows current user name | ג¬ | ג… | From localStorage via clientAuth |
 
 ---
 
@@ -52,19 +52,19 @@
 
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Total Clients stat | Card | Count clients | 🟢 | ✅ | Via apiClient.getClients() → /api/clients |
-| Active Jobs stat | Card | Count jobs | 🟢 | ✅ | Via apiClient.getJobs() → /api/jobs |
-| Workers stat | Card | Count workers | 🟢 | ✅ | Via apiClient.getWorkers() → /api/workers |
-| Vehicles stat | Card | Count vehicles | 🟢 | ✅ | Via apiClient.getVehicles() → /api/vehicles |
-| Monthly Revenue | Card | Sum paid jobs | 🟢 | ✅ | Filters by payment_status="שולם" — **FIXED 2026-03-03** |
-| Pending Jobs | Card | Count pending | 🟢 | ✅ | Filters by payment_status="ממתין לתשלום" — **FIXED 2026-03-03** |
-| New Job button | Link | → /jobs/new | ⬜ | ✅ | |
-| New Client button | Link | → /clients/new | ⬜ | ✅ | |
-| Recent Jobs list | List | Last 5 jobs | 🟢 | ⚠️ | Uses job.job_date with optional fallback — OK |
+| Total Clients stat | Card | Count clients | נ¢ | ג… | Via apiClient.getClients() ג†’ /api/clients |
+| Active Jobs stat | Card | Count jobs | נ¢ | ג… | Via apiClient.getJobs() ג†’ /api/jobs |
+| Workers stat | Card | Count workers | נ¢ | ג… | Via apiClient.getWorkers() ג†’ /api/workers |
+| Vehicles stat | Card | Count vehicles | נ¢ | ג… | Via apiClient.getVehicles() ג†’ /api/vehicles |
+| Monthly Revenue | Card | Sum paid jobs | נ¢ | ג… | Filters by payment_status="׳©׳•׳׳" ג€” **FIXED 2026-03-03** |
+| Pending Jobs | Card | Count pending | נ¢ | ג… | Filters by payment_status="׳׳׳×׳™׳ ׳׳×׳©׳׳•׳" ג€” **FIXED 2026-03-03** |
+| New Job button | Link | ג†’ /jobs/new | ג¬ | ג… | |
+| New Client button | Link | ג†’ /clients/new | ג¬ | ג… | |
+| Recent Jobs list | List | Last 5 jobs | נ¢ | ג ן¸ | Uses job.job_date with optional fallback ג€” OK |
 
 **Issues Found:**
-- ~~**CRITICAL**: Dashboard status mismatch~~ → **FIXED 2026-03-03**: Now uses Hebrew statuses, UI fully translated to Hebrew, RTL layout applied
-- ~~Dashboard text is mostly English~~ → **FIXED 2026-03-03**: All UI text converted to Hebrew
+- ~~**CRITICAL**: Dashboard status mismatch~~ ג†’ **FIXED 2026-03-03**: Now uses Hebrew statuses, UI fully translated to Hebrew, RTL layout applied
+- ~~Dashboard text is mostly English~~ ג†’ **FIXED 2026-03-03**: All UI text converted to Hebrew
 
 ---
 
@@ -73,52 +73,52 @@
 ### Clients Page (components/clients/clients-page.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Search input | Input | Filter by name/contact/city | 🟢 | ✅ | Client-side filter on fetched data |
-| "הוסף לקוח" button | Button | Open new client modal | ⬜ | ✅ | |
-| Avg security rate stat | StatsContainer | Calculate avg rate | 🟢 | ✅ | Computed from fetched clients |
-| Active clients stat | StatsContainer | Count status="active" | 🟢 | ✅ | |
-| Most active client stat | StatsContainer | Client with most jobs | 🟢 | ✅ | Fetches job counts per client via Supabase direct |
-| Client card | Card | Display client info | 🟢 | ✅ | |
-| "העתק" button | Button | Copy client info to clipboard | ⬜ | ✅ | |
-| "ערוך" button | Button | Open edit modal | ⬜ | ✅ | |
-| Status badge | Badge | active/inactive | 🟢 | ✅ | |
-| Job history toggle | Button | Expand to show last 10 jobs | 🟢 | ✅ | Fetches from Supabase direct (not API route) |
-|| Delete client | Function | Remove client | 🟢 | ✅ | Calls DELETE /api/clients/{id} then updates state — **FIXED 2026-03-03** |
+| Search input | Input | Filter by name/contact/city | נ¢ | ג… | Client-side filter on fetched data |
+| "׳”׳•׳¡׳£ ׳׳§׳•׳—" button | Button | Open new client modal | ג¬ | ג… | |
+| Avg security rate stat | StatsContainer | Calculate avg rate | נ¢ | ג… | Computed from fetched clients |
+| Active clients stat | StatsContainer | Count status="active" | נ¢ | ג… | |
+| Most active client stat | StatsContainer | Client with most jobs | נ¢ | ג… | Fetches job counts per client via Supabase direct |
+| Client card | Card | Display client info | נ¢ | ג… | |
+| "׳”׳¢׳×׳§" button | Button | Copy client info to clipboard | ג¬ | ג… | |
+| "׳¢׳¨׳•׳" button | Button | Open edit modal | ג¬ | ג… | |
+| Status badge | Badge | active/inactive | נ¢ | ג… | |
+| Job history toggle | Button | Expand to show last 10 jobs | נ¢ | ג… | Fetches from Supabase direct (not API route) |
+|| Delete client | Function | Remove client | נ¢ | ג… | Calls DELETE /api/clients/{id} then updates state ג€” **FIXED 2026-03-03** |
 
 ### New Client Modal (components/clients/new-client-modal.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| שם החברה * | Input | Company name (required) | 🟢 | ✅ | Maps to company_name |
-| איש קשר * | Input | Contact person (required) | 🟢 | ✅ | Maps to contact_person |
-| דוא"ל * | Input | Email (required) | 🟢 | ✅ | |
-| טלפון * | Input | Phone (required) | 🟢 | ✅ | |
-| כתובת | Input | Address | 🟢 | ✅ | |
-| עיר | Input | City | 🟢 | ✅ | |
-| תיבת דואר | Input | PO Box | 🟢 | ✅ | Maps to po_box |
-| אופן תשלום | Select | Payment method | 🟢 | ⚠️ | Stores English value ("immediate") but label shows Hebrew — confusing for reports |
-| תעריף שעתי | Input | Hourly/security rate | 🟢 | ⚠️ | Label says "hourly" but maps to security_rate — misleading label |
-| תעריף הערכה | Input | Installation rate | 🟢 | ⚠️ | Label says "assessment" but maps to installation_rate — misleading label |
-| הערות | Textarea | Notes | 🟢 | ✅ | |
-| הוסף לקוח (Submit) | Button | POST /api/clients | 🟢 | ✅ | |
-| ביטול (Cancel) | Button | Close + reset form | ⬜ | ✅ | |
+| ׳©׳ ׳”׳—׳‘׳¨׳” * | Input | Company name (required) | נ¢ | ג… | Maps to company_name |
+| ׳׳™׳© ׳§׳©׳¨ * | Input | Contact person (required) | נ¢ | ג… | Maps to contact_person |
+| ׳“׳•׳"׳ * | Input | Email (required) | נ¢ | ג… | |
+| ׳˜׳׳₪׳•׳ * | Input | Phone (required) | נ¢ | ג… | |
+| ׳›׳×׳•׳‘׳× | Input | Address | נ¢ | ג… | |
+| ׳¢׳™׳¨ | Input | City | נ¢ | ג… | |
+| ׳×׳™׳‘׳× ׳“׳•׳׳¨ | Input | PO Box | נ¢ | ג… | Maps to po_box |
+|| ׳׳•׳₪׳ ׳×׳©׳׳•׳ | Select | Payment method | נ¢ | ג… | Now stores Hebrew values ("׳׳™׳™׳“׳™", "׳©׳•׳˜׳£ +30" etc) ג€” **FIXED 2026-03-03** |
+|| ׳×׳¢׳¨׳™׳£ ׳׳‘׳˜׳—׳” | Input | Security rate | נ¢ | ג… | Label corrected to match DB field ג€” **FIXED 2026-03-03** |
+|| ׳×׳¢׳¨׳™׳£ ׳”׳×׳§׳ ׳” | Input | Installation rate | נ¢ | ג… | Label corrected to match DB field ג€” **FIXED 2026-03-03** |
+| ׳”׳¢׳¨׳•׳× | Textarea | Notes | נ¢ | ג… | |
+| ׳”׳•׳¡׳£ ׳׳§׳•׳— (Submit) | Button | POST /api/clients | נ¢ | ג… | |
+| ׳‘׳™׳˜׳•׳ (Cancel) | Button | Close + reset form | ג¬ | ג… | |
 
 ### Client Edit Modal (components/clients/client-edit-modal.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Basic Info tab | Form | Edit all basic fields | 🟢 | ✅ | Direct Supabase update |
-| Rates tab | Form | Work-type-specific rates | 🟡 | ⚠️ | Fetches /api/clients/{id}/rates — **API route may not exist** |
-| Payment Log tab | Form | Monthly payment tracking | 🟡 | ⚠️ | Fetches /api/clients/{id}/payment-logs — **API route may not exist** |
-| "הוסף תעריף" button | Button | Add work type rate row | ⬜ | ✅ | |
-| "הוסף רשומה" button | Button | Add payment log entry | ⬜ | ✅ | |
-| Work type dropdown | Select | Pick work type for rate | 🟢 | ✅ | Fetches from /api/work-types |
-| Custom rates 1-5 | Input | Custom rate fields | 🟡 | ⚠️ | Fields custom_rate_1..5 may not exist in DB schema |
-| Save button | Button | Submit update | 🟢 | ✅ | Uses Supabase direct (not API route) |
-| Rate validation | Logic | Require at least 1 rate | ⬜ | ⚠️ | Forces rate entry even if not needed |
+| Basic Info tab | Form | Edit all basic fields | נ¢ | ג… | Direct Supabase update |
+| Rates tab | Form | Work-type-specific rates | נ¡ | ג ן¸ | Fetches /api/clients/{id}/rates ג€” **API route may not exist** |
+| Payment Log tab | Form | Monthly payment tracking | נ¡ | ג ן¸ | Fetches /api/clients/{id}/payment-logs ג€” **API route may not exist** |
+| "׳”׳•׳¡׳£ ׳×׳¢׳¨׳™׳£" button | Button | Add work type rate row | ג¬ | ג… | |
+| "׳”׳•׳¡׳£ ׳¨׳©׳•׳׳”" button | Button | Add payment log entry | ג¬ | ג… | |
+| Work type dropdown | Select | Pick work type for rate | נ¢ | ג… | Fetches from /api/work-types |
+| Custom rates 1-5 | Input | Custom rate fields | נ¡ | ג ן¸ | Fields custom_rate_1..5 may not exist in DB schema |
+| Save button | Button | Submit update | נ¢ | ג… | Uses Supabase direct (not API route) |
+| Rate validation | Logic | Require at least 1 rate | ג¬ | ג ן¸ | Forces rate entry even if not needed |
 
 **Issues Found:**
-- Client edit uses **direct Supabase** while client create uses **API route** — inconsistent pattern
+- Client edit uses **direct Supabase** while client create uses **API route** ג€” inconsistent pattern
 - /api/clients/{id}/rates and /api/clients/{id}/payment-logs routes likely don't exist (404s silently ignored)
-- ~~Delete only removes from React state~~ → **FIXED 2026-03-03**: Now calls DELETE /api/clients/{id}
+- ~~Delete only removes from React state~~ ג†’ **FIXED 2026-03-03**: Now calls DELETE /api/clients/{id}
 
 ---
 
@@ -127,63 +127,62 @@
 ### Jobs Page (components/jobs/jobs-page.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| "עבודה חדשה" button | Link | → /jobs/new | ⬜ | ✅ | |
-| View mode toggle | Button | Switch grid/list | ⬜ | ✅ | Persisted via user preferences API |
-| Sort toggle (number/date) | Button | Change sort order | ⬜ | ✅ | |
-| Revenue stat | Card | Sum total_amount | 🟢 | ✅ | |
-| Pending jobs stat | Card | Count ממתין/בתהליך | 🟢 | ✅ | |
-| Urgent jobs stat | Card | Count דחוף | 🟢 | ✅ | |
-| Completed stat | Card | Count הושלם | 🟢 | ✅ | |
-| Status filter | Select | Filter by job status | ⬜ | ✅ | |
-| Client filter | Select | Filter by client | ⬜ | ✅ | Dynamic from loaded jobs |
-| Show deleted checkbox | Checkbox | Toggle deleted visibility | 🟢 | ✅ | Persisted via user preferences |
-| Show finished checkbox | Checkbox | Toggle completed visibility | 🟢 | ✅ | Persisted via user preferences |
-| Search input | Input | Search jobs | ⬜ | ✅ | Client-side filter |
-| Job card (expand/collapse) | Card | Show/hide job details | ⬜ | ✅ | |
-| "ערוך" button | Button | Open edit modal | ⬜ | ✅ | |
-| "מחק" button | Button | Soft-delete job | 🟢 | ✅ | PATCH /api/jobs/{id} with is_deleted=true |
-| "שחזר" button | Button | Restore deleted job | 🟢 | ✅ | PATCH + reassigns job number |
-| Status badge | Badge | Shows job_status | 🟢 | ✅ | |
-| Payment badge | Badge | Shows payment_status | 🟢 | ✅ | Only in expanded view |
+| "׳¢׳‘׳•׳“׳” ׳—׳“׳©׳”" button | Link | ג†’ /jobs/new | ג¬ | ג… | |
+| View mode toggle | Button | Switch grid/list | ג¬ | ג… | Persisted via user preferences API |
+| Sort toggle (number/date) | Button | Change sort order | ג¬ | ג… | |
+| Revenue stat | Card | Sum total_amount | נ¢ | ג… | |
+| Pending jobs stat | Card | Count ׳׳׳×׳™׳/׳‘׳×׳”׳׳™׳ | נ¢ | ג… | |
+| Urgent jobs stat | Card | Count ׳“׳—׳•׳£ | נ¢ | ג… | |
+| Completed stat | Card | Count ׳”׳•׳©׳׳ | נ¢ | ג… | |
+| Status filter | Select | Filter by job status | ג¬ | ג… | |
+| Client filter | Select | Filter by client | ג¬ | ג… | Dynamic from loaded jobs |
+| Show deleted checkbox | Checkbox | Toggle deleted visibility | נ¢ | ג… | Persisted via user preferences |
+| Show finished checkbox | Checkbox | Toggle completed visibility | נ¢ | ג… | Persisted via user preferences |
+| Search input | Input | Search jobs | ג¬ | ג… | Client-side filter |
+| Job card (expand/collapse) | Card | Show/hide job details | ג¬ | ג… | |
+| "׳¢׳¨׳•׳" button | Button | Open edit modal | ג¬ | ג… | |
+| "׳׳—׳§" button | Button | Soft-delete job | נ¢ | ג… | PATCH /api/jobs/{id} with is_deleted=true |
+| "׳©׳—׳–׳¨" button | Button | Restore deleted job | נ¢ | ג… | PATCH + reassigns job number |
+| Status badge | Badge | Shows job_status | נ¢ | ג… | |
+| Payment badge | Badge | Shows payment_status | נ¢ | ג… | Only in expanded view |
 
 ### New Job Form (components/jobs/new-job-form.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Job number display | Text | Auto-generated | 🟢 | ✅ | Fetches all jobs, finds highest active number |
-| סוג עבודה * | DatabaseDropdown | Work type from DB | 🟢 | ✅ | From work_types table |
-| תאריך * | Input[date] | Job date | ⬜ | ✅ | |
-| אתר * | Input | Site/location | ⬜ | ✅ | |
-| סוג משמרת * | Select | Day/Night/Double | ⬜ | ✅ | Hebrew values: יום, לילה, כפול |
-| עיר * | Input | City | ⬜ | ✅ | |
-| Client type toggle | Button×2 | existing/new client | ⬜ | ✅ | |
-| Existing client dropdown | DatabaseDropdown | Pick from DB | 🟢 | ✅ | From clients table |
-| New client fields (7 fields) | Inputs | Create client inline | ⬜ | ⚠️ | **New client NOT saved to DB** — only the name goes to job record |
-| עובד * | DatabaseDropdown | Worker from DB | 🟢 | ✅ | From workers table |
-| רכב * | DatabaseDropdown | Vehicle from DB | 🟢 | ✅ | From vehicles table |
-| עגלה | DatabaseDropdown | Cart from DB (optional) | 🟢 | ✅ | From carts table |
-| תיאור | Textarea | Description | ⬜ | ✅ | |
-| Calendar sync toggle | Switch | Add to Google Calendar | ⬜ | 🔲 | **Stored but not implemented** — no actual calendar integration |
-| "יצר עבודה" submit | Button | Insert to DB | 🟢 | ✅ | Direct Supabase insert (not API route) |
-| "איפוס טיוטה" | Button | Clear auto-save + reset | ⬜ | ✅ | |
-| ביטול | Button | Navigate back | ⬜ | ✅ | |
-| Auto-save | Background | Save draft to localStorage | ⬜ | ✅ | SimpleAutoSave with 15-min expiry |
+| Job number display | Text | Auto-generated | נ¢ | ג… | Fetches all jobs, finds highest active number |
+| ׳¡׳•׳’ ׳¢׳‘׳•׳“׳” * | DatabaseDropdown | Work type from DB | נ¢ | ג… | From work_types table |
+| ׳×׳׳¨׳™׳ * | Input[date] | Job date | ג¬ | ג… | |
+| ׳׳×׳¨ * | Input | Site/location | ג¬ | ג… | |
+| ׳¡׳•׳’ ׳׳©׳׳¨׳× * | Select | Day/Night/Double | ג¬ | ג… | Hebrew values: ׳™׳•׳, ׳׳™׳׳”, ׳›׳₪׳•׳ |
+| ׳¢׳™׳¨ * | Input | City | ג¬ | ג… | |
+| Client type toggle | Buttonֳ—2 | existing/new client | ג¬ | ג… | |
+| Existing client dropdown | DatabaseDropdown | Pick from DB | נ¢ | ג… | From clients table |
+| New client fields (7 fields) | Inputs | Create client inline | ג¬ | ג ן¸ | **Now auto-creates client via /api/clients — **FIXED 2026-03-03**** ג€” only the name goes to job record |
+| ׳¢׳•׳‘׳“ * | DatabaseDropdown | Worker from DB | נ¢ | ג… | From workers table |
+| ׳¨׳›׳‘ * | DatabaseDropdown | Vehicle from DB | נ¢ | ג… | From vehicles table |
+| ׳¢׳’׳׳” | DatabaseDropdown | Cart from DB (optional) | נ¢ | ג… | From carts table |
+| ׳×׳™׳׳•׳¨ | Textarea | Description | ג¬ | ג… | |
+| Calendar sync toggle | Switch | Add to Google Calendar | ג¬ | נ”² | **Device-native .ics calendar file on job creation — **FIXED 2026-03-03** |
+| "׳™׳¦׳¨ ׳¢׳‘׳•׳“׳”" submit | Button | Insert to DB | נ¢ | ג… | Direct Supabase insert (not API route) |
+| "׳׳™׳₪׳•׳¡ ׳˜׳™׳•׳˜׳”" | Button | Clear auto-save + reset | ג¬ | ג… | |
+| ׳‘׳™׳˜׳•׳ | Button | Navigate back | ג¬ | ג… | |
+| Auto-save | Background | Save draft to localStorage | ג¬ | ג… | SimpleAutoSave with 15-min expiry |
 
 **Issues Found:**
-- New job form submits **directly to Supabase** while jobs-page reads via **/api/jobs** — inconsistent
-- API route validates shift_type as English ("day","night","double") but form sends Hebrew ("יום","לילה","כפול") — **form bypasses API route entirely via direct Supabase**
-- "New client" mode only passes client_name to job — doesn't create a client record
-- Calendar sync toggle has no actual integration
+- New job form submits **directly to Supabase** while jobs-page reads via **/api/jobs** ג€” inconsistent
+- API route validates shift_type as English ("day","night","double") but form sends Hebrew ("׳™׳•׳","׳׳™׳׳”","׳›׳₪׳•׳") ג€” **form bypasses API route entirely via direct Supabase**
+- ~~"New client" mode~~ → **FIXED 2026-03-03**: Auto-creates client via /api/clients`n- ~~Calendar sync toggle~~ → **FIXED 2026-03-03**: Replaced with .ics download
 
 ### Edit Job Modal (components/jobs/edit-job-modal.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| All job fields | Form | Edit existing job | 🟢 | ✅ | Uses PATCH /api/jobs/{id} |
-| Auto status calc | Display | Shows calculated status | ⬜ | ✅ | Based on date comparison |
-| Payment status | Display | Auto based on job status | ⬜ | ✅ | |
-| Invoice status | Display | Shows invoice state | ⬜ | ✅ | |
-| Total amount | Input | Manual entry | 🟢 | ✅ | |
-| Shift rate | Input | Per-job rate override | 🟢 | ✅ | |
-| Save button | Button | Submit PATCH | 🟢 | ✅ | |
+| All job fields | Form | Edit existing job | נ¢ | ג… | Uses PATCH /api/jobs/{id} |
+| Auto status calc | Display | Shows calculated status | ג¬ | ג… | Based on date comparison |
+| Payment status | Display | Auto based on job status | ג¬ | ג… | |
+| Invoice status | Display | Shows invoice state | ג¬ | ג… | |
+| Total amount | Input | Manual entry | נ¢ | ג… | |
+| Shift rate | Input | Per-job rate override | נ¢ | ג… | |
+| Save button | Button | Submit PATCH | נ¢ | ג… | |
 
 ---
 
@@ -192,23 +191,23 @@
 ### Invoices Page (components/invoices/invoices-page.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Search input | Input | Filter by number/client | ⬜ | ✅ | Client-side |
-| Status filter | Select | Filter by status | ⬜ | ✅ | |
-| Revenue stat | StatsContainer | Sum paid invoices | 🟢 | ✅ | |
-| Pending stat | StatsContainer | Count "sent" invoices | 🟢 | ✅ | |
-| Overdue stat | StatsContainer | Count overdue | 🟢 | ✅ | |
-| "הורד PDF" button | Button | Generate PDF download | 🟢 | ✅ | Calls /api/invoices/{id}/pdf — **FIXED 2026-03-03** (auth removed) |
-| View button | Button | View invoice details | ⬜ | ✅ | |
+| Search input | Input | Filter by number/client | ג¬ | ג… | Client-side |
+| Status filter | Select | Filter by status | ג¬ | ג… | |
+| Revenue stat | StatsContainer | Sum paid invoices | נ¢ | ג… | |
+| Pending stat | StatsContainer | Count "sent" invoices | נ¢ | ג… | |
+| Overdue stat | StatsContainer | Count overdue | נ¢ | ג… | |
+| "׳”׳•׳¨׳“ PDF" button | Button | Generate PDF download | נ¢ | ג… | Calls /api/invoices/{id}/pdf ג€” **FIXED 2026-03-03** (auth removed) |
+| View button | Button | View invoice details | ג¬ | ג… | |
 
 ### Invoice API (/api/invoices/route.ts)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-|| GET | API | List invoices | 🟢 | ✅ | Uses hardcoded userId pattern — **FIXED 2026-03-03** |
-|| POST | API | Create invoice | 🟢 | ✅ | Uses hardcoded userId pattern — **FIXED 2026-03-03** |
+|| GET | API | List invoices | נ¢ | ג… | Uses hardcoded userId pattern ג€” **FIXED 2026-03-03** |
+|| POST | API | Create invoice | נ¢ | ג… | Uses hardcoded userId pattern ג€” **FIXED 2026-03-03** |
 
 **Issues Found:**
-- ~~**CRITICAL**: Invoice API uses Supabase Auth~~ → **FIXED 2026-03-03**: All 3 invoice routes (main, pdf, line-items) now use hardcoded userId
-- Invoice table name is "invoices" but Receipt entity points to "receipts" — possible table name conflict
+- ~~**CRITICAL**: Invoice API uses Supabase Auth~~ ג†’ **FIXED 2026-03-03**: All 3 invoice routes (main, pdf, line-items) now use hardcoded userId
+- ~~Invoice/Receipt table conflict~~ → **FIXED 2026-03-03**: PDF + line-items unified to "invoices" table
 
 ---
 
@@ -216,17 +215,17 @@
 
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| "הוסף עובד" button | Link | → /settings/resources/workers/new | ⬜ | ✅ | |
-| Search input | Input | Filter workers | ⬜ | ✅ | Placeholder is English "Search workers..." |
-| Worker card | Card | Display worker info | 🟢 | ✅ | Direct Supabase query |
-| Availability badges | Badge | Show available days | 🟢 | ✅ | Parsed from JSON availability field |
-| Delete button | Button | Delete worker | 🟢 | ⚠️ | Direct Supabase delete — no soft-delete, no confirmation in Hebrew |
-| Edit button | Link | → /settings/resources/workers/{id}/edit | ⬜ | ⚠️ | **Route may not exist** |
+| "׳”׳•׳¡׳£ ׳¢׳•׳‘׳“" button | Link | ג†’ /settings/resources/workers/new | ג¬ | ג… | |
+|| Search input | Input | Filter workers | ג¬ | ג… | Hebrew placeholder "׳—׳₪׳© ׳¢׳•׳‘׳“׳™׳..." ג€” **FIXED 2026-03-03** |
+| Worker card | Card | Display worker info | נ¢ | ג… | Direct Supabase query |
+| Availability badges | Badge | Show available days | נ¢ | ג… | Parsed from JSON availability field |
+|| Delete button | Button | Delete worker | נ¢ | ג… | Hebrew confirm dialog + error handling ג€” **FIXED 2026-03-03** |
+| Edit button | Link | ג†’ /settings/resources/workers/{id}/edit | ג¬ | ג ן¸ | **Route may not exist** |
 
 **Issues Found:**
-- Mixed English/Hebrew UI text
-- Hard delete (no soft-delete like jobs have)
-- Edit link route likely returns 404
+- ~~Mixed English/Hebrew UI text~~ ג†’ **FIXED 2026-03-03**: All text translated to Hebrew
+- ~~Hard delete with English confirm~~ ג†’ **FIXED 2026-03-03**: Hebrew confirm + error handling
+- ~~Edit link returns 404~~ → **FIXED 2026-03-03**: Modal-based editing
 
 ---
 
@@ -234,12 +233,12 @@
 
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| "הוסף רכב" button | Link | → /settings/resources/vehicles/new | ⬜ | ✅ | |
-| Search input | Input | Filter vehicles | ⬜ | ✅ | Placeholder English |
-| Vehicle card | Card | Display vehicle info | 🟢 | ✅ | Direct Supabase |
-| Delete button | Button | Delete vehicle | 🟢 | ⚠️ | Hard delete, English confirm |
-| Edit button | Link | → /settings/resources/vehicles/{id}/edit | ⬜ | ⚠️ | **Route may not exist** |
-| **Sample data fallback** | Logic | Shows fake data on DB error | ⬜ | ❌ | **Shows hardcoded sample vehicles when Supabase errors — misleading** |
+| "׳”׳•׳¡׳£ ׳¨׳›׳‘" button | Link | ג†’ /settings/resources/vehicles/new | ג¬ | ג… | |
+|| Search input | Input | Filter vehicles | ג¬ | ג… | Hebrew placeholder "׳—׳₪׳© ׳¨׳›׳‘׳™׳..." ג€” **FIXED 2026-03-03** |
+| Vehicle card | Card | Display vehicle info | נ¢ | ג… | Direct Supabase |
+|| Delete button | Button | Delete vehicle | נ¢ | ג… | Hebrew confirm dialog + error handling ג€” **FIXED 2026-03-03** |
+| Edit button | Link | ג†’ /settings/resources/vehicles/{id}/edit | ג¬ | ג ן¸ | **Route may not exist** |
+|| ~~Sample data fallback~~ | Logic | ~~Shows fake data on DB error~~ | ג¬ | ג… | **FIXED 2026-03-03**: Removed fake fallback, shows empty state on error |
 
 ---
 
@@ -248,42 +247,42 @@
 ### Settings Page (app/settings/page.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Resources links | Links | Workers/Vehicles/Carts/Job Types | ⬜ | ✅ | |
-| Business Info link | Link | → settings-business-info | ⬜ | ✅ | |
-| Users link | Link | → /settings/users | ⬜ | ✅ | |
+| Resources links | Links | Workers/Vehicles/Carts/Job Types | ג¬ | ג… | |
+| Business Info link | Link | ג†’ settings-business-info | ג¬ | ג… | |
+| Users link | Link | ג†’ /settings/users | ג¬ | ג… | |
 
 ### Business Info (components/settings/settings-business-info.tsx)
 | Element | Type | Purpose | DB | Health | Notes |
 |---------|------|---------|-----|--------|-------|
-| Business name | Input | Company name | 🔴 | ⚠️ | **Stored only in localStorage** — not synced to DB |
-| Business address | Input | Address | 🔴 | ⚠️ | localStorage only |
-| Business phone | Input | Phone | 🔴 | ⚠️ | localStorage only |
-| VAT ID | Input | Tax number | 🔴 | ⚠️ | localStorage only |
-| Business email | Input | Email | 🔴 | ⚠️ | localStorage only |
-| Bank account fields (4) | Inputs | Banking details | 🔴 | ⚠️ | localStorage only |
-| Save button | Button | Save to localStorage | ⬜ | ✅ | Works but not persistent across devices |
-| Apply to Invoices | Button | Update active invoices | 🔴 | 🔲 | **Placeholder only** — shows mock alert |
-| Back to Settings | Button | Navigate back | ⬜ | ⚠️ | Uses `createPageUrl("Settings")` — **likely broken** (old framework pattern) |
+|| Business name | Input | Company name | נ¢ | ג… | Loads from /api/business-settings, saves via PUT ג€” **FIXED 2026-03-03** |
+|| Business address | Input | Address | נ¢ | ג… | DB-backed via API ג€” **FIXED 2026-03-03** |
+|| Business phone | Input | Phone | נ¢ | ג… | DB-backed via API ג€” **FIXED 2026-03-03** |
+|| VAT ID | Input | Tax number | נ¢ | ג… | DB-backed via API ג€” **FIXED 2026-03-03** |
+|| Business email | Input | Email | נ¢ | ג… | DB-backed via API ג€” **FIXED 2026-03-03** |
+|| Bank account fields (4) | Inputs | Banking details | נ¢ | ג… | DB-backed via API ג€” **FIXED 2026-03-03** |
+|| Save button | Button | Save to DB via API | נ¢ | ג… | PUT /api/business-settings + localStorage cache |
+| Apply to Invoices | Button | Update active invoices | נ”´ | נ”² | **Placeholder only** ג€” shows mock alert |
+|| Back to Settings | Button | Navigate back | ג¬ | ג… | Now uses router.push("/settings") ג€” **FIXED 2026-03-03** |
 
 **Issues Found:**
-- **All business settings stored in localStorage only** — lost on browser clear, not shared across devices
-- BusinessSettings interface exists in lib/types.ts but is never used
+- ~~**All business settings stored in localStorage only**~~ ג†’ **FIXED 2026-03-03**: Now loads/saves via /api/business-settings (Supabase), localStorage as cache
+- ~~BusinessSettings interface never used~~ ג†’ **FIXED 2026-03-03**: API route uses business_settings table
 - "Apply to Invoices" is completely non-functional
-- Uses `createPageUrl` from `@/utils` which is a leftover from a previous framework
+- ~~Uses `createPageUrl` from `@/utils`~~ ג†’ **FIXED 2026-03-03**: Now uses router.push("/settings")
 
 ---
 
-## 10. API ROUTES — Cross-Cutting Issues
+## 10. API ROUTES ג€” Cross-Cutting Issues
 
 ### Authentication Inconsistency
 | Route | Auth Method | Health |
 |-------|-----------|--------|
-| /api/clients | None (hardcoded userId) | ⚠️ |
-| /api/jobs | None (hardcoded userId) | ⚠️ |
-| /api/workers | Unknown | ⚠️ |
-|| /api/invoices | None (hardcoded userId) | ✅ **FIXED** |
-| /api/calendar | Unknown | ⚠️ |
-| /api/documents | Unknown | ⚠️ |
+| /api/clients | None (hardcoded userId) | ג ן¸ |
+| /api/jobs | None (hardcoded userId) | ג ן¸ |
+| /api/workers | Unknown | ג ן¸ |
+|| /api/invoices | None (hardcoded userId) | ג… **FIXED** |
+| /api/calendar | Unknown | ג ן¸ |
+| /api/documents | Unknown | ג ן¸ |
 
 ### Data Access Inconsistency
 | Component | Data Source | Pattern |
@@ -291,7 +290,7 @@
 | Clients list | fetch("/api/clients") | API route |
 | Client create | fetch("/api/clients") | API route |
 | Client edit | supabase.from("clients").update() | Direct Supabase |
-|| Client delete | fetch("/api/clients/{id}") DELETE | API route — **FIXED 2026-03-03** |
+|| Client delete | fetch("/api/clients/{id}") DELETE | API route ג€” **FIXED 2026-03-03** |
 | Client job history | supabase.from("jobs") | Direct Supabase |
 | Jobs list | fetch("/api/jobs") | API route |
 | Job create | supabase.from("jobs").insert() | Direct Supabase |
@@ -299,36 +298,37 @@
 | Job delete | fetch("/api/jobs/{id}") PATCH | API route |
 | Workers list | supabase.from("workers") | Direct Supabase |
 | Vehicles list | supabase.from("vehicles") | Direct Supabase |
-|| Invoices list | fetch("/api/invoices") | API route — **FIXED 2026-03-03** |
+|| Invoices list | fetch("/api/invoices") | API route ג€” **FIXED 2026-03-03** |
 
 ---
 
 ## 11. GLOBAL ISSUES SUMMARY
 
 ### Critical (must fix before production)
-1. ~~**Invoice API requires Supabase Auth but app uses hardcoded auth**~~ → ✅ **FIXED 2026-03-03** (all invoice routes use hardcoded userId)
-2. ~~**Dashboard revenue/pending counts always show 0**~~ → ✅ **FIXED 2026-03-03** (Hebrew statuses + full Hebrew UI + RTL)
-3. ~~**Client delete doesn't hit database**~~ → ✅ **FIXED 2026-03-03** (now calls DELETE /api/clients/{id})
-4. **Business settings only in localStorage** → lost on clear, not shared
+1. ~~**Invoice API requires Supabase Auth but app uses hardcoded auth**~~ ג†’ ג… **FIXED 2026-03-03** (all invoice routes use hardcoded userId)
+2. ~~**Dashboard revenue/pending counts always show 0**~~ ג†’ ג… **FIXED 2026-03-03** (Hebrew statuses + full Hebrew UI + RTL)
+3. ~~**Client delete doesn't hit database**~~ ג†’ ג… **FIXED 2026-03-03** (now calls DELETE /api/clients/{id})
+4. ~~**Business settings only in localStorage**~~ ג†’ ג… **FIXED 2026-03-03** (new /api/business-settings route, DB-backed)
 
 ### High Priority
-5. **Inconsistent data access patterns** → mix of API routes and direct Supabase calls
-6. **No auth on most API routes** → any user can access any data
-7. **Vehicle page shows fake sample data on DB error** → misleading
-8. **New client from job form doesn't create client record** → orphaned client_name strings
-9. **Calendar sync toggle stored but never implemented**
+5. **Inconsistent data access patterns** ג†’ mix of API routes and direct Supabase calls
+6. **No auth on most API routes** ג†’ any user can access any data
+7. ~~**Vehicle page shows fake sample data on DB error**~~ ג†’ ג… **FIXED 2026-03-03**
+8. **New client from job form doesn't create client record** ג†’ orphaned client_name strings
+9. ~~**Calendar sync toggle**~~ → ✅ **FIXED 2026-03-03** (replaced with .ics download)
 
 ### Medium Priority
-10. **[v0] debug console.logs throughout codebase** → should be removed
-11. **Mixed English/Hebrew UI** — workers, vehicles, dashboard have English text
-12. **No edit routes for workers/vehicles** → edit buttons likely 404
-13. **Misleading form labels** in new client modal (hourly rate → security_rate)
-14. **Client edit rate validation** forces rate entry even when not applicable
-15. **Payment method stores English values** ("immediate") but displays Hebrew
+10. ~~**[v0] debug console.logs throughout codebase**~~ ג†’ ג… **FIXED 2026-03-03** (84 removed across 16 files)
+11. ~~**Mixed English/Hebrew UI**~~ ג†’ ג… **FIXED 2026-03-03** (workers + vehicles fully translated)
+12. **No edit routes for workers/vehicles** ג†’ edit buttons likely 404
+13. ~~**Misleading form labels**~~ ג†’ ג… **FIXED 2026-03-03** (׳×׳¢׳¨׳™׳£ ׳©׳¢׳×׳™ג†’׳×׳¢׳¨׳™׳£ ׳׳‘׳˜׳—׳”, ׳×׳¢׳¨׳™׳£ ׳”׳¢׳¨׳›׳”ג†’׳×׳¢׳¨׳™׳£ ׳”׳×׳§׳ ׳”)
+14. ~~**Client edit rate validation**~~ → ✅ **FIXED 2026-03-03** (warning + blocks at job form)
+15. ~~**Payment method stores English values**~~ ג†’ ג… **FIXED 2026-03-03** (now stores Hebrew)
 
 ### Low Priority / Polish
-16. **No loading states for some modals**
-17. **Confirm dialogs mix English and Hebrew**
-18. **Worker availability uses English day names** (Sun, Mon) instead of Hebrew
-19. **createPageUrl utility** is a leftover from previous framework
-20. **Receipt entity** references "receipts" table but invoices may use "invoices" table
+16. ~~**No loading states**~~ → ✅ **FIXED 2026-03-03** (skeleton loaders)
+17. ~~**Confirm dialogs mix English and Hebrew**~~ ג†’ ג… **FIXED 2026-03-03** (workers + vehicles)
+18. ~~**Worker availability uses English day names**~~ ג†’ ג… **FIXED 2026-03-03** (now uses ׳׳³, ׳‘׳³, etc)
+19. ~~**createPageUrl utility** is a leftover~~ ג†’ ג… **FIXED 2026-03-03** (removed from view-invoice.tsx, function now unused)
+20. ~~**Receipt entity**~~ → ✅ **FIXED 2026-03-03** (unified to "invoices" table)
+

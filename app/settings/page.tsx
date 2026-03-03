@@ -424,7 +424,7 @@ export default function SettingsPage() {
   }
 
   const handleDeleteUser = (userId: string) => {
-    console.log("[v0] Deleting user:", userId)
+    console.log("Deleting user:", userId)
     if (confirm("האם אתה בטוח שברצונך למחוק את המשתמש?")) {
       setUsers((prev) => prev.filter((user) => user.id !== userId))
       alert("משתמש נמחק בהצלחה!")

@@ -75,8 +75,6 @@ export async function POST(request: NextRequest) {
         created_by: 'admin@example.com'
       }
 
-      console.log(`Creating sample invoice ${i + 1}:`, invoiceData)
-
       // Create invoice
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')

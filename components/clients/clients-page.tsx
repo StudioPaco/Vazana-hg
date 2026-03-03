@@ -118,7 +118,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        console.log("[v0] Fetching clients from API...")
+        console.log("Fetching clients from API...")
 
         const response = await fetch("/api/clients")
         
@@ -129,11 +129,11 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         const result = await response.json()
         const data = result.data || []
 
-        console.log("[v0] Successfully fetched clients:", data)
+        console.log("Successfully fetched clients:", data)
         setClients(data)
         setFilteredClients(data)
       } catch (error) {
-        console.error("[v0] Failed to load clients:", error)
+        console.error("Failed to load clients:", error)
         setClients([])
         setFilteredClients([])
       } finally {
@@ -191,7 +191,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         }
         setClients(clients.filter((client) => client.id !== id))
       } catch (error) {
-        console.error("[v0] Failed to delete client:", error)
+        console.error("Failed to delete client:", error)
         alert("שגיאה במחיקת הלקוח. נסה שוב.")
       }
     }
@@ -221,7 +221,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         .limit(10)
 
       if (error) {
-        console.error("[v0] Error fetching client jobs:", error)
+        console.error("Error fetching client jobs:", error)
         setClientJobs((prev) => ({ ...prev, [clientId]: [] }))
         return
       }
@@ -235,7 +235,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         setClientJobs((prev) => ({ ...prev, [clientId]: jobsWithStatus }))
       }
     } catch (error) {
-      console.error("[v0] Failed to fetch client jobs:", error)
+      console.error("Failed to fetch client jobs:", error)
     }
   }
 

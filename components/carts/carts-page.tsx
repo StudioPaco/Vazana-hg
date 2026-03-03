@@ -27,7 +27,7 @@ export default function CartsPage() {
         const { data, error } = await supabase.from("carts").select("*").order("name")
 
         if (error) {
-          console.error("[v0] Error fetching carts:", error)
+          console.error("Error fetching carts:", error)
           const sampleCarts = [
             {
               id: "cart-1",
@@ -73,7 +73,7 @@ export default function CartsPage() {
         const { error } = await supabase.from("carts").delete().eq("id", id)
 
         if (error) {
-          console.error("[v0] Error deleting cart:", error)
+          console.error("Error deleting cart:", error)
         }
         setCarts(carts.filter((cart) => cart.id !== id))
       } catch (error) {

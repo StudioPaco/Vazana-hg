@@ -1,18 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 import { emailService } from "@/lib/email-service"
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
     const body = await request.json()
     const { type, jobId, recipientEmail, additionalData } = body
@@ -26,7 +21,6 @@ export async function POST(request: NextRequest) {
         workers:worker_id(name, phone_number)
       `)
       .eq("id", jobId)
-      .eq("created_by_id", user.id)
       .single()
 
     if (jobError || !job) {

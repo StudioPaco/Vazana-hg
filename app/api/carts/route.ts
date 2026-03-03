@@ -18,14 +18,13 @@ export async function GET(request: NextRequest) {
       .order("name", { ascending: true })
 
     if (error) {
-      console.error("[v0] Error fetching carts:", error)
+      console.error("Error fetching carts:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log("[v0] Carts fetched successfully:", carts?.length || 0, "records")
     return NextResponse.json({ data: carts || [] })
   } catch (error) {
-    console.error("[v0] Internal error fetching carts:", error)
+    console.error("Internal error fetching carts:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
       created_by_id: defaultUser.id,
       created_by: defaultUser.email,
       updated_date: new Date().toISOString(),
-      is_sample: true,
+      is_sample: false,
     }
 
     const { data: cart, error } = await supabase.from("carts").insert([cartData]).select().single()

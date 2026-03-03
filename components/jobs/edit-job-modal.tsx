@@ -509,9 +509,9 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
               </div>
 
               <div className="flex items-center gap-3 text-right justify-end">
-                <Label htmlFor="calendarSync" className="font-hebrew">
-                  הוסף ללוח השנה
-                </Label>
+              <Label htmlFor="calendarSync" className="font-hebrew">
+                הוסף ליומן המכשיר
+              </Label>
                 <Switch
                   id="calendarSync"
                   checked={formData.calendarSync}

@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { getModalClasses } from "@/lib/modal-utils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Client {
   id: string
@@ -93,7 +94,7 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
     address: "",
     city: "",
     po_box: "",
-    payment_terms: "immediate",
+    payment_method: "מיידי",
     notes: "",
     security_rate: 0,
     installation_rate: 0,
@@ -111,6 +112,7 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
   const [availableWorkTypes, setAvailableWorkTypes] = useState<any[]>([])
   const [isRatesExpanded, setIsRatesExpanded] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingData, setIsLoadingData] = useState(false)
   const [activeTab, setActiveTab] = useState("basic")
 
   useEffect(() => {
@@ -123,7 +125,7 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
         address: client.address || "",
         city: client.city || "",
         po_box: client.po_box || "",
-        payment_terms: client.payment_terms || "immediate",
+        payment_method: client.payment_method || "מיידי",
         notes: client.notes || "",
         security_rate: client.security_rate || 0,
         installation_rate: client.installation_rate || 0,
@@ -161,6 +163,7 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
   }
 
   const loadClientData = async (clientId: string) => {
+    setIsLoadingData(true)
     try {
       // Load work type rates
       const ratesResponse = await fetch(`/api/clients/${clientId}/rates`)
@@ -177,6 +180,8 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
       }
     } catch (error) {
       console.error("Error loading client data:", error)
+    } finally {
+      setIsLoadingData(false)
     }
   }
 
@@ -193,10 +198,10 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
     e.preventDefault()
     if (!client) return
 
-    // Validate that at least one rate is set
+    // Warn if no rates are set — client won't be usable in jobs
     if (!validateRates()) {
-      alert("חובה למלא לפחות תעריף אחד עבור סוג עבודה")
-      return
+      const proceed = confirm("לקוח זה לא יהיה פעיל לשיוך עבודות עד שיוגדר תעריף ברירת מחדל לפחות לסוג עבודה אחד. להמשיך?")
+      if (!proceed) return
     }
 
     setIsSubmitting(true)
@@ -223,13 +228,38 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
         .update({
           ...formData,
           ...customRatesData,
-          updated_at: new Date().toISOString(),
+          updated_date: new Date().toISOString(),
         })
         .eq("id", client.id)
         .select()
         .single()
 
       if (error) throw error
+
+      // Save work type rates
+      if (workTypeRates.length > 0) {
+        await fetch(`/api/clients/${client.id}/rates`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rates: workTypeRates.map(r => ({
+              work_type_id: r.work_type_id,
+              rate: r.rate,
+            })),
+          }),
+        })
+      }
+
+      // Save payment logs
+      if (paymentLogs.length > 0) {
+        await fetch(`/api/clients/${client.id}/payment-logs`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            logs: paymentLogs,
+          }),
+        })
+      }
 
       onClientUpdated(updatedClient)
       onOpenChange(false)
@@ -418,19 +448,19 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
                       אופן תשלום
                     </Label>
                     <Select
-                      value={formData.payment_terms}
-                      onValueChange={(value) => setFormData({ ...formData, payment_terms: value })}
+                      value={formData.payment_method}
+                      onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
                       dir="rtl"
                     >
                       <SelectTrigger className="text-right font-hebrew">
                         <SelectValue placeholder="בחר אופן תשלום" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="immediate">מיידי</SelectItem>
-                        <SelectItem value="current+15">שוטף +15</SelectItem>
-                        <SelectItem value="current+30">שוטף +30</SelectItem>
-                        <SelectItem value="current+60">שוטף +60</SelectItem>
-                        <SelectItem value="current+90">שוטף +90</SelectItem>
+                        <SelectItem value="מיידי">מיידי</SelectItem>
+                        <SelectItem value="שוטף +15">שוטף +15</SelectItem>
+                        <SelectItem value="שוטף +30">שוטף +30</SelectItem>
+                        <SelectItem value="שוטף +60">שוטף +60</SelectItem>
+                        <SelectItem value="שוטף +90">שוטף +90</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -487,6 +517,20 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {isLoadingData ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
+                          <Skeleton className="h-8 w-8" />
+                          <div className="flex-1 grid grid-cols-2 gap-4">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                  <>
                   {workTypeRates.map((rate) => (
                     <div key={rate.id} className="flex items-center gap-4 p-4 border rounded-lg">
                       <Button
@@ -543,6 +587,8 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
                       לא הוגדרו תעריפים. לחץ "הוסף תעריף" להתחלה.
                     </div>
                   )}
+                  </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -569,6 +615,23 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {isLoadingData ? (
+                    <div className="space-y-4">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="p-4 border rounded-lg space-y-4">
+                          <div className="flex items-center justify-between">
+                            <Skeleton className="h-8 w-8" />
+                            <Skeleton className="h-10 w-32" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                  <>
                   {paymentLogs.map((log) => (
                     <div key={log.id} className="p-4 border rounded-lg space-y-4">
                       <div className="flex items-center justify-between">
@@ -670,6 +733,8 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
                     <div className="text-center py-8 text-gray-500 font-hebrew">
                       אין רשומות תשלום. לחץ "הוסף רשומה" להתחלה.
                     </div>
+                  )}
+                  </>
                   )}
                 </CardContent>
               </Card>

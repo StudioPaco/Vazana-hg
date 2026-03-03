@@ -17,6 +17,7 @@ import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/h
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import { SimpleAutoSave } from "@/lib/simple-auto-save"
 import { customAlert, customConfirm } from "@/lib/custom-alert"
+import { downloadJobICS } from "@/lib/ics-calendar"
 
 // Standardized shift types - single source of truth
 const SHIFT_TYPES = [
@@ -113,7 +114,7 @@ export default function NewJobForm() {
         const response = await fetch('/api/jobs')
         
         if (!response.ok) {
-          console.error("[v0] API error fetching jobs for numbering:", response.status)
+          console.error("API error fetching jobs for numbering:", response.status)
           setJobNumber("0001")
           return
         }
@@ -142,11 +143,11 @@ export default function NewJobForm() {
         // Always increment from the highest ACTIVE job number
         const nextNumber = highestActiveJobNumber + 1
         const formattedNumber = nextNumber.toString().padStart(4, "0")
-        console.log("[v0] Generated job number:", formattedNumber, "from highest:", highestActiveJobNumber)
+        console.log("Generated job number:", formattedNumber, "from highest:", highestActiveJobNumber)
         setJobNumber(formattedNumber)
 
       } catch (error) {
-        console.error("[v0] Failed to fetch job number:", error)
+        console.error("Failed to fetch job number:", error)
         setJobNumber("0001")
       }
     }
@@ -176,6 +177,16 @@ export default function NewJobForm() {
         key: "existingClientId",
         message: "בחר לקוח מהרשימה",
       })
+    }
+
+    // Check if selected existing client has at least one rate defined
+    if (clientType === "existing" && formData.existingClientId) {
+      const selected = clients.find((c) => c.id === formData.existingClientId)
+      if (selected && !(selected as any).security_rate && !(selected as any).installation_rate) {
+        setValidationErrors({ existingClientId: "ללקוח זה לא הוגדרו תעריפים. הגדר תעריף לפני שיוך לעבודה" })
+        customAlert("ללקוח זה לא הוגדרו תעריפים. הגדר תעריף לפני שיוך לעבודה")
+        return
+      }
     }
     if (clientType === "new") {
       requiredFields.push(
@@ -209,8 +220,40 @@ export default function NewJobForm() {
       const selectedEmployee = employees.find((emp) => emp.id === formData.employee)
       const selectedVehicle = vehicles.find((veh) => veh.id === formData.vehicle)
       const selectedCart = carts.find((cart) => cart.id === formData.cart)
-      const selectedClient = clients.find((c) => c.id === formData.existingClientId)
+      let selectedClient = clients.find((c) => c.id === formData.existingClientId)
       const selectedWorkType = workTypes.find((wt) => wt.id === formData.jobType)
+
+      // If new client mode, create the client record first
+      let newClientId: string | null = null
+      if (clientType === "new") {
+        const clientPayload = {
+          company_name: formData.clientName,
+          contact_person: formData.clientPhone,
+          email: formData.clientEmail,
+          address: formData.clientAddress,
+          city: formData.clientCity,
+          po_box: formData.clientPostalCode || null,
+          payment_method: formData.clientPaymentTerms,
+          security_rate: 0,
+          installation_rate: 0,
+          status: "active",
+        }
+
+        const clientResponse = await fetch("/api/clients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(clientPayload),
+        })
+
+        if (!clientResponse.ok) {
+          const errData = await clientResponse.json()
+          alert(`שגיאה ביצירת הלקוח: ${errData.error || "שגיאה לא ידועה"}`)
+          return
+        }
+
+        const clientResult = await clientResponse.json()
+        newClientId = clientResult.data?.id || null
+      }
 
       const sampleUserId = "00000000-0000-0000-0000-000000000001" // Must match the API route UUID
 
@@ -222,7 +265,7 @@ export default function NewJobForm() {
         shift_type: formData.shiftType,
         city: formData.city,
         client_name: clientType === "new" ? formData.clientName : (selectedClient?.company_name || ""),
-        client_id: clientType === "existing" && selectedClient ? selectedClient.id : null,
+        client_id: clientType === "new" ? newClientId : (selectedClient ? selectedClient.id : null),
         worker_name: selectedEmployee?.name || "",
         worker_id: selectedEmployee ? selectedEmployee.id : null,
         vehicle_name: selectedVehicle ? `${selectedVehicle.license_plate} - ${selectedVehicle.name}` : "",
@@ -246,25 +289,42 @@ export default function NewJobForm() {
         // job_status will be auto-calculated by database trigger
       }
 
-      console.log("[v0] Submitting job data:", jobData)
+      console.log("Submitting job data:", jobData)
 
       const { data, error } = await supabase.from("jobs").insert([jobData]).select()
 
       if (error) {
-        console.error("[v0] Error creating job:", error)
+        console.error("Error creating job:", error)
         alert(`שגיאה ביצירת העבודה: ${error.message}`)
         return
       }
 
-      console.log("[v0] Job created successfully:", data)
+      console.log("Job created successfully:", data)
       
       // Clear auto-save after successful job creation
       autoSave.clear()
+
+      // Download .ics calendar event if toggle is on
+      if (formData.calendarSync) {
+        const selectedEmployee = employees.find((emp) => emp.id === formData.employee)
+        const selectedWorkType = workTypes.find((wt) => wt.id === formData.jobType)
+        downloadJobICS({
+          jobNumber,
+          clientName: clientType === "new" ? formData.clientName : (clients.find(c => c.id === formData.existingClientId)?.company_name || ""),
+          workerName: selectedEmployee?.name || "",
+          jobDate: formData.date,
+          site: formData.location,
+          city: formData.city,
+          workType: selectedWorkType?.name_he || "",
+          shiftType: formData.shiftType,
+          notes: formData.description || undefined,
+        })
+      }
       
       alert("העבודה נוצרה בהצלחה!")
       router.push("/jobs")
     } catch (error) {
-      console.error("[v0] Failed to create job:", error)
+      console.error("Failed to create job:", error)
       alert("שגיאה ביצירת העבודה")
     }
   }
@@ -673,9 +733,9 @@ export default function NewJobForm() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">צור אירוע ביומן עבור עבודה זו (אופציונלי)</span>
+              <span className="text-sm text-gray-600">הורד קובץ יומן (.ics) להוספה ליומן המכשיר (אופציונלי)</span>
               <div className="flex items-center space-x-2">
-                <span className="text-sm">הוסף ליומן גוגל</span>
+              <span className="text-sm">הוסף ליומן המכשיר</span>
                 <Switch
                   checked={formData.calendarSync}
                   onCheckedChange={(checked) => setFormData({ ...formData, calendarSync: checked })}

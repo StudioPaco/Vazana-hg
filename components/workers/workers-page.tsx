@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Phone, MapPin, Calendar, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import WorkerEditModal from "@/components/workers/worker-edit-modal"
 
 interface Worker {
   id: string
@@ -25,6 +26,8 @@ export default function WorkersPage() {
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
+  const [editingWorker, setEditingWorker] = useState<Worker | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchWorkers = async () => {
@@ -33,7 +36,7 @@ export default function WorkersPage() {
         const { data, error } = await supabase.from("workers").select("*").order("name")
 
         if (error) {
-          console.error("[v0] Error fetching workers:", error)
+          console.error("Error fetching workers:", error)
           setWorkers([])
           setFilteredWorkers([])
         } else {
@@ -63,17 +66,20 @@ export default function WorkersPage() {
   }, [searchTerm, workers])
 
   const handleDeleteWorker = async (id: string) => {
-    if (confirm("Are you sure you want to delete this worker?")) {
+    if (confirm("האם אתה בטוח שברצונך למחוק עובד זה?")) {
       try {
         const supabase = createClient()
         const { error } = await supabase.from("workers").delete().eq("id", id)
 
         if (error) {
-          console.error("[v0] Error deleting worker:", error)
+          console.error("Error deleting worker:", error)
+          alert("שגיאה במחיקת העובד. נסה שוב.")
+          return
         }
         setWorkers(workers.filter((worker) => worker.id !== id))
       } catch (error) {
         console.error("Failed to delete worker:", error)
+        alert("שגיאה במחיקת העובד. נסה שוב.")
       }
     }
   }
@@ -82,7 +88,7 @@ export default function WorkersPage() {
     if (!availability) return []
 
     const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    const dayNames = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]
     const availableDays: string[] = []
 
     days.forEach((day, index) => {
@@ -129,7 +135,7 @@ export default function WorkersPage() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input
-          placeholder="Search workers..."
+          placeholder="חפש עובדים..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
@@ -142,9 +148,9 @@ export default function WorkersPage() {
           <CardContent className="text-center py-12">
             <div className="text-gray-500">
               <Plus className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-lg font-medium mb-2">No workers found</p>
+              <p className="text-lg font-medium mb-2">לא נמצאו עובדים</p>
               <p className="text-sm">
-                {searchTerm ? "Try adjusting your search terms" : "Add your first worker to get started"}
+                {searchTerm ? "נסה לשנות את מילות החיפוש" : "הוסף את העובד הראשון שלך כדי להתחיל"}
               </p>
             </div>
           </CardContent>
@@ -157,7 +163,7 @@ export default function WorkersPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg">{worker.name}</CardTitle>
-                    <CardDescription>₪{worker.shift_rate}/shift</CardDescription>
+                    <CardDescription>₪{worker.shift_rate}/משמרת</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -165,25 +171,25 @@ export default function WorkersPage() {
                 <div className="space-y-2">
                   {worker.phone_number && (
                     <div className="flex items-center text-sm text-gray-600">
-                      <Phone className="mr-2 h-4 w-4" />
+                      <Phone className="ml-2 h-4 w-4" />
                       {worker.phone_number}
                     </div>
                   )}
                   {worker.address && (
                     <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="mr-2 h-4 w-4" />
+                      <MapPin className="ml-2 h-4 w-4" />
                       {worker.address}
                     </div>
                   )}
                   <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Payment terms: {worker.payment_terms_days} days
+                    <Calendar className="ml-2 h-4 w-4" />
+                    תנאי תשלום: {worker.payment_terms_days} ימים
                   </div>
                 </div>
 
                 {worker.availability && (
                   <div className="pt-2 border-t">
-                    <p className="text-sm text-gray-500 mb-2">Available Days:</p>
+                    <p className="text-sm text-gray-500 mb-2">ימים זמינים:</p>
                     <div className="flex flex-wrap gap-1">
                       {getAvailabilityBadges(worker.availability).map((day) => (
                         <Badge key={day} variant="secondary" className="text-xs">
@@ -196,17 +202,23 @@ export default function WorkersPage() {
 
                 {worker.notes && (
                   <div className="pt-2 border-t">
-                    <p className="text-sm text-gray-500 mb-1">Notes:</p>
+                    <p className="text-sm text-gray-500 mb-1">הערות:</p>
                     <p className="text-sm text-gray-700">{worker.notes}</p>
                   </div>
                 )}
 
-                <div className="flex space-x-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
-                    <Link href={`/workers/${worker.id}/edit`}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Link>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-transparent"
+                    onClick={() => {
+                      setEditingWorker(worker)
+                      setEditModalOpen(true)
+                    }}
+                  >
+                    <Edit className="ml-2 h-4 w-4" />
+                    ערוך
                   </Button>
                   <Button
                     variant="outline"
@@ -222,6 +234,14 @@ export default function WorkersPage() {
           ))}
         </div>
       )}
+      <WorkerEditModal
+        worker={editingWorker}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onWorkerUpdated={(updated) => {
+          setWorkers(prev => prev.map(w => w.id === updated.id ? updated : w))
+        }}
+      />
     </div>
   )
 }
