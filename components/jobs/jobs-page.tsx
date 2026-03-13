@@ -85,7 +85,7 @@ export default function JobsPage() {
       try {
         console.log("Fetching jobs from API...")
         
-        const response = await fetch('/api/jobs')
+        const response = await fetch('/api/jobs', { credentials: 'include' })
         
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`)

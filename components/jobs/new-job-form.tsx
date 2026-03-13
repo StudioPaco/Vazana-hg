@@ -111,7 +111,7 @@ export default function NewJobForm() {
     const fetchJobNumber = async () => {
       try {
         // Use API endpoint instead of direct Supabase query to avoid RLS issues
-        const response = await fetch('/api/jobs')
+        const response = await fetch('/api/jobs', { credentials: 'include' })
         
         if (!response.ok) {
           console.error("API error fetching jobs for numbering:", response.status)

@@ -120,7 +120,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
       try {
         console.log("Fetching clients from API...")
 
-        const response = await fetch("/api/clients")
+        const response = await fetch("/api/clients", { credentials: "include" })
         
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`)
@@ -426,7 +426,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
 
                     <div className="text-right space-y-1">
                       <div>
-                        <p className="text-xs text-gray-600">אופן תשלום (יומי)</p>
+                        <p className="text-xs text-gray-600">אופן תשלום (יומ��)</p>
                         <p className="font-medium text-sm">{client.payment_method || 'לא הוגדר'}</p>
                       </div>
                       {client.notes && (

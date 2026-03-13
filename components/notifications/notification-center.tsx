@@ -40,6 +40,7 @@ export default function NotificationCenter({ jobId, jobNumber, clientEmail, work
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           type: notificationType,
           jobId,
@@ -83,6 +84,7 @@ export default function NotificationCenter({ jobId, jobNumber, clientEmail, work
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ jobId }),
       })
 

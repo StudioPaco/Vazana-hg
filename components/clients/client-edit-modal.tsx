@@ -152,7 +152,7 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
 
   const loadWorkTypes = async () => {
     try {
-      const response = await fetch("/api/work-types")
+      const response = await fetch("/api/work-types", { credentials: "include" })
       const result = await response.json()
       if (result.data) {
         setAvailableWorkTypes(result.data)
@@ -166,14 +166,14 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
     setIsLoadingData(true)
     try {
       // Load work type rates
-      const ratesResponse = await fetch(`/api/clients/${clientId}/rates`)
+      const ratesResponse = await fetch(`/api/clients/${clientId}/rates`, { credentials: "include" })
       if (ratesResponse.ok) {
         const ratesResult = await ratesResponse.json()
         setWorkTypeRates(ratesResult.data || [])
       }
 
       // Load payment logs  
-      const logsResponse = await fetch(`/api/clients/${clientId}/payment-logs`)
+      const logsResponse = await fetch(`/api/clients/${clientId}/payment-logs`, { credentials: "include" })
       if (logsResponse.ok) {
         const logsResult = await logsResponse.json()
         setPaymentLogs(logsResult.data || [])

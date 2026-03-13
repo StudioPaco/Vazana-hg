@@ -65,6 +65,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           company_name: formData.companyName,
           contact_person: formData.contactPerson, // Fixed: matches DB schema

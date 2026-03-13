@@ -599,7 +599,7 @@ export default function MaintenancePage() {
       addLog("info", "Testing authentication system...", "Authentication")
 
       // Test session API
-      const response = await fetch("/api/auth/session")
+      const response = await fetch("/api/auth/session", { credentials: "include" })
       if (!response.ok) {
         addLog("error", "Session API not responding", "Authentication")
         return "error"
@@ -972,7 +972,7 @@ export default function MaintenancePage() {
               { key: "api", label: "API", icon: Zap },
               { key: "auth", label: "אימות", icon: Lock },
               { key: "encryption", label: "הצפנה", icon: Shield },
-              { key: "storage", label: "אחסון", icon: HardDrive },
+              { key: "storage", label: "א��סון", icon: HardDrive },
             ].map(({ key, label, icon: Icon }) => (
               <Card key={key}>
                 <CardContent className="p-4">

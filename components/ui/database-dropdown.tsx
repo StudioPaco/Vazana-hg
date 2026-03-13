@@ -94,7 +94,7 @@ export default function DatabaseDropdown({
       try {
         // Use API endpoints instead of direct Supabase queries
         const apiTable = table === 'work_types' ? 'work-types' : table
-        const response = await fetch(`/api/${apiTable}`)
+        const response = await fetch(`/api/${apiTable}`, { credentials: "include" })
         
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`)

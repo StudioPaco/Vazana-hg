@@ -39,7 +39,7 @@ export default function SettingsBusinessInfo() {
 
     const loadSettings = async () => {
       try {
-        const res = await fetch("/api/business-settings")
+        const res = await fetch("/api/business-settings", { credentials: "include" })
         if (res.ok) {
           const { data } = await res.json()
           if (data) {
@@ -166,11 +166,12 @@ export default function SettingsBusinessInfo() {
         bank_account_number: bankAccountNumber,
       }
 
-      const res = await fetch("/api/business-settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+    const res = await fetch("/api/business-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    })
 
       if (!res.ok) {
         throw new Error("API save failed")

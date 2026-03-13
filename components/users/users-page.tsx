@@ -32,7 +32,7 @@ export function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/users")
+      const response = await fetch("/api/users", { credentials: "include" })
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
@@ -65,6 +65,7 @@ export function UsersPage() {
       const response = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(userData),
       })
 

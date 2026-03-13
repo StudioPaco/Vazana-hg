@@ -206,6 +206,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(updateData)
       })
 

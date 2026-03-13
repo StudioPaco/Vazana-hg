@@ -96,6 +96,7 @@ export default function DataExportImport({ open, onOpenChange }: DataExportImpor
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(exportOptions),
       })
 
@@ -148,6 +149,7 @@ export default function DataExportImport({ open, onOpenChange }: DataExportImpor
 
       const response = await fetch('/api/import', {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       })
 
@@ -181,6 +183,7 @@ export default function DataExportImport({ open, onOpenChange }: DataExportImpor
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           action,
           duplicateId,

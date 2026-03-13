@@ -18,7 +18,7 @@ class BaseApiEntity implements ApiEntity {
 
   async list() {
     try {
-      const response = await fetch(`/api/${this.tableName}`)
+      const response = await fetch(`/api/${this.tableName}`, { credentials: 'include' })
       
       if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`)
@@ -39,6 +39,7 @@ class BaseApiEntity implements ApiEntity {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       })
       
@@ -62,6 +63,7 @@ class BaseApiEntity implements ApiEntity {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ id, ...data }),
       })
       
@@ -82,6 +84,7 @@ class BaseApiEntity implements ApiEntity {
       // For most resources, use DELETE with query parameter
       const response = await fetch(`/api/${this.tableName}?id=${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       })
       
       if (!response.ok) {
@@ -107,7 +110,7 @@ export const Client = {
   
   async list() {
     try {
-      const response = await fetch('/api/clients')
+      const response = await fetch('/api/clients', { credentials: 'include' })
       
       if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`)
@@ -128,6 +131,7 @@ export const Client = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       })
       
@@ -151,6 +155,7 @@ export const Client = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       })
       
@@ -171,6 +176,7 @@ export const Client = {
       // Clients use individual ID routes
       const response = await fetch(`/api/clients/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       })
       
       if (!response.ok) {
@@ -190,7 +196,7 @@ export const WorkType = {
   
   async list() {
     try {
-      const response = await fetch('/api/work-types')
+      const response = await fetch('/api/work-types', { credentials: 'include' })
       
       if (!response.ok) {
         throw new Error(`API responded with status: ${response.status}`)
@@ -211,6 +217,7 @@ export const WorkType = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       })
       
@@ -234,6 +241,7 @@ export const WorkType = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ id, ...data }),
       })
       
@@ -254,6 +262,7 @@ export const WorkType = {
       // For now, use DELETE with query parameter
       const response = await fetch(`/api/work-types?id=${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       })
       
       if (!response.ok) {

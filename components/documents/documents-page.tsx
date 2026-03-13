@@ -28,7 +28,7 @@ export function DocumentsPage() {
         params.append("entityType", filter)
       }
 
-      const response = await fetch(`/api/documents?${params}`)
+      const response = await fetch(`/api/documents?${params}`, { credentials: "include" })
       if (response.ok) {
         const data = await response.json()
         setDocuments(data)
@@ -49,6 +49,7 @@ export function DocumentsPage() {
     try {
       const response = await fetch("/api/documents", {
         method: "POST",
+        credentials: "include",
         body: formData,
       })
 

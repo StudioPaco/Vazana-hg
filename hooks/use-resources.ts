@@ -43,7 +43,7 @@ export function useVehiclesResource() {
 
   const fetchVehicles = async () => {
     try {
-      const response = await fetch("/api/vehicles")
+      const response = await fetch("/api/vehicles", { credentials: "include" })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Failed to fetch vehicles")
       setVehicles(result.data || [])
@@ -60,6 +60,7 @@ export function useVehiclesResource() {
       const response = await fetch("/api/vehicles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(vehicle),
       })
       const result = await response.json()
@@ -77,6 +78,7 @@ export function useVehiclesResource() {
       const response = await fetch("/api/vehicles", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ id, ...updates }),
       })
       const result = await response.json()
@@ -93,6 +95,7 @@ export function useVehiclesResource() {
     try {
       const response = await fetch(`/api/vehicles?id=${id}`, {
         method: "DELETE",
+        credentials: "include",
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Failed to delete vehicle")
@@ -127,7 +130,7 @@ export function useWorkersResource() {
 
   const fetchWorkers = async () => {
     try {
-      const response = await fetch("/api/workers")
+      const response = await fetch("/api/workers", { credentials: "include" })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Failed to fetch workers")
       setWorkers(result.data || [])
@@ -144,6 +147,7 @@ export function useWorkersResource() {
       const response = await fetch("/api/workers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(worker),
       })
       const result = await response.json()
@@ -161,6 +165,7 @@ export function useWorkersResource() {
       const response = await fetch("/api/workers", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ id, ...updates }),
       })
       const result = await response.json()
@@ -177,6 +182,7 @@ export function useWorkersResource() {
     try {
       const response = await fetch(`/api/workers?id=${id}`, {
         method: "DELETE",
+        credentials: "include",
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Failed to delete worker")
@@ -211,7 +217,7 @@ export function useCartsResource() {
 
   const fetchCarts = async () => {
     try {
-      const response = await fetch("/api/carts")
+      const response = await fetch("/api/carts", { credentials: "include" })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Failed to fetch carts")
       setCarts(result.data || [])
@@ -228,6 +234,7 @@ export function useCartsResource() {
       const response = await fetch("/api/carts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(cart),
       })
       const result = await response.json()
@@ -245,6 +252,7 @@ export function useCartsResource() {
       const response = await fetch("/api/carts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ id, ...updates }),
       })
       const result = await response.json()
@@ -261,6 +269,7 @@ export function useCartsResource() {
     try {
       const response = await fetch(`/api/carts?id=${id}`, {
         method: "DELETE",
+        credentials: "include",
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Failed to delete cart")
@@ -295,7 +304,7 @@ export function useWorkTypesResource() {
 
   const fetchWorkTypes = async () => {
     try {
-      const response = await fetch("/api/work-types")
+      const response = await fetch("/api/work-types", { credentials: "include" })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Failed to fetch work types")
       setWorkTypes(result.data || [])
@@ -312,6 +321,7 @@ export function useWorkTypesResource() {
       const response = await fetch("/api/work-types", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(workType),
       })
       const result = await response.json()
@@ -329,6 +339,7 @@ export function useWorkTypesResource() {
       const response = await fetch("/api/work-types", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ id, ...updates }),
       })
       const result = await response.json()
@@ -345,6 +356,7 @@ export function useWorkTypesResource() {
     try {
       const response = await fetch(`/api/work-types?id=${id}`, {
         method: "DELETE",
+        credentials: "include",
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || "Failed to delete work type")

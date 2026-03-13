@@ -94,7 +94,7 @@ export function useUserPreferences(): UseUserPreferencesReturn {
       setPreferences(storedPrefs);
       
       // Then try to sync with server
-      const response = await fetch('/api/user-preferences');
+      const response = await fetch('/api/user-preferences', { credentials: 'include' });
       
       if (!response.ok) {
         console.warn('API preferences failed, using stored preferences');
@@ -147,6 +147,7 @@ export function useUserPreferences(): UseUserPreferencesReturn {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify(updates),
         });
         
