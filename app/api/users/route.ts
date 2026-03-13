@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     // Check if user has permission to view users
     const { data: currentUser } = await supabase.from("user_profiles").select("role").eq("id", user.id).single()
 
-    if (!currentUser || !["root", "admin"].includes(currentUser.role)) {
+    if (!currentUser || !["owner", "admin"].includes(currentUser.role)) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 })
     }
 
@@ -54,17 +55,17 @@ export async function POST(request: NextRequest) {
     // Check permissions
     const { data: currentUser } = await supabase.from("user_profiles").select("role").eq("id", user.id).single()
 
-    if (!currentUser || !["root", "admin"].includes(currentUser.role)) {
+    if (!currentUser || !["owner", "admin"].includes(currentUser.role)) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 })
     }
-
-    // Only root can create root users
-    if (role === "root" && currentUser.role !== "root") {
-      return NextResponse.json({ error: "Only root can create root users" }, { status: 403 })
+    // Only owner can create owner users
+    if (role === "owner" && currentUser.role !== "owner") {
+      return NextResponse.json({ error: "Only owner can create owner users" }, { status: 403 })
     }
 
-    // Create auth user first
-    const { data: authUser, error: signUpError } = await supabase.auth.admin.createUser({
+    // Create auth user via admin client (requires service_role key)
+    const admin = createAdminClient()
+    const { data: authUser, error: signUpError } = await admin.auth.admin.createUser({
       email,
       password: "TempPassword123!", // User will need to reset
       email_confirm: true,
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user profile
-    const { data: newUser, error: profileError } = await supabase
+    const { data: newUser, error: profileError } = await admin
       .from("user_profiles")
       .insert({
         id: authUser.user.id,
