@@ -1,15 +1,14 @@
-import { getCurrentSession } from "@/lib/auth-custom"
 import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import SignUpForm from "@/components/auth/sign-up-form"
 
 export const dynamic = "force-dynamic"
 
 export default async function SignUpPage() {
-  // Check if user is already logged in
-  const session = await getCurrentSession()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // If user is logged in, redirect to home page
-  if (session) {
+  if (user) {
     redirect("/")
   }
 
