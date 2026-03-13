@@ -39,13 +39,8 @@ Add these 3 variables:
 | Key | Value | Notes |
 |-----|-------|-------|
 | `ROOT_USERNAME` | `root` | Or your preferred admin username |
-| `ROOT_PASSWORD` | (your secure password) | Replace the hardcoded `10203040` |
-| `DB_ENCRYPTION_KEY` | (32+ char random string) | For field encryption |
-
-**To generate a secure encryption key:**
-```bash
-openssl rand -base64 32
-```
+| `ROOT_PASSWORD` | (your secure password) | Replace the hardcoded default |
+| `DB_ENCRYPTION_KEY` | (provisioned externally) | For field encryption - assumed already set |
 
 ### STEP 2: Redeploy the Application
 
@@ -163,7 +158,7 @@ New columns added by migrations:
    - localStorage is cache only, cookies are source of truth
 
 2. **Encryption:**
-   - Set `DB_ENCRYPTION_KEY` env var before using encryption
+   - `DB_ENCRYPTION_KEY` is provisioned externally via Vercel env vars
    - Call Supabase RPC functions to encrypt/decrypt
    - Secure views auto-decrypt with session key
 
