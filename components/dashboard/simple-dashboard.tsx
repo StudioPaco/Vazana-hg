@@ -1,27 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/components/auth/auth-provider"
 
 export default function SimpleDashboard() {
-  const [user, setUser] = useState<any>(null)
+  const { profile } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const userData = localStorage.getItem("vazana_user")
-      if (userData) {
-        setUser(JSON.parse(userData))
-      }
-    }
-  }, [])
-
-  const handleLogout = () => {
-    localStorage.removeItem("vazana_logged_in")
-    localStorage.removeItem("vazana_user")
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" })
     router.push("/auth/login")
+    router.refresh()
   }
 
   return (
@@ -34,7 +25,7 @@ export default function SimpleDashboard() {
             <p className="text-vazana-dark/70 mt-2">מערכת ניהול עסקי מתקדמת</p>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-vazana-dark font-medium">שלום, {user?.username || "משתמש"}</span>
+            <span className="text-vazana-dark font-medium">שלום, {profile?.full_name || profile?.username || "משתמש"}</span>
             <Button
               onClick={handleLogout}
               variant="outline"

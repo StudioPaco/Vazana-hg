@@ -1,31 +1,43 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { Suspense, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { clientAuth } from "@/lib/client-auth"
+import { useAuth } from "@/components/auth/auth-provider"
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-vazana-yellow/10 to-vazana-teal/10">
+        <div className="text-vazana-dark text-lg font-hebrew">טוען...</div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { isAuthenticated } = useAuth()
 
-  // Check if already logged in
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (clientAuth.isAuthenticated()) {
-        router.push("/")
-      }
-    }
-  }, [router])
+  // If already authenticated, redirect to home (or ?next= param)
+  if (isAuthenticated) {
+    const next = searchParams.get("next") || "/"
+    router.replace(next)
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,13 +45,21 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const result = await clientAuth.login(username, password)
-      
-      if (result.success) {
-        console.log("Login successful:", result.user?.username)
-        router.push("/")
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        // Session cookies are set by the API route via @supabase/ssr
+        const next = searchParams.get("next") || "/"
+        router.push(next)
+        router.refresh() // Force re-render to pick up new session
       } else {
-        setError(result.error || "שגיאה בלתי ידועה")
+        setError(data.error || "שגיאה בלתי ידועה")
       }
     } catch (error) {
       console.error("Login error:", error)

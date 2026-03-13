@@ -19,7 +19,8 @@ import {
 // import Image from "next/image"
 import { useState, createContext, useContext, useEffect } from "react"
 import { useLoading } from "./loading-overlay"
-import { clientAuth } from "@/lib/client-auth"
+import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/components/auth/auth-provider"
 
 const SidebarContext = createContext<{
   isMinimized: boolean
@@ -69,16 +70,11 @@ export default function SidebarNavigation() {
   const router = useRouter()
   const { isMinimized, setIsMinimized } = useSidebar()
   const { setLoading } = useLoading()
-  const [currentUser, setCurrentUser] = useState<any>(null)
-  
-  useEffect(() => {
-    const user = clientAuth.getCurrentUser()
-    setCurrentUser(user)
-  }, [])
+  const { profile } = useAuth()
+  const supabase = createClient()
 
-  const handleLogout = () => {
-    localStorage.removeItem("vazana_logged_in")
-    localStorage.removeItem("vazana_user")
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
     window.location.href = "/auth/login"
   }
 
@@ -158,10 +154,10 @@ export default function SidebarNavigation() {
         {!isMinimized && (
           <div className="text-right mb-3">
             <p className="text-sm font-semibold text-vazana-dark font-hebrew">
-              שלום, {currentUser?.full_name || currentUser?.username || 'משתמש'}
+              שלום, {profile?.full_name || profile?.username || 'משתמש'}
             </p>
             <p className="text-xs text-gray-600 font-hebrew">
-              {currentUser?.username === 'root' ? 'מנהל מערכת ראשי' : 'משתמש'}
+              {profile?.role === 'owner' ? 'מנהל מערכת ראשי' : profile?.role === 'admin' ? 'מנהל' : 'משתמש'}
             </p>
           </div>
         )}

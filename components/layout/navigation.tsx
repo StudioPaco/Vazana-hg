@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -43,26 +43,16 @@ const navigationItems = [
 
 export default function Navigation({ user: propUser }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
   const pathname = usePathname()
   const router = useRouter()
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const userData = localStorage.getItem("vazana_user")
-      if (userData) {
-        setUser(JSON.parse(userData))
-      }
-    }
-  }, [])
-
-  const handleSignOut = () => {
-    localStorage.removeItem("vazana_logged_in")
-    localStorage.removeItem("vazana_user")
+  const handleSignOut = async () => {
+    await fetch("/api/auth/logout", { method: "POST" })
     router.push("/auth/login")
+    router.refresh()
   }
 
-  const currentUser = propUser || user
+  const currentUser = propUser
 
   return (
     <>

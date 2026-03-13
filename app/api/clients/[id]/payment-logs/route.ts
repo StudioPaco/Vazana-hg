@@ -1,17 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
+import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const supabase = getSupabase()
+    const supabase = await createClient()
 
     const { data, error } = await supabase
       .from("client_payment_logs")
@@ -34,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const supabase = getSupabase()
+    const supabase = await createClient()
     const body = await request.json()
     const { logs } = body // Array of payment log entries
 

@@ -1,21 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // For API routes, we'll use a default user approach
-    const userId = "00000000-0000-0000-0000-000000000001" // Sample user UUID that matches our sample data
+    const supabase = await createClient()
 
     const { data: jobs, error } = await supabase
       .from("jobs")
       .select("*")
-      .or(`created_by_id.eq.${userId},is_sample.eq.true`)
-      .order("created_date", { ascending: true }) // Show oldest first, newest at bottom
+      .order("created_date", { ascending: true })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -29,13 +22,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // Use default user for API routes
-    const defaultUser = { id: "00000000-0000-0000-0000-000000000001", email: "admin@example.com" }
+    const supabase = await createClient()
 
     const body = await request.json()
 
@@ -71,8 +58,6 @@ export async function POST(request: NextRequest) {
     const jobData = {
       ...body,
       job_number: jobNumber,
-      // created_by_id: defaultUser.id, // Temporarily removed to avoid foreign key constraint
-      created_by: defaultUser.email,
       // Let database handle timestamps with DEFAULT NOW()
       is_sample: false,
     }

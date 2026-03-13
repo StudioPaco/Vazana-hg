@@ -1,20 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // For API routes, we'll use a default user approach since we're not handling cookies
-    const userId = "00000000-0000-0000-0000-000000000001" // Sample user UUID that matches our sample data
+    const supabase = await createClient()
 
     const { data: workers, error } = await supabase
       .from("workers")
       .select("*")
-      .or(`created_by_id.eq.${userId},is_sample.eq.true`)
       .order("name", { ascending: true })
 
     if (error) {
@@ -31,20 +24,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // Use default user for API routes
-    const defaultUser = { id: "00000000-0000-0000-0000-000000000001", email: "admin@example.com" }
+    const supabase = await createClient()
 
     const body = await request.json()
 
     const workerData = {
       ...body,
-      created_by_id: defaultUser.id,
-      created_by: defaultUser.email,
       updated_date: new Date().toISOString(),
       is_sample: false,
     }
@@ -63,10 +48,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = await createClient()
 
     const body = await request.json()
     const { id, ...updateData } = body
@@ -94,10 +76,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = await createClient()
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")

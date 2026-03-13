@@ -1,16 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/server"
 import { invoiceService } from "@/lib/invoice-service"
-
-// Hardcoded auth — matches clients/jobs API pattern
-const defaultUser = { id: "00000000-0000-0000-0000-000000000001", email: "admin@example.com" }
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = await createClient()
 
     const { data: invoices, error } = await supabase
       .from("invoices")
@@ -32,10 +26,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = await createClient()
 
     const body = await request.json()
     const { clientId, jobIds, notes } = body
@@ -80,8 +71,6 @@ export async function POST(request: NextRequest) {
       invoice_date: new Date().toISOString().split("T")[0],
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 30 days from now
       notes,
-      created_by_id: defaultUser.id,
-      created_by: defaultUser.email,
     }
 
     const { data: invoice, error: invoiceError } = await supabase

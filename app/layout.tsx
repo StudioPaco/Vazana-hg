@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/lib/language-context"
 import { LoadingProvider } from "@/components/layout/loading-overlay"
 import AppWrapper from "@/components/layout/app-wrapper"
 import GlobalAlertProvider from "@/components/layout/global-alert-provider"
+import AuthProvider from "@/components/auth/auth-provider"
 
 export const metadata: Metadata = {
   title: "Vazana Studio - וזאנה סטודיו",
@@ -35,7 +36,9 @@ export default function RootLayout({
               <LoadingProvider>
                 <SidebarProvider>
                   <GlobalAlertProvider>
-                    <AppWrapper>{children}</AppWrapper>
+                    <AuthProvider>
+                      <AppWrapper>{children}</AppWrapper>
+                    </AuthProvider>
                   </GlobalAlertProvider>
                 </SidebarProvider>
               </LoadingProvider>

@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 import PageLayout from "@/components/layout/page-layout"
 import ClientsPage from "@/components/clients/clients-page"
@@ -11,27 +10,12 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 
 export default function Clients() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [stats, setStats] = useState({
     averageSecurityRate: 0,
     activeClientsCount: 0,
     mostActiveClient: { name: "אין נתונים", count: 0 }
   })
-  const router = useRouter()
-
-  useEffect(() => {
-    const loggedIn = localStorage.getItem("vazana_logged_in")
-    if (loggedIn === "true") {
-      setIsAuthenticated(true)
-    } else {
-      router.push("/auth/login")
-    }
-  }, [router])
-
-  if (!isAuthenticated) {
-    return <div>Loading...</div>
-  }
 
   const handleStatsCalculated = (newStats: typeof stats) => {
     setStats(newStats)
