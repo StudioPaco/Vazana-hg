@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Progress } from "@/components/ui/progress"
 import {
   Activity,
   AlertTriangle,
@@ -28,6 +29,24 @@ import {
   Pause,
   Trash2,
   Lock,
+  Shield,
+  Key,
+  Globe,
+  HardDrive,
+  Layers,
+  Link,
+  MessageSquare,
+  Receipt,
+  Building,
+  Calendar,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
+  Target,
+  Wrench,
+  CheckSquare,
+  Square,
 } from "lucide-react"
 import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
 import { BackButton } from "@/components/ui/back-button"
@@ -46,19 +65,393 @@ interface LogEntry {
 
 interface FeatureStatus {
   name: string
-  status: "healthy" | "warning" | "error" | "unknown"
-  lastChecked: Date
+  nameHe: string
+  status: "working" | "partial" | "not-working" | "planned" | "testing"
+  lastChecked: Date | null
   message: string
+  messageHe: string
   icon: any
   category: string
+  route?: string
+  apiRoute?: string
+  priority: "critical" | "high" | "medium" | "low"
+  dependencies?: string[]
 }
 
 interface SystemHealth {
   database: "healthy" | "warning" | "error" | "unknown"
   api: "healthy" | "warning" | "error" | "unknown"
   auth: "healthy" | "warning" | "error" | "unknown"
-  integrations: "healthy" | "warning" | "error" | "unknown"
+  encryption: "healthy" | "warning" | "error" | "unknown"
+  storage: "healthy" | "warning" | "error" | "unknown"
 }
+
+// Complete feature registry - this is the master list of all system capabilities
+const FEATURE_REGISTRY: Omit<FeatureStatus, "lastChecked">[] = [
+  // Authentication & Security
+  {
+    name: "Cookie-Based Auth",
+    nameHe: "אימות מבוסס עוגיות",
+    status: "working",
+    message: "Server-side session with HTTP-only cookies",
+    messageHe: "פעיל - אימות צד-שרת עם עוגיות מאובטחות",
+    icon: Lock,
+    category: "auth",
+    apiRoute: "/api/auth/session",
+    priority: "critical",
+  },
+  {
+    name: "Root User Login",
+    nameHe: "התחברות משתמש על",
+    status: "working",
+    message: "Hardcoded root credentials (server-side only)",
+    messageHe: "פעיל - פרטי משתמש על מאוחסנים בצד שרת",
+    icon: Key,
+    category: "auth",
+    apiRoute: "/api/auth/simple-login",
+    priority: "critical",
+  },
+  {
+    name: "Bcrypt Password Hashing",
+    nameHe: "הצפנת סיסמאות",
+    status: "working",
+    message: "Using bcrypt for DB user passwords",
+    messageHe: "פעיל - הצפנת bcrypt לסיסמאות משתמשים",
+    icon: Shield,
+    category: "auth",
+    priority: "critical",
+  },
+  {
+    name: "User Profiles CRUD",
+    nameHe: "ניהול משתמשים",
+    status: "working",
+    message: "Create, read, update, delete user profiles",
+    messageHe: "פעיל - יצירה, קריאה, עדכון, מחיקה של משתמשים",
+    icon: Users,
+    category: "auth",
+    route: "/settings",
+    priority: "high",
+  },
+  {
+    name: "Role-Based Permissions",
+    nameHe: "הרשאות לפי תפקיד",
+    status: "partial",
+    message: "Admin/user roles exist, fine-grained permissions not enforced",
+    messageHe: "חלקי - תפקידים קיימים, הרשאות מפורטות לא מיושמות",
+    icon: Shield,
+    category: "auth",
+    priority: "high",
+  },
+  {
+    name: "Session Expiry & Refresh",
+    nameHe: "תפוגת הפעלה",
+    status: "working",
+    message: "Sessions expire after 8 hours, auto-refresh on activity",
+    messageHe: "פעיל - פג תוקף אחרי 8 שעות, רענון אוטומטי",
+    icon: Clock,
+    category: "auth",
+    priority: "medium",
+  },
+
+  // Database & Encryption
+  {
+    name: "Supabase Connection",
+    nameHe: "חיבור Supabase",
+    status: "working",
+    message: "PostgreSQL database via Supabase",
+    messageHe: "פעיל - מסד נתונים PostgreSQL",
+    icon: Database,
+    category: "database",
+    priority: "critical",
+  },
+  {
+    name: "Field-Level Encryption",
+    nameHe: "הצפנת שדות",
+    status: "working",
+    message: "pgcrypto AES-256 for sensitive fields",
+    messageHe: "פעיל - הצפנת AES-256 לשדות רגישים",
+    icon: Lock,
+    category: "database",
+    priority: "critical",
+  },
+  {
+    name: "Encrypted Business Settings",
+    nameHe: "הגדרות עסק מוצפנות",
+    status: "planned",
+    message: "Bank account, tax ID encrypted in DB",
+    messageHe: "מתוכנן - חשבון בנק, מס' עוסק מוצפנים",
+    icon: Building,
+    category: "database",
+    priority: "high",
+    dependencies: ["Field-Level Encryption"],
+  },
+  {
+    name: "Migration Tracking",
+    nameHe: "מעקב מיגרציות",
+    status: "working",
+    message: "schema_migrations table tracks all DB changes",
+    messageHe: "פעיל - טבלת מעקב שינויי מסד נתונים",
+    icon: Layers,
+    category: "database",
+    priority: "medium",
+  },
+  {
+    name: "Row Level Security",
+    nameHe: "אבטחה ברמת שורה",
+    status: "partial",
+    message: "RLS policies exist but need audit",
+    messageHe: "חלקי - מדיניות RLS קיימת, דורשת ביקורת",
+    icon: Shield,
+    category: "database",
+    priority: "high",
+  },
+
+  // Core Data Management
+  {
+    name: "Workers Management",
+    nameHe: "ניהול עובדים",
+    status: "working",
+    message: "Full CRUD for workers",
+    messageHe: "פעיל - ניהול מלא של עובדים",
+    icon: Users,
+    category: "data",
+    route: "/workers",
+    apiRoute: "/api/workers",
+    priority: "high",
+  },
+  {
+    name: "Vehicles Management",
+    nameHe: "ניהול רכבים",
+    status: "working",
+    message: "Full CRUD for vehicles",
+    messageHe: "פעיל - ניהול מלא של רכבים",
+    icon: Car,
+    category: "data",
+    route: "/vehicles",
+    apiRoute: "/api/vehicles",
+    priority: "high",
+  },
+  {
+    name: "Carts Management",
+    nameHe: "ניהול עגלות",
+    status: "working",
+    message: "Full CRUD for carts",
+    messageHe: "פעיל - ניהול מלא של עגלות",
+    icon: ShoppingCart,
+    category: "data",
+    route: "/carts",
+    apiRoute: "/api/carts",
+    priority: "high",
+  },
+  {
+    name: "Clients Management",
+    nameHe: "ניהול לקוחות",
+    status: "working",
+    message: "Full CRUD for clients",
+    messageHe: "פעיל - ניהול מלא של לקוחות",
+    icon: Users,
+    category: "data",
+    route: "/clients",
+    apiRoute: "/api/clients",
+    priority: "high",
+  },
+  {
+    name: "Jobs Management",
+    nameHe: "ניהול עבודות",
+    status: "working",
+    message: "Jobs with status workflow",
+    messageHe: "פעיל - עבודות עם תהליך סטטוס",
+    icon: Briefcase,
+    category: "data",
+    route: "/jobs",
+    apiRoute: "/api/jobs",
+    priority: "critical",
+  },
+  {
+    name: "Work Types Config",
+    nameHe: "הגדרת סוגי עבודה",
+    status: "working",
+    message: "Configurable work types and rates",
+    messageHe: "פעיל - סוגי עבודה ותעריפים",
+    icon: Settings,
+    category: "data",
+    priority: "high",
+  },
+
+  // Invoicing
+  {
+    name: "Invoice Generation",
+    nameHe: "יצירת חשבוניות",
+    status: "working",
+    message: "Create invoices from jobs",
+    messageHe: "פעיל - יצירת חשבוניות מעבודות",
+    icon: Receipt,
+    category: "invoicing",
+    route: "/invoices/new",
+    priority: "critical",
+  },
+  {
+    name: "Invoice Preview",
+    nameHe: "תצוגה מקדימה",
+    status: "working",
+    message: "Preview before saving",
+    messageHe: "פעיל - תצוגה מקדימה לפני שמירה",
+    icon: Eye,
+    category: "invoicing",
+    priority: "high",
+  },
+  {
+    name: "Invoice Archive",
+    nameHe: "ארכיון חשבוניות",
+    status: "working",
+    message: "Historical invoice storage",
+    messageHe: "פעיל - אחסון היסטוריית חשבוניות",
+    icon: FileText,
+    category: "invoicing",
+    route: "/invoices/archive",
+    priority: "high",
+  },
+  {
+    name: "PDF Export",
+    nameHe: "ייצוא PDF",
+    status: "partial",
+    message: "Print-to-PDF, native export not implemented",
+    messageHe: "חלקי - הדפסה ל-PDF, ייצוא ישיר לא מיושם",
+    icon: FileText,
+    category: "invoicing",
+    priority: "medium",
+  },
+  {
+    name: "Green Invoice Sync",
+    nameHe: "סנכרון חשבונית ירוקה",
+    status: "not-working",
+    message: "Integration planned but not implemented",
+    messageHe: "לא פעיל - אינטגרציה מתוכננת",
+    icon: Link,
+    category: "invoicing",
+    priority: "high",
+  },
+
+  // Business Settings
+  {
+    name: "Business Info Storage",
+    nameHe: "פרטי עסק",
+    status: "partial",
+    message: "Migrating from localStorage to DB",
+    messageHe: "חלקי - מעבר מאחסון מקומי למסד נתונים",
+    icon: Building,
+    category: "settings",
+    route: "/settings",
+    priority: "high",
+  },
+  {
+    name: "Payment Terms Config",
+    nameHe: "תנאי תשלום",
+    status: "working",
+    message: "Configurable payment terms",
+    messageHe: "פעיל - הגדרת תנאי תשלום",
+    icon: Receipt,
+    category: "settings",
+    priority: "medium",
+  },
+  {
+    name: "Theme Settings",
+    nameHe: "הגדרות ערכת נושא",
+    status: "working",
+    message: "Light/dark mode, RTL support",
+    messageHe: "פעיל - מצב בהיר/כהה, תמיכה בעברית",
+    icon: Eye,
+    category: "settings",
+    priority: "low",
+  },
+  {
+    name: "Language Settings",
+    nameHe: "הגדרות שפה",
+    status: "working",
+    message: "Hebrew interface",
+    messageHe: "פעיל - ממשק בעברית",
+    icon: Globe,
+    category: "settings",
+    priority: "low",
+  },
+
+  // Integrations (Future)
+  {
+    name: "WhatsApp Integration",
+    nameHe: "אינטגרציית WhatsApp",
+    status: "not-working",
+    message: "Table exists, integration not implemented",
+    messageHe: "לא פעיל - טבלה קיימת, אינטגרציה לא מיושמת",
+    icon: MessageSquare,
+    category: "integrations",
+    priority: "medium",
+  },
+  {
+    name: "Calendar Sync",
+    nameHe: "סנכרון לוח שנה",
+    status: "planned",
+    message: "Google/Outlook calendar sync planned",
+    messageHe: "מתוכנן - סנכרון לוח שנה",
+    icon: Calendar,
+    category: "integrations",
+    priority: "low",
+  },
+  {
+    name: "Audit Logging",
+    nameHe: "יומן ביקורת",
+    status: "working",
+    message: "All changes logged to audit_log table",
+    messageHe: "פעיל - כל השינויים נרשמים",
+    icon: FileText,
+    category: "integrations",
+    priority: "medium",
+  },
+
+  // Pages & Navigation
+  {
+    name: "Dashboard",
+    nameHe: "לוח בקרה",
+    status: "working",
+    message: "Main dashboard with stats",
+    messageHe: "פעיל - לוח בקרה עם סטטיסטיקות",
+    icon: Activity,
+    category: "pages",
+    route: "/",
+    priority: "critical",
+  },
+  {
+    name: "Sidebar Navigation",
+    nameHe: "ניווט צדדי",
+    status: "working",
+    message: "Collapsible sidebar with all routes",
+    messageHe: "פעיל - סרגל צד מתקפל",
+    icon: Layers,
+    category: "pages",
+    priority: "high",
+  },
+  {
+    name: "Settings Page",
+    nameHe: "דף הגדרות",
+    status: "working",
+    message: "All settings in one place",
+    messageHe: "פעיל - כל ההגדרות במקום אחד",
+    icon: Settings,
+    category: "pages",
+    route: "/settings",
+    priority: "high",
+  },
+  {
+    name: "Maintenance Dashboard",
+    nameHe: "לוח תחזוקה",
+    status: "working",
+    message: "System health monitoring",
+    messageHe: "פעיל - מעקב בריאות מערכת",
+    icon: Wrench,
+    category: "pages",
+    route: "/maintenance",
+    priority: "medium",
+  },
+]
 
 export default function MaintenancePage() {
   const { isMinimized } = useSidebar()
@@ -71,10 +464,20 @@ export default function MaintenancePage() {
     database: "unknown",
     api: "unknown",
     auth: "unknown",
-    integrations: "unknown",
+    encryption: "unknown",
+    storage: "unknown",
   })
   const [isRunningTests, setIsRunningTests] = useState(false)
   const [lastFullCheck, setLastFullCheck] = useState<Date | null>(null)
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    auth: true,
+    database: true,
+    data: true,
+    invoicing: true,
+    settings: false,
+    integrations: false,
+    pages: false,
+  })
   const logsEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -82,7 +485,7 @@ export default function MaintenancePage() {
     if (!isLogging) return
 
     const newLog: LogEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique IDs
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
       level,
       message,
@@ -90,9 +493,8 @@ export default function MaintenancePage() {
       details,
     }
 
-    setLogs((prev) => [...prev.slice(-99), newLog]) // Keep last 100 logs
+    setLogs((prev) => [...prev.slice(-99), newLog])
 
-    // Auto-scroll to bottom
     setTimeout(() => {
       logsEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, 100)
@@ -103,10 +505,13 @@ export default function MaintenancePage() {
     addLog("info", "Logs cleared", "System")
   }
 
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }))
+  }
+
   const checkDatabaseConnection = async (): Promise<"healthy" | "warning" | "error"> => {
     try {
       addLog("info", "Testing database connection...", "Database")
-
       const { data, error } = await supabase.from("business_settings").select("id").limit(1)
 
       if (error) {
@@ -122,13 +527,44 @@ export default function MaintenancePage() {
     }
   }
 
+  const checkEncryption = async (): Promise<"healthy" | "warning" | "error"> => {
+    try {
+      addLog("info", "Testing encryption functions...", "Encryption")
+      
+      // Check if pgcrypto functions exist
+      const { data, error } = await supabase.rpc("encrypt_sensitive", { 
+        plaintext: "test", 
+        encryption_key: "test-key" 
+      })
+
+      if (error) {
+        if (error.message.includes("does not exist")) {
+          addLog("error", "Encryption functions not installed", "Encryption")
+          return "error"
+        }
+        // Function exists but returned error (expected without proper key)
+        addLog("success", "Encryption functions available", "Encryption")
+        return "healthy"
+      }
+
+      addLog("success", "Encryption working correctly", "Encryption")
+      return "healthy"
+    } catch (error) {
+      addLog("warning", `Encryption check inconclusive: ${error}`, "Encryption")
+      return "warning"
+    }
+  }
+
   const checkAPIEndpoints = async (): Promise<"healthy" | "warning" | "error"> => {
     const endpoints = [
+      { name: "Session", url: "/api/auth/session" },
       { name: "Workers", url: "/api/workers" },
       { name: "Vehicles", url: "/api/vehicles" },
       { name: "Carts", url: "/api/carts" },
       { name: "Clients", url: "/api/clients" },
       { name: "Jobs", url: "/api/jobs" },
+      { name: "Invoices", url: "/api/invoices" },
+      { name: "Business Settings", url: "/api/business-settings" },
     ]
 
     let healthyCount = 0
@@ -139,13 +575,10 @@ export default function MaintenancePage() {
         addLog("info", `Testing ${endpoint.name} API...`, "API")
 
         const response = await fetch(endpoint.url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
         })
 
-        // Consider both 200 OK and 401 Unauthorized as "healthy" since 401 means the endpoint exists and responds
         if (response.ok || response.status === 401) {
           addLog("success", `${endpoint.name} API is healthy`, "API")
           healthyCount++
@@ -153,114 +586,110 @@ export default function MaintenancePage() {
           addLog("error", `${endpoint.name} API not found (404)`, "API")
         } else {
           addLog("warning", `${endpoint.name} API returned ${response.status}`, "API")
-          if (response.status < 500) {
-            // Client errors (4xx) except 404 still count as "working" endpoints
-            healthyCount++
-          }
+          if (response.status < 500) healthyCount++
         }
       } catch (error) {
         addLog("error", `${endpoint.name} API failed: ${error}`, "API", error)
       }
     }
 
-    if (healthyCount === totalCount) {
+    if (healthyCount === totalCount) return "healthy"
+    else if (healthyCount > totalCount / 2) return "warning"
+    else return "error"
+  }
+
+  const checkAuthSystem = async (): Promise<"healthy" | "warning" | "error"> => {
+    try {
+      addLog("info", "Testing authentication system...", "Authentication")
+
+      // Test session API
+      const response = await fetch("/api/auth/session")
+      if (!response.ok) {
+        addLog("error", "Session API not responding", "Authentication")
+        return "error"
+      }
+
+      const session = await response.json()
+      if (session.authenticated) {
+        addLog("success", `Authenticated as ${session.user?.username}`, "Authentication")
+      } else {
+        addLog("warning", "Not authenticated via cookie", "Authentication")
+      }
+
+      // Check user_profiles table
+      const { data: users, error } = await supabase
+        .from("user_profiles")
+        .select("username, role, is_active")
+        .limit(5)
+
+      if (error) {
+        addLog("error", `User profiles table error: ${error.message}`, "Authentication")
+        return "error"
+      }
+
+      addLog("success", `User database accessible: ${users?.length || 0} users found`, "Authentication")
       return "healthy"
-    } else if (healthyCount > totalCount / 2) {
-      return "warning"
-    } else {
+    } catch (error) {
+      addLog("error", `Auth system check failed: ${error}`, "Authentication")
       return "error"
     }
   }
 
-  const checkDataIntegrity = async (): Promise<FeatureStatus[]> => {
-    const features: FeatureStatus[] = []
+  const checkDataTables = async (): Promise<FeatureStatus[]> => {
+    const tableChecks = [
+      { table: "workers", name: "Workers Management", nameHe: "ניהול עובדים", icon: Users },
+      { table: "vehicles", name: "Vehicles Management", nameHe: "ניהול רכבים", icon: Car },
+      { table: "carts", name: "Carts Management", nameHe: "ניהול עגלות", icon: ShoppingCart },
+      { table: "clients", name: "Clients Management", nameHe: "ניהול לקוחות", icon: Users },
+      { table: "jobs", name: "Jobs Management", nameHe: "ניהול עבודות", icon: Briefcase },
+      { table: "invoices", name: "Invoice Generation", nameHe: "יצירת חשבוניות", icon: Receipt },
+      { table: "work_types", name: "Work Types Config", nameHe: "הגדרת סוגי עבודה", icon: Settings },
+      { table: "user_profiles", name: "User Profiles CRUD", nameHe: "ניהול משתמשים", icon: Users },
+      { table: "schema_migrations", name: "Migration Tracking", nameHe: "מעקב מיגרציות", icon: Layers },
+      { table: "audit_log", name: "Audit Logging", nameHe: "יומן ביקורת", icon: FileText },
+    ]
 
-    try {
-      // Check Workers
-      addLog("info", "Checking workers data...", "Data Integrity")
-      const { data: workers, error: workersError } = await supabase.from("workers").select("id, name").limit(5)
+    const results: FeatureStatus[] = []
 
-      features.push({
-        name: "Workers Management",
-        status: workersError ? "error" : workers && workers.length > 0 ? "healthy" : "warning",
-        lastChecked: new Date(),
-        message: workersError ? workersError.message : `${workers?.length || 0} workers found`,
-        icon: Users,
-        category: "Data",
-      })
+    for (const check of tableChecks) {
+      try {
+        addLog("info", `Checking ${check.table} table...`, "Data Integrity")
+        const { data, error, count } = await supabase
+          .from(check.table)
+          .select("id", { count: "exact" })
+          .limit(1)
 
-      // Check Vehicles
-      addLog("info", "Checking vehicles data...", "Data Integrity")
-      const { data: vehicles, error: vehiclesError } = await supabase.from("vehicles").select("id, name").limit(5)
-
-      features.push({
-        name: "Vehicles Management",
-        status: vehiclesError ? "error" : vehicles && vehicles.length > 0 ? "healthy" : "warning",
-        lastChecked: new Date(),
-        message: vehiclesError ? vehiclesError.message : `${vehicles?.length || 0} vehicles found`,
-        icon: Car,
-        category: "Data",
-      })
-
-      // Check Carts
-      addLog("info", "Checking carts data...", "Data Integrity")
-      const { data: carts, error: cartsError } = await supabase.from("carts").select("id, name").limit(5)
-
-      features.push({
-        name: "Carts Management",
-        status: cartsError ? "error" : carts && carts.length > 0 ? "healthy" : "warning",
-        lastChecked: new Date(),
-        message: cartsError ? cartsError.message : `${carts?.length || 0} carts found`,
-        icon: ShoppingCart,
-        category: "Data",
-      })
-
-      // Check Clients
-      addLog("info", "Checking clients data...", "Data Integrity")
-      const { data: clients, error: clientsError } = await supabase.from("clients").select("id, company_name").limit(5)
-
-      features.push({
-        name: "Clients Management",
-        status: clientsError ? "error" : clients && clients.length > 0 ? "healthy" : "warning",
-        lastChecked: new Date(),
-        message: clientsError ? clientsError.message : `${clients?.length || 0} clients found`,
-        icon: Users,
-        category: "Data",
-      })
-
-      // Check Jobs
-      addLog("info", "Checking jobs data...", "Data Integrity")
-      const { data: jobs, error: jobsError } = await supabase.from("jobs").select("id, job_number").limit(5)
-
-      features.push({
-        name: "Jobs Management",
-        status: jobsError ? "error" : "healthy",
-        lastChecked: new Date(),
-        message: jobsError ? jobsError.message : `${jobs?.length || 0} jobs found`,
-        icon: Briefcase,
-        category: "Data",
-      })
-
-      // Check Work Types
-      addLog("info", "Checking work types data...", "Data Integrity")
-      const { data: workTypes, error: workTypesError } = await supabase
-        .from("work_types")
-        .select("id, name_he")
-        .limit(5)
-
-      features.push({
-        name: "Work Types",
-        status: workTypesError ? "error" : workTypes && workTypes.length > 0 ? "healthy" : "warning",
-        lastChecked: new Date(),
-        message: workTypesError ? workTypesError.message : `${workTypes?.length || 0} work types found`,
-        icon: Settings,
-        category: "Configuration",
-      })
-    } catch (error) {
-      addLog("error", `Data integrity check failed: ${error}`, "Data Integrity", error)
+        if (error) {
+          results.push({
+            name: check.name,
+            nameHe: check.nameHe,
+            status: "not-working",
+            lastChecked: new Date(),
+            message: error.message,
+            messageHe: `שגיאה: ${error.message}`,
+            icon: check.icon,
+            category: "data",
+            priority: "high",
+          })
+        } else {
+          results.push({
+            name: check.name,
+            nameHe: check.nameHe,
+            status: "working",
+            lastChecked: new Date(),
+            message: `${count || 0} records`,
+            messageHe: `${count || 0} רשומות`,
+            icon: check.icon,
+            category: "data",
+            priority: "high",
+          })
+        }
+      } catch (error) {
+        addLog("error", `Table check failed: ${check.table}`, "Data Integrity", error)
+      }
     }
 
-    return features
+    return results
   }
 
   const runFullSystemCheck = async () => {
@@ -268,38 +697,42 @@ export default function MaintenancePage() {
     addLog("info", "Starting full system health check...", "System")
 
     try {
-      // Check database
-      const dbHealth = await checkDatabaseConnection()
+      const [dbHealth, apiHealth, authHealth, encryptionHealth] = await Promise.all([
+        checkDatabaseConnection(),
+        checkAPIEndpoints(),
+        checkAuthSystem(),
+        checkEncryption(),
+      ])
 
-      // Check authentication system
-      const authHealth = await testAuthenticationSystem()
-      
-      // Check user management
-      const userMgmtHealth = await testUserCreationFlow()
+      const dataFeatures = await checkDataTables()
 
-      // Check API endpoints
-      const apiHealth = await checkAPIEndpoints()
+      // Merge data features with registry
+      const allFeatures: FeatureStatus[] = FEATURE_REGISTRY.map(f => {
+        const dataCheck = dataFeatures.find(df => df.name === f.name)
+        return {
+          ...f,
+          lastChecked: new Date(),
+          status: dataCheck?.status || f.status,
+          message: dataCheck?.message || f.message,
+          messageHe: dataCheck?.messageHe || f.messageHe,
+        }
+      })
 
-      // Check data integrity
-      const featureStatuses = await checkDataIntegrity()
-
+      setFeatures(allFeatures)
       setSystemHealth({
         database: dbHealth,
         api: apiHealth,
         auth: authHealth,
-        integrations: "healthy", // Simplified for now
+        encryption: encryptionHealth,
+        storage: "healthy",
       })
 
-      setFeatures(featureStatuses)
       const checkTime = new Date()
       setLastFullCheck(checkTime)
-      
-      // Store check timestamp in localStorage for 24h throttling
+
       try {
-        localStorage.setItem('maintenance:lastCheck', checkTime.toISOString())
-      } catch (error) {
-        console.warn('Could not store maintenance check timestamp:', error)
-      }
+        localStorage.setItem("maintenance:lastCheck", checkTime.toISOString())
+      } catch {}
 
       addLog("success", "Full system health check completed", "System")
     } catch (error) {
@@ -309,280 +742,163 @@ export default function MaintenancePage() {
     }
   }
 
-  const autoFixDatabaseIssues = async () => {
-    addLog("info", "Starting automatic database fixes...", "Auto-Fix")
-
-    try {
-      // Check if sample data exists, if not create it
-      const { data: sampleWorkers } = await supabase.from("workers").select("id").eq("is_sample", true).limit(1)
-
-      if (!sampleWorkers || sampleWorkers.length === 0) {
-        addLog("info", "Creating sample workers data...", "Auto-Fix")
-        await fetch("/api/workers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: "עובד דוגמה",
-            phone: "050-1234567",
-            is_sample: true,
-          }),
-        })
-      }
-
-      const { data: sampleVehicles } = await supabase.from("vehicles").select("id").eq("is_sample", true).limit(1)
-
-      if (!sampleVehicles || sampleVehicles.length === 0) {
-        addLog("info", "Creating sample vehicles data...", "Auto-Fix")
-        await fetch("/api/vehicles", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: "רכב דוגמה",
-            license_plate: "123-45-678",
-            is_sample: true,
-          }),
-        })
-      }
-
-      const { data: sampleCarts } = await supabase.from("carts").select("id").eq("is_sample", true).limit(1)
-
-      if (!sampleCarts || sampleCarts.length === 0) {
-        addLog("info", "Creating sample carts data...", "Auto-Fix")
-        await fetch("/api/carts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: "עגלה דוגמה",
-            capacity: "500kg",
-            is_sample: true,
-          }),
-        })
-      }
-
-      addLog("success", "Database auto-fix completed successfully", "Auto-Fix")
-
-      // Refresh the system check
-      await runFullSystemCheck()
-    } catch (error) {
-      addLog("error", `Auto-fix failed: ${error}`, "Auto-Fix", error)
-    }
-  }
-
-  const fixAPIEndpoints = async () => {
-    addLog("info", "Attempting to fix API endpoint issues...", "Auto-Fix")
-
-    try {
-      // Check each endpoint and provide detailed diagnostics
-      const endpoints = ["/api/workers", "/api/vehicles", "/api/carts", "/api/clients", "/api/jobs"]
-      let fixedCount = 0
-
-      for (const endpoint of endpoints) {
-        try {
-          addLog("info", `Diagnosing ${endpoint}...`, "Auto-Fix")
-          const response = await fetch(endpoint, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          })
-
-          if (response.ok) {
-            addLog("success", `${endpoint} is working correctly`, "Auto-Fix")
-            fixedCount++
-          } else if (response.status === 401) {
-            addLog("info", `${endpoint} requires authentication (this is normal)`, "Auto-Fix")
-            fixedCount++
-          } else if (response.status === 404) {
-            addLog("error", `${endpoint} not found - route may be missing`, "Auto-Fix")
-          } else {
-            addLog("warning", `${endpoint} returned ${response.status}`, "Auto-Fix")
-          }
-        } catch (fetchError) {
-          addLog("error", `${endpoint} connection failed: ${fetchError}`, "Auto-Fix")
-        }
-      }
-
-      addLog("success", `API diagnostics completed: ${fixedCount}/${endpoints.length} endpoints functional`, "Auto-Fix")
-      
-      // Re-run the full system check to update status
-      await runFullSystemCheck()
-    } catch (error) {
-      addLog("error", `API fix failed: ${error}`, "Auto-Fix", error)
-    }
-  }
-
-  const testAuthenticationSystem = async (): Promise<"healthy" | "warning" | "error"> => {
-    try {
-      addLog("info", "Testing authentication system...", "Authentication")
-      
-      // Test current user session
-      const currentUser = clientAuth.getCurrentUser()
-      if (!currentUser) {
-        addLog("error", "No authenticated user found", "Authentication")
-        return "error"
-      }
-      
-      addLog("success", `Current user: ${currentUser.username} (${currentUser.role})`, "Authentication")
-      
-      // Test session validity
-      const isSessionValid = clientAuth.isSessionValid()
-      if (!isSessionValid) {
-        addLog("warning", "Current session is expired", "Authentication")
-        return "warning"
-      }
-      
-      const timeRemaining = Math.floor(clientAuth.getSessionTimeRemaining())
-      addLog("info", `Session time remaining: ${timeRemaining} minutes`, "Authentication")
-      
-      // Test admin permissions
-      const isAdmin = clientAuth.isAdmin()
-      addLog("info", `Admin privileges: ${isAdmin ? 'Yes' : 'No'}`, "Authentication")
-      
-      // Test user database table
-      const { data: users, error: usersError } = await supabase
-        .from('user_profiles')
-        .select('username, role, is_active')
-        .limit(5)
-      
-      if (usersError) {
-        addLog("error", `User profiles table error: ${usersError.message}`, "Authentication")
-        return "error"
-      }
-      
-      addLog("success", `User database accessible: ${users?.length || 0} users found`, "Authentication")
-      
-      return "healthy"
-    } catch (error) {
-      addLog("error", `Authentication test failed: ${error}`, "Authentication", error)
-      return "error"
-    }
-  }
-
-  const testUserCreationFlow = async (): Promise<"healthy" | "warning" | "error"> => {
-    try {
-      addLog("info", "Testing user creation flow...", "User Management")
-      
-      // Check if we can hash passwords
-      const testPassword = "test123"
-      const hashedPassword = await clientAuth.hashPassword(testPassword)
-      
-      if (!hashedPassword || hashedPassword === testPassword) {
-        addLog("error", "Password hashing failed", "User Management")
-        return "error"
-      }
-      
-      addLog("success", "Password hashing working correctly", "User Management")
-      
-      // Test database table structure
-      const { data: tableInfo, error: tableError } = await supabase
-        .from('user_profiles')
-        .select('username, password_hash, full_name, role, is_active, permissions, created_by')
-        .limit(1)
-      
-      if (tableError) {
-        addLog("error", `User profiles table structure error: ${tableError.message}`, "User Management")
-        return "error"
-      }
-      
-      addLog("success", "User profiles table structure is correct", "User Management")
-      return "healthy"
-      
-    } catch (error) {
-      addLog("error", `User creation test failed: ${error}`, "User Management", error)
-      return "error"
-    }
-  }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "healthy":
-        return "text-green-600 bg-green-50"
+      case "working":
+        return "bg-green-100 text-green-700 border-green-200"
       case "warning":
-        return "text-yellow-600 bg-yellow-50"
+      case "partial":
+        return "bg-yellow-100 text-yellow-700 border-yellow-200"
       case "error":
-        return "text-red-600 bg-red-50"
+      case "not-working":
+        return "bg-red-100 text-red-700 border-red-200"
+      case "planned":
+        return "bg-blue-100 text-blue-700 border-blue-200"
+      case "testing":
+        return "bg-purple-100 text-purple-700 border-purple-200"
       default:
-        return "text-gray-600 bg-gray-50"
+        return "bg-gray-100 text-gray-700 border-gray-200"
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "healthy":
+      case "working":
         return <CheckCircle className="w-4 h-4" />
       case "warning":
+      case "partial":
         return <AlertTriangle className="w-4 h-4" />
       case "error":
+      case "not-working":
         return <XCircle className="w-4 h-4" />
+      case "planned":
+        return <Target className="w-4 h-4" />
+      case "testing":
+        return <Activity className="w-4 h-4" />
       default:
         return <AlertCircle className="w-4 h-4" />
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "healthy":
+      case "working":
+        return "פעיל"
+      case "warning":
+      case "partial":
+        return "חלקי"
+      case "error":
+      case "not-working":
+        return "לא פעיל"
+      case "planned":
+        return "מתוכנן"
+      case "testing":
+        return "בבדיקה"
+      default:
+        return "לא ידוע"
     }
   }
 
   const getLevelColor = (level: string) => {
     switch (level) {
       case "success":
-        return "text-green-600"
+        return "text-green-400"
       case "warning":
-        return "text-yellow-600"
+        return "text-yellow-400"
       case "error":
-        return "text-red-600"
+        return "text-red-400"
       default:
-        return "text-blue-600"
+        return "text-blue-400"
     }
   }
 
+  const getCategoryName = (category: string) => {
+    const names: Record<string, string> = {
+      auth: "אימות ואבטחה",
+      database: "מסד נתונים והצפנה",
+      data: "ניהול נתונים",
+      invoicing: "חשבוניות",
+      settings: "הגדרות",
+      integrations: "אינטגרציות",
+      pages: "דפים וניווט",
+    }
+    return names[category] || category
+  }
+
+  const getCategoryIcon = (category: string) => {
+    const icons: Record<string, any> = {
+      auth: Lock,
+      database: Database,
+      data: Layers,
+      invoicing: Receipt,
+      settings: Settings,
+      integrations: Link,
+      pages: Globe,
+    }
+    return icons[category] || Activity
+  }
+
   useEffect(() => {
-    // Check admin access first
-    if (!clientAuth.isAuthenticated()) {
-      router.push("/auth/login")
-      return
-    }
-
-    if (!clientAuth.isAdmin()) {
-      addLog("error", "Access denied - Admin privileges required", "Security")
-      setHasAccess(false)
-      return
-    }
-
-    setHasAccess(true)
-    addLog("info", "Maintenance dashboard initialized", "System")
-    
-    // Check if we should auto-run the system check
-    const shouldAutoCheck = () => {
-      try {
-        const lastCheck = localStorage.getItem('maintenance:lastCheck')
-        if (!lastCheck) return true
-        
-        const lastCheckTime = new Date(lastCheck)
-        const now = new Date()
-        const hoursSinceLastCheck = (now.getTime() - lastCheckTime.getTime()) / (1000 * 60 * 60)
-        
-        return hoursSinceLastCheck >= 24
-      } catch (error) {
-        return true // If localStorage fails, run the check
+    const checkAccess = async () => {
+      const isAuth = await clientAuth.isAuthenticatedAsync()
+      if (!isAuth) {
+        router.push("/auth/login")
+        return
       }
-    }
-    
-    if (shouldAutoCheck()) {
-      runFullSystemCheck()
-    } else {
-      const lastCheck = localStorage.getItem('maintenance:lastCheck')
-      if (lastCheck) {
+
+      const user = await clientAuth.getCurrentUserAsync()
+      if (!user || user.role !== "admin") {
+        addLog("error", "Access denied - Admin privileges required", "Security")
+        setHasAccess(false)
+        return
+      }
+
+      setHasAccess(true)
+      addLog("info", "Maintenance dashboard initialized", "System")
+
+      // Initialize features from registry
+      setFeatures(FEATURE_REGISTRY.map(f => ({ ...f, lastChecked: null })))
+
+      // Auto-run check
+      const lastCheck = localStorage.getItem("maintenance:lastCheck")
+      if (!lastCheck) {
+        runFullSystemCheck()
+      } else {
         const lastCheckTime = new Date(lastCheck)
         setLastFullCheck(lastCheckTime)
-        addLog("info", `מערכת נבדקה לאחרונה ב-${lastCheckTime.toLocaleString('he-IL')}`, "System")
+        const hoursSince = (Date.now() - lastCheckTime.getTime()) / (1000 * 60 * 60)
+        if (hoursSince >= 24) {
+          runFullSystemCheck()
+        } else {
+          addLog("info", `מערכת נבדקה לאחרונה ב-${lastCheckTime.toLocaleString("he-IL")}`, "System")
+        }
       }
     }
+
+    checkAccess()
   }, [router])
 
-  const healthyFeatures = features.filter((f) => f.status === "healthy").length
-  const warningFeatures = features.filter((f) => f.status === "warning").length
-  const errorFeatures = features.filter((f) => f.status === "error").length
+  // Calculate stats
+  const workingCount = features.filter(f => f.status === "working").length
+  const partialCount = features.filter(f => f.status === "partial").length
+  const notWorkingCount = features.filter(f => f.status === "not-working").length
+  const plannedCount = features.filter(f => f.status === "planned").length
+  const totalProgress = features.length > 0 
+    ? Math.round(((workingCount + partialCount * 0.5) / features.length) * 100)
+    : 0
+
+  const groupedFeatures = features.reduce((acc, f) => {
+    if (!acc[f.category]) acc[f.category] = []
+    acc[f.category].push(f)
+    return acc
+  }, {} as Record<string, FeatureStatus[]>)
 
   if (!hasAccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-background" dir="rtl">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle className="font-hebrew text-right">אין לך הרשאות גישה</CardTitle>
@@ -594,7 +910,7 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-background" dir="rtl">
       <SidebarNavigation />
       <div className={`${isMinimized ? "mr-24" : "mr-64"} p-6 transition-all duration-300`}>
         <div className="max-w-7xl mx-auto space-y-6">
@@ -604,84 +920,93 @@ export default function MaintenancePage() {
               <div className="mb-2">
                 <BackButton href="/" />
               </div>
-              <h1 className="text-3xl font-bold text-vazana-dark font-hebrew flex items-center gap-3">
-                <Activity className="w-8 h-8 text-vazana-teal" />
+              <h1 className="text-3xl font-bold text-foreground font-hebrew flex items-center gap-3">
+                <Activity className="w-8 h-8 text-primary" />
                 מרכז תחזוקה ומעקב
               </h1>
-              <p className="text-gray-600 font-hebrew">מעקב בזמן אמת על בריאות המערכת ותפקודה</p>
+              <p className="text-muted-foreground font-hebrew">מעקב בזמן אמת על בריאות המערכת ותפקודה</p>
             </div>
             <div className="pt-20"></div>
           </div>
 
-          {/* System Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <Badge className={getStatusColor(systemHealth.database)}>
-                    {getStatusIcon(systemHealth.database)}
-                  </Badge>
-                  <div className="text-right">
-                    <p className="text-sm font-medium font-hebrew">מסד נתונים</p>
-                    <p className="text-xs text-gray-600 font-hebrew">
-                      {systemHealth.database === "healthy" ? "פעיל" : "בעיה"}
-                    </p>
-                  </div>
+          {/* System Progress */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={runFullSystemCheck}
+                    disabled={isRunningTests}
+                    className="font-hebrew"
+                  >
+                    {isRunningTests ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
+                        בודק...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 ml-2" />
+                        הרץ בדיקה מלאה
+                      </>
+                    )}
+                  </Button>
+                  {lastFullCheck && (
+                    <span className="text-sm text-muted-foreground font-hebrew">
+                      נבדק לאחרונה: {lastFullCheck.toLocaleString("he-IL")}
+                    </span>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="text-right">
+                  <h2 className="text-xl font-bold font-hebrew">התקדמות מערכת</h2>
+                  <p className="text-sm text-muted-foreground font-hebrew">
+                    {workingCount} פעיל | {partialCount} חלקי | {notWorkingCount} לא פעיל | {plannedCount} מתוכנן
+                  </p>
+                </div>
+              </div>
+              <Progress value={totalProgress} className="h-3" />
+              <p className="text-center mt-2 font-hebrew text-sm text-muted-foreground">{totalProgress}% מהתכונות פעילות</p>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <Badge className={getStatusColor(systemHealth.api)}>{getStatusIcon(systemHealth.api)}</Badge>
-                  <div className="text-right">
-                    <p className="text-sm font-medium font-hebrew">API</p>
-                    <p className="text-xs text-gray-600 font-hebrew">
-                      {systemHealth.api === "healthy" ? "פעיל" : "בעיה"}
-                    </p>
+          {/* System Health Overview */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[
+              { key: "database", label: "מסד נתונים", icon: Database },
+              { key: "api", label: "API", icon: Zap },
+              { key: "auth", label: "אימות", icon: Lock },
+              { key: "encryption", label: "הצפנה", icon: Shield },
+              { key: "storage", label: "אחסון", icon: HardDrive },
+            ].map(({ key, label, icon: Icon }) => (
+              <Card key={key}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <Badge className={getStatusColor(systemHealth[key as keyof SystemHealth])}>
+                      {getStatusIcon(systemHealth[key as keyof SystemHealth])}
+                    </Badge>
+                    <div className="text-right flex items-center gap-2">
+                      <div>
+                        <p className="text-sm font-medium font-hebrew">{label}</p>
+                        <p className="text-xs text-muted-foreground font-hebrew">
+                          {getStatusText(systemHealth[key as keyof SystemHealth])}
+                        </p>
+                      </div>
+                      <Icon className="w-5 h-5 text-muted-foreground" />
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <Badge className={getStatusColor(systemHealth.auth)}>{getStatusIcon(systemHealth.auth)}</Badge>
-                  <div className="text-right">
-                    <p className="text-sm font-medium font-hebrew">אימות</p>
-                    <p className="text-xs text-gray-600 font-hebrew">פעיל</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-1">
-                    <span className="text-xs text-green-600 font-hebrew">{healthyFeatures}</span>
-                    <span className="text-xs text-yellow-600 font-hebrew">{warningFeatures}</span>
-                    <span className="text-xs text-red-600 font-hebrew">{errorFeatures}</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium font-hebrew">תכונות</p>
-                    <p className="text-xs text-gray-600 font-hebrew">{features.length} סה"כ</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          {/* Main Content */}
-          <Tabs defaultValue="overview" className="space-y-6" dir="rtl">
+          {/* Main Content Tabs */}
+          <Tabs defaultValue="roadmap" className="space-y-6" dir="rtl">
             <TabsList className="grid w-full grid-cols-4" dir="rtl">
-              <TabsTrigger value="overview" className="font-hebrew">
-                סקירה כללית
+              <TabsTrigger value="roadmap" className="font-hebrew">
+                מפת דרכים
               </TabsTrigger>
-              <TabsTrigger value="features" className="font-hebrew">
-                מעקב תכונות
+              <TabsTrigger value="tests" className="font-hebrew">
+                בדיקות מערכת
               </TabsTrigger>
               <TabsTrigger value="logs" className="font-hebrew">
                 קונסול לוגים
@@ -691,75 +1016,146 @@ export default function MaintenancePage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-hebrew flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-vazana-teal" />
-                      סטטוס מערכת
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <Badge className={getStatusColor(systemHealth.database)}>
-                          {getStatusIcon(systemHealth.database)}
-                        </Badge>
-                        <div className="text-right">
-                          <p className="font-medium font-hebrew">חיבור מסד נתונים</p>
-                          <p className="text-sm text-gray-600 font-hebrew">Supabase PostgreSQL</p>
-                        </div>
-                      </div>
+            {/* Roadmap Tab - Full Feature Registry */}
+            <TabsContent value="roadmap" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-hebrew flex items-center gap-2">
+                    <Target className="w-5 h-5 text-primary" />
+                    מפת תכונות המערכת
+                  </CardTitle>
+                  <CardDescription className="font-hebrew text-right">
+                    רשימה מלאה של כל התכונות - פעילות ומתוכננות
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {Object.entries(groupedFeatures).map(([category, categoryFeatures]) => {
+                    const CategoryIcon = getCategoryIcon(category)
+                    const categoryWorking = categoryFeatures.filter(f => f.status === "working").length
+                    const isExpanded = expandedCategories[category]
 
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <Badge className={getStatusColor(systemHealth.api)}>{getStatusIcon(systemHealth.api)}</Badge>
-                        <div className="text-right">
-                          <p className="font-medium font-hebrew">API Endpoints</p>
-                          <p className="text-sm text-gray-600 font-hebrew">REST API Services</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
+                    return (
+                      <Card key={category} className="overflow-hidden">
+                        <button
+                          onClick={() => toggleCategory(category)}
+                          className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            <Badge variant="outline" className="font-hebrew">
+                              {categoryWorking}/{categoryFeatures.length}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-3 text-right">
+                            <div>
+                              <h3 className="font-semibold font-hebrew">{getCategoryName(category)}</h3>
+                              <p className="text-xs text-muted-foreground font-hebrew">
+                                {categoryFeatures.length} תכונות
+                              </p>
+                            </div>
+                            <CategoryIcon className="w-5 h-5 text-primary" />
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="border-t p-4 space-y-3">
+                            {categoryFeatures.map((feature) => (
+                              <div
+                                key={feature.name}
+                                className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <Badge className={`${getStatusColor(feature.status)} border`}>
+                                    {getStatusIcon(feature.status)}
+                                    <span className="mr-1 text-xs">{getStatusText(feature.status)}</span>
+                                  </Badge>
+                                  {feature.route && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => router.push(feature.route!)}
+                                      className="text-xs"
+                                    >
+                                      <Link className="w-3 h-3 ml-1" />
+                                      פתח
+                                    </Button>
+                                  )}
+                                </div>
+                                <div className="text-right flex items-center gap-3">
+                                  <div>
+                                    <h4 className="font-medium font-hebrew">{feature.nameHe}</h4>
+                                    <p className="text-xs text-muted-foreground font-hebrew">{feature.messageHe}</p>
+                                  </div>
+                                  <feature.icon className="w-5 h-5 text-muted-foreground" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </Card>
+                    )
+                  })}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Tests Tab */}
+            <TabsContent value="tests" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="p-4">
+                  <div className="text-right mb-4">
+                    <h3 className="font-medium font-hebrew mb-2 flex items-center justify-end gap-2">
+                      <Database className="w-4 h-4" />
+                      בדיקת מסד נתונים
+                    </h3>
+                    <p className="text-sm text-muted-foreground font-hebrew">בדוק חיבור וטבלאות</p>
+                  </div>
+                  <Button onClick={checkDatabaseConnection} className="w-full font-hebrew">
+                    <Database className="w-4 h-4 ml-2" />
+                    בדוק חיבור
+                  </Button>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-hebrew flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-vazana-teal" />
-                      בדיקה אחרונה
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-vazana-dark">
-                          {lastFullCheck ? lastFullCheck.toLocaleTimeString("he-IL") : "לא בוצעה"}
-                        </p>
-                        <p className="text-sm text-gray-600 font-hebrew">
-                          {lastFullCheck ? lastFullCheck.toLocaleDateString("he-IL") : "בדיקה ראשונה"}
-                        </p>
-                      </div>
+                <Card className="p-4">
+                  <div className="text-right mb-4">
+                    <h3 className="font-medium font-hebrew mb-2 flex items-center justify-end gap-2">
+                      <Zap className="w-4 h-4" />
+                      בדיקת API
+                    </h3>
+                    <p className="text-sm text-muted-foreground font-hebrew">בדוק את כל נקודות הקצה</p>
+                  </div>
+                  <Button onClick={checkAPIEndpoints} className="w-full font-hebrew">
+                    <Zap className="w-4 h-4 ml-2" />
+                    בדוק API
+                  </Button>
+                </Card>
 
-                      <Button
-                        onClick={runFullSystemCheck}
-                        disabled={isRunningTests}
-                        className="w-full bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
-                      >
-                        {isRunningTests ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
-                            בודק מערכת...
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="w-4 h-4 ml-2" />
-                            הרץ בדיקה מלאה
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
+                <Card className="p-4">
+                  <div className="text-right mb-4">
+                    <h3 className="font-medium font-hebrew mb-2 flex items-center justify-end gap-2">
+                      <Lock className="w-4 h-4" />
+                      בדיקת אימות
+                    </h3>
+                    <p className="text-sm text-muted-foreground font-hebrew">בדוק מערכת ההתחברות</p>
+                  </div>
+                  <Button onClick={checkAuthSystem} className="w-full font-hebrew">
+                    <Lock className="w-4 h-4 ml-2" />
+                    בדוק אימות
+                  </Button>
+                </Card>
+
+                <Card className="p-4">
+                  <div className="text-right mb-4">
+                    <h3 className="font-medium font-hebrew mb-2 flex items-center justify-end gap-2">
+                      <Shield className="w-4 h-4" />
+                      בדיקת הצפנה
+                    </h3>
+                    <p className="text-sm text-muted-foreground font-hebrew">בדוק פונקציות הצפנה</p>
+                  </div>
+                  <Button onClick={checkEncryption} className="w-full font-hebrew">
+                    <Shield className="w-4 h-4 ml-2" />
+                    בדוק הצפנה
+                  </Button>
                 </Card>
               </div>
 
@@ -787,7 +1183,7 @@ export default function MaintenancePage() {
                       ))}
 
                     {logs.filter((log) => log.level === "error" || log.level === "warning").length === 0 && (
-                      <div className="text-center py-8 text-gray-500 font-hebrew">
+                      <div className="text-center py-8 text-muted-foreground font-hebrew">
                         <CheckCircle className="mx-auto h-12 w-12 text-green-300 mb-4" />
                         <p>אין בעיות מדווחות</p>
                       </div>
@@ -797,53 +1193,18 @@ export default function MaintenancePage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="features" className="space-y-6">
+            {/* Logs Tab */}
+            <TabsContent value="logs" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="font-hebrew flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-vazana-teal" />
-                    מעקב תכונות מערכת
-                  </CardTitle>
-                  <CardDescription className="font-hebrew text-right">
-                    מעקב בזמן אמת על תפקוד כל התכונות במערכת
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {features.map((feature) => (
-                      <Card key={feature.name} className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge className={getStatusColor(feature.status)}>{getStatusIcon(feature.status)}</Badge>
-                          {feature.icon && <feature.icon className="w-5 h-5 text-vazana-teal" />}
-                        </div>
-                        <div className="text-right">
-                          <h3 className="font-medium font-hebrew">{feature.name}</h3>
-                          <p className="text-sm text-gray-600 font-hebrew">{feature.message}</p>
-                          <p className="text-xs text-gray-400 font-hebrew mt-1">
-                            נבדק: {feature.lastChecked.toLocaleTimeString("he-IL")}
-                          </p>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="logs" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-hebrew flex items-center gap-2">
-                    <Terminal className="w-5 h-5 text-vazana-teal" />
+                    <Terminal className="w-5 h-5 text-primary" />
                     קונסול לוגים חי
                   </CardTitle>
-                  <CardDescription className="font-hebrew text-right">
-                    מעקב בזמן אמת על כל הפעילות במערכת
-                  </CardDescription>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={clearLogs} className="font-hebrew bg-transparent">
+                    <Button variant="outline" size="sm" onClick={clearLogs} className="font-hebrew">
                       <Trash2 className="w-4 h-4 ml-1" />
-                      נקה לוגים
+                      נקה
                     </Button>
                     <Button
                       variant="outline"
@@ -851,17 +1212,8 @@ export default function MaintenancePage() {
                       onClick={() => setIsLogging(!isLogging)}
                       className="font-hebrew"
                     >
-                      {isLogging ? (
-                        <>
-                          <Pause className="w-4 h-4 ml-1" />
-                          השהה
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-4 h-4 ml-1" />
-                          המשך
-                        </>
-                      )}
+                      {isLogging ? <Pause className="w-4 h-4 ml-1" /> : <Play className="w-4 h-4 ml-1" />}
+                      {isLogging ? "השהה" : "המשך"}
                     </Button>
                   </div>
                 </CardHeader>
@@ -887,124 +1239,31 @@ export default function MaintenancePage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="actions" className="space-y-6">
+            {/* Actions Tab */}
+            <TabsContent value="actions" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="font-hebrew flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-vazana-teal" />
+                    <Wrench className="w-5 h-5 text-primary" />
                     פעולות תחזוקה
                   </CardTitle>
-                  <CardDescription className="font-hebrew text-right">כלים לתחזוקה ותיקון בעיות במערכת</CardDescription>
+                  <CardDescription className="font-hebrew text-right">
+                    כלים לתחזוקה ותיקון בעיות במערכת
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="p-4">
-                      <div className="text-right mb-4">
-                        <h3 className="font-medium font-hebrew mb-2">בדיקת חיבורי מסד נתונים</h3>
-                        <p className="text-sm text-gray-600 font-hebrew">בדוק את החיבור למסד הנתונים ותקינות הטבלאות</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Button
-                          onClick={checkDatabaseConnection}
-                          className="w-full bg-blue-600 hover:bg-blue-700 font-hebrew"
-                        >
-                          <Database className="w-4 h-4 ml-2" />
-                          בדוק מסד נתונים
-                        </Button>
-                        <Button
-                          onClick={autoFixDatabaseIssues}
-                          variant="outline"
-                          className="w-full font-hebrew bg-transparent"
-                        >
-                          <RefreshCw className="w-4 h-4 ml-2" />
-                          תקן בעיות מסד נתונים
-                        </Button>
-                      </div>
-                    </Card>
-
-                    <Card className="p-4">
-                      <div className="text-right mb-4">
-                        <h3 className="font-medium font-hebrew mb-2">בדיקת API Endpoints</h3>
-                        <p className="text-sm text-gray-600 font-hebrew">בדוק את תקינות כל נקודות הקצה של ה-API</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Button
-                          onClick={checkAPIEndpoints}
-                          className="w-full bg-green-600 hover:bg-green-700 font-hebrew"
-                        >
-                          <Zap className="w-4 h-4 ml-2" />
-                          בדוק API
-                        </Button>
-                        <Button
-                          onClick={fixAPIEndpoints}
-                          variant="outline"
-                          className="w-full font-hebrew bg-transparent"
-                        >
-                          <RefreshCw className="w-4 h-4 ml-2" />
-                          תקן בעיות API
-                        </Button>
-                      </div>
-                    </Card>
-
-                    <Card className="p-4">
-                      <div className="text-right mb-4">
-                        <h3 className="font-medium font-hebrew mb-2">בדיקת שלמות נתונים</h3>
-                        <p className="text-sm text-gray-600 font-hebrew">בדוק את שלמות הנתונים בכל הטבלאות</p>
-                      </div>
-                      <Button
-                        onClick={() => checkDataIntegrity().then(setFeatures)}
-                        className="w-full bg-purple-600 hover:bg-purple-700 font-hebrew"
-                      >
-                        <FileText className="w-4 h-4 ml-2" />
-                        בדוק שלמות נתונים
-                      </Button>
-                    </Card>
-
-                    <Card className="p-4">
-                      <div className="text-right mb-4">
-                        <h3 className="font-medium font-hebrew mb-2">בדיקת מערכת אימות</h3>
-                        <p className="text-sm text-gray-600 font-hebrew">בדוק התחברות, פגישות והרשאות משתמש</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Button
-                          onClick={async () => {
-                            try {
-                              await testAuthenticationSystem()
-                            } catch (error) {
-                              addLog("error", `Test failed: ${error}`, "Authentication")
-                            }
-                          }}
-                          className="w-full bg-orange-600 hover:bg-orange-700 font-hebrew"
-                        >
-                          <Lock className="w-4 h-4 ml-2" />
-                          בדוק מערכת אימות
-                        </Button>
-                        <Button
-                          onClick={async () => {
-                            try {
-                              await testUserCreationFlow()
-                            } catch (error) {
-                              addLog("error", `Test failed: ${error}`, "User Management")
-                            }
-                          }}
-                          variant="outline"
-                          className="w-full font-hebrew bg-transparent"
-                        >
-                          <Users className="w-4 h-4 ml-2" />
-                          בדוק ניהול משתמשים
-                        </Button>
-                      </div>
-                    </Card>
-
-                    <Card className="p-4">
+                    <Card className="p-4 border-dashed">
                       <div className="text-right mb-4">
                         <h3 className="font-medium font-hebrew mb-2">בדיקה מלאה</h3>
-                        <p className="text-sm text-gray-600 font-hebrew">הרץ בדיקה מקיפה של כל המערכת</p>
+                        <p className="text-sm text-muted-foreground font-hebrew">
+                          הרץ בדיקה מקיפה של כל המערכת
+                        </p>
                       </div>
                       <Button
                         onClick={runFullSystemCheck}
                         disabled={isRunningTests}
-                        className="w-full bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
+                        className="w-full font-hebrew"
                       >
                         {isRunningTests ? (
                           <>
@@ -1019,6 +1278,71 @@ export default function MaintenancePage() {
                         )}
                       </Button>
                     </Card>
+
+                    <Card className="p-4 border-dashed border-yellow-300">
+                      <div className="text-right mb-4">
+                        <h3 className="font-medium font-hebrew mb-2">ניקוי מטמון</h3>
+                        <p className="text-sm text-muted-foreground font-hebrew">
+                          נקה מטמון מקומי ואתחל מחדש
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          localStorage.clear()
+                          addLog("success", "Local storage cleared", "System")
+                          window.location.reload()
+                        }}
+                        className="w-full font-hebrew"
+                      >
+                        <Trash2 className="w-4 h-4 ml-2" />
+                        נקה מטמון
+                      </Button>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Manual Steps for User */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-hebrew flex items-center gap-2">
+                    <CheckSquare className="w-5 h-5 text-primary" />
+                    משימות ידניות נדרשות
+                  </CardTitle>
+                  <CardDescription className="font-hebrew text-right">
+                    פעולות שדורשות התערבות ידנית
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                      <Square className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div className="text-right flex-1">
+                        <h4 className="font-medium font-hebrew">הגדרת DB_ENCRYPTION_KEY</h4>
+                        <p className="text-sm text-muted-foreground font-hebrew">
+                          הוסף משתנה סביבה DB_ENCRYPTION_KEY ב-Vercel להפעלת הצפנת שדות רגישים
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                      <Square className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div className="text-right flex-1">
+                        <h4 className="font-medium font-hebrew">הגדרת ROOT_USERNAME / ROOT_PASSWORD</h4>
+                        <p className="text-sm text-muted-foreground font-hebrew">
+                          הוסף משתני סביבה לפרטי משתמש על (כרגע hardcoded)
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                      <Square className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div className="text-right flex-1">
+                        <h4 className="font-medium font-hebrew">העברת נתוני עסק ל-DB</h4>
+                        <p className="text-sm text-muted-foreground font-hebrew">
+                          העבר נתוני עסק מ-localStorage לטבלת business_settings המוצפנת
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

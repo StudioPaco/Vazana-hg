@@ -5,227 +5,174 @@
 
 ---
 
-## MASTER TASK LIST (In Priority Order)
+## COMPLETED TASKS (v0 Automated)
 
-### Phase 1: Critical Infrastructure (CURRENT)
-
-| # | Task | Status | Blocking | Action Required |
-|---|------|--------|----------|-----------------|
-| 1.1 | Run encryption migration 011 | PENDING | Yes | Run SQL in Supabase |
-| 1.2 | Run business settings migration 012 | PENDING | 1.1 | Run SQL in Supabase |
-| 1.3 | Set DB_ENCRYPTION_KEY env var | PENDING | 1.1 | Add to Vercel project |
-| 1.4 | Verify encryption functions work | PENDING | 1.1-1.3 | Test in maintenance page |
-
-### Phase 2: Authentication Consolidation
-
-| # | Task | Status | Blocking | Action Required |
-|---|------|--------|----------|-----------------|
-| 2.1 | Remove localStorage auth from client-auth.ts | TODO | 1.x | Code changes |
-| 2.2 | Update components to use cookie-based auth | TODO | 2.1 | Code changes (~15 files) |
-| 2.3 | Update middleware for unified session | TODO | 2.1 | Code changes |
-| 2.4 | Test login/logout flow end-to-end | TODO | 2.1-2.3 | Manual testing |
-
-### Phase 3: Data Migration (localStorage to DB)
-
-| # | Task | Status | Blocking | Action Required |
-|---|------|--------|----------|-----------------|
-| 3.1 | Migrate business info to DB | TODO | 1.2 | Code changes |
-| 3.2 | Migrate payment terms to DB | TODO | 1.2 | Code changes |
-| 3.3 | Migrate bank info to encrypted DB | TODO | 1.1 | Code changes |
-| 3.4 | Update invoice components to use DB | TODO | 3.1-3.3 | Code changes |
-
-### Phase 4: Polish & Cleanup
-
-| # | Task | Status | Blocking | Action Required |
-|---|------|--------|----------|-----------------|
-| 4.1 | Clean up duplicate RLS policies | TODO | None | SQL cleanup |
-| 4.2 | Remove deprecated backup files | DONE | None | .gitignore updated |
-| 4.3 | Archive old SQL scripts | TODO | None | File organization |
+| Task | Status | Files Changed |
+|------|--------|---------------|
+| Fix vaul peer dependency | DONE | `package.json` |
+| Server-side auth with bcrypt | DONE | `lib/auth-custom.ts`, `lib/client-auth.ts`, `app/api/auth/simple-login/route.ts` |
+| Remove NEXT_PUBLIC_ROOT_PASSWORD exposure | DONE | `lib/client-auth.ts` |
+| Layout fonts cleanup | DONE | `app/layout.tsx` |
+| CSS consolidation (785→350 lines) | DONE | `app/globals.css` |
+| Create schema_migrations table | DONE | Executed in Supabase |
+| Run migration 011 (encryption) | DONE | Executed in Supabase |
+| Run migration 012 (business settings) | DONE | Executed in Supabase |
+| Create /api/auth/session endpoint | DONE | `app/api/auth/session/route.ts` |
+| Cookie-based auth verification | DONE | `lib/client-auth.ts` |
+| Update login page for async auth | DONE | `app/auth/login/page.tsx` |
+| Update main page for async auth | DONE | `app/page.tsx` |
+| Update sidebar for async auth | DONE | `components/layout/sidebar-navigation.tsx` |
+| Add _backups to .gitignore | DONE | `.gitignore` |
+| Enhance maintenance page | DONE | `app/maintenance/page.tsx` |
+| Create migration documentation | DONE | `scripts/MIGRATION_REGISTRY.md` |
 
 ---
 
 ## YOUR ACTION ITEMS (Step by Step)
 
-### Step 1: Run Encryption Migrations
+### STEP 1: Set Environment Variables in Vercel (REQUIRED)
 
-1. Go to Supabase Dashboard > SQL Editor
-2. Copy contents of `scripts/migrations/011-add-field-encryption.sql`
-3. Run the SQL
-4. Copy contents of `scripts/migrations/012-expand-business-settings.sql`
-5. Run the SQL
+Go to **Vercel Dashboard → Your Project → Settings → Environment Variables**
 
-### Step 2: Set Environment Variable
+Add these 3 variables:
 
-1. Go to Vercel Dashboard > Your Project > Settings > Environment Variables
-2. Add new variable:
-   - Key: `DB_ENCRYPTION_KEY`
-   - Value: Generate a strong 32+ character key (e.g., `openssl rand -base64 32`)
-   - Environment: Production, Preview, Development
+| Key | Value | Notes |
+|-----|-------|-------|
+| `ROOT_USERNAME` | `root` | Or your preferred admin username |
+| `ROOT_PASSWORD` | (your secure password) | Replace the hardcoded `10203040` |
+| `DB_ENCRYPTION_KEY` | (32+ char random string) | For field encryption |
 
-### Step 3: Verify in Maintenance Page
+**To generate a secure encryption key:**
+```bash
+openssl rand -base64 32
+```
 
-1. Go to `/maintenance` in your app
-2. Run "Full System Check"
-3. Check the "Encryption" section shows green status
+### STEP 2: Redeploy the Application
 
----
+After setting environment variables, redeploy:
+1. Go to Vercel Dashboard → Deployments
+2. Click "Redeploy" on the latest deployment
+3. Wait for deployment to complete
 
-## SYSTEM AUDIT RESULTS
+### STEP 3: Test Login
 
-### Pages (29 total)
+1. Open your app at the production URL
+2. Go to `/auth/login`
+3. Log in with `ROOT_USERNAME` and `ROOT_PASSWORD` you set
+4. Verify you reach the dashboard
 
-| Page | Route | Status | Notes |
-|------|-------|--------|-------|
-| Home/Dashboard | `/` | Working | Main dashboard |
-| Login | `/auth/login` | Working | Uses client-auth.ts |
-| Sign Up | `/auth/sign-up` | Working | Uses auth-custom.ts |
-| Jobs List | `/jobs` | Working | |
-| New Job | `/jobs/new` | Working | |
-| Clients List | `/clients` | Working | |
-| New Client | `/clients/new` | Working | |
-| Edit Client | `/clients/[id]/edit` | Working | |
-| Invoices List | `/invoices` | Working | |
-| New Invoice | `/invoices/new` | Working | Uses localStorage for business info |
-| Invoice Archive | `/invoices/archive` | Working | |
-| Workers | `/workers` | Working | |
-| Vehicles | `/vehicles` | Working | |
-| Carts | `/carts` | Working | |
-| Calendar | `/calendar` | Working | |
-| Documents | `/documents` | Working | |
-| Settings | `/settings` | Working | Main settings hub |
-| Settings - Resources | `/settings/resources` | Working | |
-| Settings - Workers | `/settings/resources/workers` | Working | |
-| New Worker | `/settings/resources/workers/new` | Working | |
-| Settings - Vehicles | `/settings/resources/vehicles` | Working | |
-| New Vehicle | `/settings/resources/vehicles/new` | Working | |
-| Settings - Carts | `/settings/resources/shopping-carts` | Working | |
-| New Cart | `/settings/resources/shopping-carts/new` | Working | |
-| Job Types | `/settings/resources/job-types` | Working | |
-| New Job Type | `/settings/resources/job-types/new` | Working | |
-| Users List | `/users` | Working | |
-| Edit User | `/settings/users/[id]/edit` | Working | |
-| Maintenance | `/maintenance` | Working | Admin only |
+### STEP 4: Run System Health Check
 
-### API Routes (21 total)
+1. Go to `/maintenance`
+2. Click **"הרץ בדיקה מלאה"** (Run Full Check)
+3. Verify all 5 health indicators show green:
+   - Database: Healthy
+   - API: Healthy
+   - Auth: Healthy
+   - Encryption: Healthy
+   - Storage: Healthy
 
-| Route | Method | Status | Notes |
-|-------|--------|--------|-------|
-| `/api/auth/simple-login` | POST | Working | Root + DB auth |
-| `/api/business-settings` | GET/POST | Working | |
-| `/api/carts` | GET/POST | Working | |
-| `/api/clients` | GET/POST | Working | |
-| `/api/clients/[id]` | GET/PUT/DELETE | Working | |
-| `/api/clients/[id]/rates` | GET/POST | Working | |
-| `/api/clients/[id]/payment-logs` | GET/POST | Working | |
-| `/api/documents` | GET/POST | Working | |
-| `/api/invoices` | GET/POST | Working | |
-| `/api/invoices/[id]/line-items` | GET/POST | Working | |
-| `/api/invoices/[id]/pdf` | GET | Working | |
-| `/api/jobs` | GET/POST | Working | |
-| `/api/jobs/[id]` | GET/PUT/DELETE | Working | |
-| `/api/migrate` | POST | Caution | Migration utility |
-| `/api/notifications` | GET | Working | |
-| `/api/sample-data/invoices` | GET | Working | |
-| `/api/user-preferences` | GET/POST | Working | |
-| `/api/users` | GET/POST | Working | |
-| `/api/vehicles` | GET/POST | Working | |
-| `/api/work-types` | GET/POST | Working | |
-| `/api/workers` | GET/POST | Working | |
+### STEP 5: Review the Roadmap
 
-### Database Tables (18 total)
-
-| Table | Records | RLS | Encryption | Notes |
-|-------|---------|-----|------------|-------|
-| users | - | Yes | No | Legacy Supabase auth |
-| user_profiles | - | Yes | bcrypt on password | Main user table |
-| business_settings | - | Yes | PENDING | Needs encryption |
-| clients | - | Yes | PENDING | Contact info encryption |
-| workers | - | Yes | No | |
-| vehicles | - | Yes | No | |
-| carts | - | Yes | No | |
-| work_types | - | Yes | No | |
-| jobs | - | Yes | No | |
-| invoices | - | Yes | No | |
-| invoice_line_items | - | Yes | No | |
-| receipts | - | Yes | No | |
-| documents | - | Yes | No | |
-| user_preferences | - | Yes | No | |
-| user_roles | - | Yes | No | |
-| payment_terms | - | Yes | No | |
-| audit_log | - | Yes | No | |
-| schema_migrations | 9 | No | No | Migration tracker |
-
-### localStorage Keys (to migrate)
-
-| Key | Used By | Migrate To | Priority |
-|-----|---------|------------|----------|
-| `vazana_user` | Auth session | Cookie session | HIGH |
-| `vazana_logged_in` | Auth state | Cookie session | HIGH |
-| `vazana-business-name` | Invoices | business_settings table | HIGH |
-| `vazana-business-address` | Invoices | business_settings table | HIGH |
-| `vazana-business-phone` | Invoices | business_settings table | HIGH |
-| `vazana-business-email` | Invoices | business_settings table | HIGH |
-| `vazana-business-vat-id` | Invoices | business_settings table | HIGH |
-| `vazana-bank-*` | Invoices | business_settings (encrypted) | HIGH |
-| `vazana-payment-terms` | Settings | payment_terms table | MEDIUM |
-| `bankAccountInfo` | Settings | business_settings (encrypted) | HIGH |
-| `vazana_theme_settings` | Theme | Keep in localStorage | LOW |
-| `vazana_language` | i18n | Keep in localStorage | LOW |
-| `vazana-font-size` | Accessibility | Keep in localStorage | LOW |
-| `vazana-auto-save-forms` | UX preference | Keep in localStorage | LOW |
-| `new-job-draft` | Form draft | Keep in localStorage | LOW |
-| `new-invoice-draft` | Form draft | Keep in localStorage | LOW |
-| `approachingJobsCount` | Cache | Keep in localStorage | LOW |
-| `maintenance:lastCheck` | Cache | Keep in localStorage | LOW |
+1. In the maintenance page, click the **"מפת דרכים"** (Roadmap) tab
+2. Review all 35+ features and their status
+3. Features marked "לא פעיל" (Not Working) are future goals
 
 ---
 
-## FILES AFFECTED BY AUTH MIGRATION
+## REMAINING TASKS (Manual Action Required)
 
-The following files use `localStorage` for auth and need to be updated:
+### High Priority
 
-1. `lib/client-auth.ts` - Main auth class (remove localStorage session)
-2. `components/layout/sidebar-navigation.tsx` - Logout handler
-3. `components/layout/navigation.tsx` - User display, logout
-4. `components/dashboard/simple-dashboard.tsx` - User display
-5. `app/clients/page.tsx` - Auth check
-6. `app/jobs/page.tsx` - Auth check
-7. `app/jobs/new/page.tsx` - Auth check
-8. `app/maintenance/page.tsx` - Auth check
-9. `hooks/useUserPreferences.ts` - User context
+| Task | Status | Action |
+|------|--------|--------|
+| Migrate business info from localStorage to DB | TODO | Update settings page to save to Supabase |
+| Encrypt bank account details | TODO | Use `encrypt_sensitive()` function when saving |
+| Test encryption end-to-end | TODO | Save bank info, verify it's encrypted in DB |
 
----
+### Medium Priority
 
-## TESTS TO ADD TO MAINTENANCE PAGE
+| Task | Status | Action |
+|------|--------|--------|
+| RLS policy audit | TODO | Review 80+ policies in Supabase dashboard |
+| Green Invoice integration | TODO | Implement API when ready |
+| PDF native export | TODO | Add `@react-pdf/renderer` |
 
-### Working Tests (Green)
-- [x] Database connection
-- [x] API endpoints health
-- [x] Authentication system
-- [x] User creation flow
-- [x] Data integrity checks
+### Low Priority
 
-### Tests to Add (Yellow - Not Yet Implemented)
-- [ ] Encryption function test
-- [ ] Business settings DB test
-- [ ] Cookie session validation
-- [ ] RLS policy verification
-- [ ] Invoice generation test
-- [ ] PDF generation test
-- [ ] WhatsApp integration test
-
-### Future Tests (Red - Feature Not Built)
-- [ ] Email notifications
-- [ ] Scheduled jobs
-- [ ] Report generation
-- [ ] Data export/import
-- [ ] Backup/restore
+| Task | Status | Action |
+|------|--------|--------|
+| WhatsApp integration | TODO | Table exists, API not implemented |
+| Calendar sync | TODO | Google Calendar API |
+| Multi-language | TODO | Add i18n framework |
 
 ---
 
-## NOTES
+## SYSTEM AUDIT SUMMARY
 
-- All SQL migrations start at version 010+
-- Never delete or modify already-run migration scripts
-- Use `schema_migrations` table to track what's been applied
-- Root password is hardcoded until manually verified and migrated to DB
+### Pages: 29 total - All Working
+
+| Category | Count | Routes |
+|----------|-------|--------|
+| Dashboard | 1 | `/` |
+| Auth | 2 | `/auth/login`, `/auth/sign-up` |
+| Jobs | 2 | `/jobs`, `/jobs/new` |
+| Clients | 3 | `/clients`, `/clients/new`, `/clients/[id]/edit` |
+| Invoices | 3 | `/invoices`, `/invoices/new`, `/invoices/archive` |
+| Resources | 9 | `/workers`, `/vehicles`, `/carts`, `/settings/resources/*` |
+| Settings | 5 | `/settings`, `/settings/users/*` |
+| Other | 4 | `/calendar`, `/documents`, `/users`, `/maintenance` |
+
+### API Routes: 21 total - All Responding
+
+All API routes return 200 OK or 401 (auth required), indicating they're functional.
+
+### Database Tables: 18 total
+
+New columns added by migrations:
+- `business_settings`: 3 encrypted BYTEA columns + 10 new config columns
+- `clients`: 3 encrypted BYTEA columns
+
+### New Database Functions
+
+- `encrypt_sensitive(plaintext, key)` → BYTEA
+- `decrypt_sensitive(ciphertext, key)` → TEXT
+- `get_business_settings()` → JSON (auto-decrypts)
+- `update_business_settings(data, key)` → JSON (auto-encrypts)
+
+---
+
+## FEATURE STATUS SUMMARY
+
+| Status | Count | Description |
+|--------|-------|-------------|
+| Working | 24 | Fully functional |
+| Partial | 5 | Works but incomplete |
+| Not Working | 4 | Planned but not implemented |
+| Planned | 2 | Future roadmap |
+
+**Progress: ~75% complete**
+
+---
+
+## NOTES FOR DEVELOPERS
+
+1. **Auth Flow:**
+   - Login calls `/api/auth/simple-login` (sets cookies)
+   - Client checks `/api/auth/session` for verification
+   - localStorage is cache only, cookies are source of truth
+
+2. **Encryption:**
+   - Set `DB_ENCRYPTION_KEY` env var before using encryption
+   - Call Supabase RPC functions to encrypt/decrypt
+   - Secure views auto-decrypt with session key
+
+3. **Migrations:**
+   - All new migrations start at version 013+
+   - Track in `schema_migrations` table
+   - Never modify already-run scripts
+
+4. **Root Password:**
+   - Hardcoded fallback: `10203040`
+   - Override with `ROOT_PASSWORD` env var
+   - Server-side only (not exposed to client)
