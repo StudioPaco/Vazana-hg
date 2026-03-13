@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import JobsPage from "@/components/jobs/jobs-page"
 import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 import AppNavigation from "@/components/layout/app-navigation"
+import { clientAuth } from "@/lib/client-auth"
 
 export default function Jobs() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -12,16 +13,16 @@ export default function Jobs() {
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const loggedIn = localStorage.getItem("vazana_logged_in")
-
-      if (loggedIn === "true") {
+    const checkAuth = async () => {
+      const isAuth = await clientAuth.isAuthenticatedAsync()
+      if (isAuth) {
         setIsLoggedIn(true)
       } else {
         router.push("/auth/login")
       }
       setIsLoading(false)
     }
+    checkAuth()
   }, [router])
 
   if (isLoading) {

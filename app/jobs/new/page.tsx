@@ -5,22 +5,32 @@ import { useRouter } from "next/navigation"
 import SidebarNavigation from "@/components/layout/sidebar-navigation"
 import NewJobForm from "@/components/jobs/new-job-form"
 import AppNavigation from "@/components/layout/app-navigation"
+import { clientAuth } from "@/lib/client-auth"
 
 export default function NewJobPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem("vazana_logged_in")
-    if (loggedIn === "true") {
-      setIsAuthenticated(true)
-    } else {
-      router.push("/auth/login")
+    const checkAuth = async () => {
+      const isAuth = await clientAuth.isAuthenticatedAsync()
+      if (isAuth) {
+        setIsAuthenticated(true)
+      } else {
+        router.push("/auth/login")
+      }
+      setIsLoading(false)
     }
+    checkAuth()
   }, [router])
 
-  if (!isAuthenticated) {
-    return <div>Loading...</div>
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-vazana-yellow/10 to-vazana-teal/10">
+        <div className="text-vazana-dark text-lg font-hebrew">טוען...</div>
+      </div>
+    )
   }
 
   return (

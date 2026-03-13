@@ -4,23 +4,24 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { clientAuth } from "@/lib/client-auth"
 
 export default function SimpleDashboard() {
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const userData = localStorage.getItem("vazana_user")
+    const loadUser = async () => {
+      const userData = await clientAuth.getCurrentUserAsync()
       if (userData) {
-        setUser(JSON.parse(userData))
+        setUser(userData)
       }
     }
+    loadUser()
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem("vazana_logged_in")
-    localStorage.removeItem("vazana_user")
+  const handleLogout = async () => {
+    await clientAuth.logout()
     router.push("/auth/login")
   }
 

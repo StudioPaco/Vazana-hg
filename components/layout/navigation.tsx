@@ -19,6 +19,7 @@ import {
   Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { clientAuth } from "@/lib/client-auth"
 
 interface NavigationProps {
   user?: {
@@ -48,17 +49,17 @@ export default function Navigation({ user: propUser }: NavigationProps) {
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const userData = localStorage.getItem("vazana_user")
+    const loadUser = async () => {
+      const userData = await clientAuth.getCurrentUserAsync()
       if (userData) {
-        setUser(JSON.parse(userData))
+        setUser(userData)
       }
     }
+    loadUser()
   }, [])
 
-  const handleSignOut = () => {
-    localStorage.removeItem("vazana_logged_in")
-    localStorage.removeItem("vazana_user")
+  const handleSignOut = async () => {
+    await clientAuth.logout()
     router.push("/auth/login")
   }
 
