@@ -255,8 +255,6 @@ export default function NewJobForm() {
         newClientId = clientResult.data?.id || null
       }
 
-      const sampleUserId = "00000000-0000-0000-0000-000000000001" // Must match the API route UUID
-
       const jobData = {
         job_number: jobNumber,
         work_type: selectedWorkType ? selectedWorkType.name_he : "",
@@ -271,21 +269,19 @@ export default function NewJobForm() {
         vehicle_name: selectedVehicle ? `${selectedVehicle.license_plate} - ${selectedVehicle.name}` : "",
         vehicle_id: selectedVehicle ? selectedVehicle.id : null,
         cart_name: selectedCart?.name || null,
-        cart_id: selectedCart ? selectedCart.id : null, // Use proper UUID instead of string
+        cart_id: selectedCart ? selectedCart.id : null,
         service_description: formData.description || null,
         add_to_calendar: formData.calendarSync,
-        payment_status: "ממתין לתשלום", // Hebrew payment status
-        created_by: "root",
-        // created_by_id: sampleUserId, // Temporarily removed to avoid foreign key constraint
+        payment_status: "ממתין",
         // Let database handle created_date/updated_date with DEFAULT NOW()
+        // created_by_id defaults to auth.uid() via column default
         total_amount: formData.totalAmount,
         job_specific_shift_rate: formData.jobSpecificShiftRate,
         notes: formData.notes,
         receipt_id: formData.receiptId,
         is_sample: false,
-        // Add new required fields
-        job_time: null, // Will be filled later or left null
-        job_location: formData.location, // Use the location as job_location
+        job_time: null,
+        job_location: formData.location,
         // job_status will be auto-calculated by database trigger
       }
 

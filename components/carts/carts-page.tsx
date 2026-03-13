@@ -28,25 +28,8 @@ export default function CartsPage() {
 
         if (error) {
           console.error("Error fetching carts:", error)
-          const sampleCarts = [
-            {
-              id: "cart-1",
-              name: "עגלת ציוד 1",
-              details: "עגלה לכלי עבודה בסיסיים",
-            },
-            {
-              id: "cart-2",
-              name: "עגלת ציוד 2",
-              details: "עגלה לציוד כבד",
-            },
-            {
-              id: "cart-3",
-              name: "נגרר גדול",
-              details: "נגרר להובלת ציוד כבד",
-            },
-          ]
-          setCarts(sampleCarts)
-          setFilteredCarts(sampleCarts)
+          setCarts([])
+          setFilteredCarts([])
         } else {
           setCarts(data || [])
           setFilteredCarts(data || [])
