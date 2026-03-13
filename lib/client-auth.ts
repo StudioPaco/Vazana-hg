@@ -171,6 +171,13 @@ class UnifiedAuth {
         
         this.clearLoginAttempts(username)
         this.updateCache(user)
+        
+        // Also save to legacy keys for backward compatibility
+        if (typeof window !== "undefined") {
+          localStorage.setItem("vazana_user", JSON.stringify(user))
+          localStorage.setItem("vazana_logged_in", "true")
+        }
+        
         return { success: true, user }
       }
 
@@ -184,41 +191,28 @@ class UnifiedAuth {
   }
 
   /**
-   * Get current user - verifies session via server API
-   * Uses cache to reduce API calls
+   * Get current user - uses localStorage cache primarily
+   * Server session is optional enhancement, not required for auth
    */
   async getCurrentUserAsync(): Promise<User | null> {
-    // Check cache first
+    // Check localStorage cache first - this is the primary auth method
     const cached = this.getCachedUser()
     if (cached) return cached
     
-    // Verify session with server
-    try {
-      const response = await fetch("/api/auth/session", {
-        method: "GET",
-        credentials: "include",
-      })
-      
-      const data = await response.json()
-      
-      if (data.authenticated && data.user) {
-        const user: User = {
-          id: data.user.id,
-          username: data.user.username,
-          email: data.user.email,
-          role: data.user.role as "admin" | "user",
-          full_name: data.user.full_name,
-        }
-        this.updateCache(user)
-        return user
+    // Also check legacy localStorage key for backward compatibility
+    if (typeof window !== "undefined") {
+      const legacyUser = localStorage.getItem("vazana_user")
+      if (legacyUser) {
+        try {
+          const user = JSON.parse(legacyUser) as User
+          this.updateCache(user)
+          return user
+        } catch {}
       }
-      
-      this.updateCache(null)
-      return null
-    } catch (error) {
-      console.error("Session check error:", error)
-      return null
     }
+    
+    // No local session found
+    return null
   }
 
   /**
@@ -238,9 +232,16 @@ class UnifiedAuth {
   }
 
   /**
-   * Async authentication check - verifies with server
+   * Async authentication check - checks localStorage primarily
    */
   async isAuthenticatedAsync(): Promise<boolean> {
+    // Check localStorage for login state first (fast path)
+    if (typeof window !== "undefined") {
+      const loggedIn = localStorage.getItem("vazana_logged_in")
+      if (loggedIn === "true") return true
+    }
+    
+    // Fall back to cache check
     const user = await this.getCurrentUserAsync()
     return user !== null
   }
@@ -265,9 +266,13 @@ class UnifiedAuth {
       console.error("Logout error:", error)
     }
     
-    // Clear local cache
+    // Clear all local caches including legacy keys
     this.updateCache(null)
     this.memoryCache = null
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("vazana_user")
+      localStorage.removeItem("vazana_logged_in")
+    }
   }
 
   /**
@@ -278,6 +283,10 @@ class UnifiedAuth {
     fetch("/api/auth/session", { method: "DELETE", credentials: "include" }).catch(() => {})
     this.updateCache(null)
     this.memoryCache = null
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("vazana_user")
+      localStorage.removeItem("vazana_logged_in")
+    }
   }
 
   /**
