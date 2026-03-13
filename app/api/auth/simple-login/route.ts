@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
 import { signInWithUsername } from "@/lib/auth-custom"
 import { createClient } from "@/lib/supabase/server"
-import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,41 +10,32 @@ export async function POST(request: NextRequest) {
     const rootUser = process.env.ROOT_USERNAME || "root"
     const rootPass = process.env.ROOT_PASSWORD || "10203040"
 
-    if (username === rootUser && password === rootPass) {
-      // Root user: set session cookie
-      const cookieStore = await cookies()
-      cookieStore.set("vazana-session", "authenticated-root", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      })
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    }
 
-      return NextResponse.json({
+    if (username === rootUser && password === rootPass) {
+      // Root user: create response with session cookie
+      const response = NextResponse.json({
         success: true,
         user: { id: "root", username: "root", role: "admin", full_name: "מנהל מערכת" },
       })
+      
+      // Set cookies directly on the response object
+      response.cookies.set("vazana-session", "authenticated-root", cookieOptions)
+      response.cookies.set("session_token", "authenticated-root", cookieOptions)
+      
+      return response
     }
 
-    // DB user: use the unified auth-custom signIn which sets session_token cookie
+    // DB user: use the unified auth-custom signIn
     const result = await signInWithUsername(username, password)
 
     if (result.success && result.sessionToken) {
-      // Also set vazana-session cookie for middleware compatibility
-      const cookieStore = await cookies()
-      cookieStore.set("vazana-session", result.sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7,
-      })
-      cookieStore.set("session_token", result.sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7,
-      })
-
       // Fetch the user profile for the response
       const supabase = await createClient()
       const { data: userProfile } = await supabase
@@ -55,10 +44,16 @@ export async function POST(request: NextRequest) {
         .eq("username", username)
         .single()
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         user: userProfile || { username, role: "user" },
       })
+      
+      // Set cookies directly on the response object
+      response.cookies.set("vazana-session", result.sessionToken, cookieOptions)
+      response.cookies.set("session_token", result.sessionToken, cookieOptions)
+      
+      return response
     }
 
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })

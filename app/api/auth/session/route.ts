@@ -102,11 +102,12 @@ export async function DELETE(request: NextRequest) {
       await signOutUser(sessionToken)
     }
 
-    // Clear all auth cookies
-    cookieStore.delete("vazana-session")
-    cookieStore.delete("session_token")
+    // Create response and clear cookies on it
+    const response = NextResponse.json({ success: true })
+    response.cookies.set("vazana-session", "", { maxAge: 0, path: "/" })
+    response.cookies.set("session_token", "", { maxAge: 0, path: "/" })
 
-    return NextResponse.json({ success: true })
+    return response
   } catch (error) {
     console.error("Logout error:", error)
     return NextResponse.json({ success: false, error: "Logout failed" }, { status: 500 })
