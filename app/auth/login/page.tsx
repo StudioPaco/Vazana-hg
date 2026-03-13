@@ -18,13 +18,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
-  // Check if already logged in
+  // Check if already logged in (async to verify with server)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (clientAuth.isAuthenticated()) {
+    const checkAuth = async () => {
+      const isAuth = await clientAuth.isAuthenticatedAsync()
+      if (isAuth) {
         router.push("/")
       }
     }
+    checkAuth()
   }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {

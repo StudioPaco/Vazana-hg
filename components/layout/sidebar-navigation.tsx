@@ -72,13 +72,15 @@ export default function SidebarNavigation() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   
   useEffect(() => {
-    const user = clientAuth.getCurrentUser()
-    setCurrentUser(user)
+    const loadUser = async () => {
+      const user = await clientAuth.getCurrentUserAsync()
+      setCurrentUser(user)
+    }
+    loadUser()
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem("vazana_logged_in")
-    localStorage.removeItem("vazana_user")
+  const handleLogout = async () => {
+    await clientAuth.logout()
     window.location.href = "/auth/login"
   }
 

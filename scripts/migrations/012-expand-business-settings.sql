@@ -1,129 +1,134 @@
--- Migration 012: Expand business_settings to store all business data currently in localStorage
--- This consolidates: bankAccountInfo, vazana-business-*, vazana-payment-terms
+-- Migration 012: Expand business_settings to store all data currently in localStorage
+-- Status: APPLIED on 2026-03-13
+-- This migrates business data from client-side localStorage to encrypted server-side storage
 
--- ============================================================================
--- STEP 1: Add missing columns to business_settings
--- ============================================================================
-
+-- STEP 1: Add missing business info columns
 ALTER TABLE business_settings
-ADD COLUMN IF NOT EXISTS bank_name TEXT,
-ADD COLUMN IF NOT EXISTS bank_account_name TEXT,
-ADD COLUMN IF NOT EXISTS bank_account_number TEXT,  -- Will be encrypted in migration 011
-ADD COLUMN IF NOT EXISTS bank_branch TEXT,          -- Will be encrypted in migration 011
-ADD COLUMN IF NOT EXISTS tax_id TEXT,               -- Will be encrypted in migration 011
-ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) DEFAULT 17.00,
-ADD COLUMN IF NOT EXISTS default_payment_terms INTEGER DEFAULT 30,
-ADD COLUMN IF NOT EXISTS invoice_prefix TEXT DEFAULT 'INV',
-ADD COLUMN IF NOT EXISTS invoice_next_number INTEGER DEFAULT 1,
-ADD COLUMN IF NOT EXISTS receipt_prefix TEXT DEFAULT 'RCP',
-ADD COLUMN IF NOT EXISTS receipt_next_number INTEGER DEFAULT 1,
-ADD COLUMN IF NOT EXISTS quote_prefix TEXT DEFAULT 'QT',
-ADD COLUMN IF NOT EXISTS quote_next_number INTEGER DEFAULT 1,
-ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'ILS',
-ADD COLUMN IF NOT EXISTS currency_symbol TEXT DEFAULT '₪',
-ADD COLUMN IF NOT EXISTS date_format TEXT DEFAULT 'DD/MM/YYYY',
-ADD COLUMN IF NOT EXISTS fiscal_year_start INTEGER DEFAULT 1,  -- Month (1-12)
-ADD COLUMN IF NOT EXISTS default_job_duration INTEGER DEFAULT 60,  -- Minutes
-ADD COLUMN IF NOT EXISTS working_hours_start TIME DEFAULT '08:00',
-ADD COLUMN IF NOT EXISTS working_hours_end TIME DEFAULT '18:00',
-ADD COLUMN IF NOT EXISTS working_days INTEGER[] DEFAULT ARRAY[0,1,2,3,4],  -- Sunday-Thursday (Israeli week)
-ADD COLUMN IF NOT EXISTS whatsapp_enabled BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS email_notifications BOOLEAN DEFAULT TRUE,
-ADD COLUMN IF NOT EXISTS auto_backup BOOLEAN DEFAULT TRUE,
-ADD COLUMN IF NOT EXISTS settings_json JSONB DEFAULT '{}'::JSONB;  -- Catch-all for additional settings
+ADD COLUMN IF NOT EXISTS logo_url TEXT,
+ADD COLUMN IF NOT EXISTS website TEXT,
+ADD COLUMN IF NOT EXISTS fax TEXT,
+ADD COLUMN IF NOT EXISTS mobile TEXT,
+ADD COLUMN IF NOT EXISTS contact_name TEXT,
+ADD COLUMN IF NOT EXISTS contact_position TEXT;
 
--- ============================================================================
--- STEP 2: Create API for business settings CRUD
--- ============================================================================
+-- STEP 2: Add invoice settings columns (currently in localStorage)
+ALTER TABLE business_settings
+ADD COLUMN IF NOT EXISTS invoice_prefix VARCHAR(10) DEFAULT 'INV',
+ADD COLUMN IF NOT EXISTS invoice_notes TEXT,
+ADD COLUMN IF NOT EXISTS invoice_footer TEXT,
+ADD COLUMN IF NOT EXISTS show_bank_details_on_invoice BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS show_logo_on_invoice BOOLEAN DEFAULT true;
 
--- Function to get all business settings (for API route)
+-- STEP 3: Add work type rates (currently in localStorage as vazana-work-rates)
+ALTER TABLE business_settings
+ADD COLUMN IF NOT EXISTS work_rates JSONB DEFAULT '{}';
+
+-- STEP 4: Create API function to get business settings
 CREATE OR REPLACE FUNCTION get_business_settings()
-RETURNS JSONB AS $$
+RETURNS JSON AS $$
 DECLARE
-  result JSONB;
+  settings_row business_settings%ROWTYPE;
+  encryption_key TEXT;
 BEGIN
-  SELECT jsonb_build_object(
-    'id', id,
-    'business_name', business_name,
-    'logo_url', logo_url,
-    'address', address,
-    'phone', phone,
-    'email', email,
-    'bank_name', bank_name,
-    'bank_account_name', bank_account_name,
-    'tax_rate', tax_rate,
-    'default_payment_terms', default_payment_terms,
-    'invoice_prefix', invoice_prefix,
-    'invoice_next_number', invoice_next_number,
-    'receipt_prefix', receipt_prefix,
-    'receipt_next_number', receipt_next_number,
-    'quote_prefix', quote_prefix,
-    'quote_next_number', quote_next_number,
-    'currency', currency,
-    'currency_symbol', currency_symbol,
-    'date_format', date_format,
-    'fiscal_year_start', fiscal_year_start,
-    'default_job_duration', default_job_duration,
-    'working_hours_start', working_hours_start,
-    'working_hours_end', working_hours_end,
-    'working_days', working_days,
-    'whatsapp_enabled', whatsapp_enabled,
-    'email_notifications', email_notifications,
-    'auto_backup', auto_backup,
-    'settings_json', settings_json,
-    'created_at', created_at,
-    'updated_at', updated_at
-  ) INTO result
-  FROM business_settings
-  LIMIT 1;
+  encryption_key := current_setting('app.encryption_key', true);
   
-  RETURN COALESCE(result, '{}'::JSONB);
+  SELECT * INTO settings_row FROM business_settings LIMIT 1;
+  
+  IF settings_row IS NULL THEN
+    RETURN '{}'::JSON;
+  END IF;
+  
+  RETURN json_build_object(
+    'id', settings_row.id,
+    'company_name', settings_row.company_name,
+    'company_email', settings_row.company_email,
+    'address', settings_row.address,
+    'phone', settings_row.phone,
+    'mobile', settings_row.mobile,
+    'fax', settings_row.fax,
+    'website', settings_row.website,
+    'contact_name', settings_row.contact_name,
+    'contact_position', settings_row.contact_position,
+    'registration_number', CASE WHEN encryption_key IS NOT NULL AND settings_row.registration_number_encrypted IS NOT NULL 
+      THEN decrypt_sensitive(settings_row.registration_number_encrypted, encryption_key) 
+      ELSE settings_row.registration_number END,
+    'vat_percentage', settings_row.vat_percentage,
+    'bank_account_name', settings_row.bank_account_name,
+    'bank_name', settings_row.bank_name,
+    'bank_branch', CASE WHEN encryption_key IS NOT NULL AND settings_row.bank_branch_encrypted IS NOT NULL
+      THEN decrypt_sensitive(settings_row.bank_branch_encrypted, encryption_key)
+      ELSE settings_row.bank_branch END,
+    'bank_account_number', CASE WHEN encryption_key IS NOT NULL AND settings_row.bank_account_number_encrypted IS NOT NULL
+      THEN decrypt_sensitive(settings_row.bank_account_number_encrypted, encryption_key)
+      ELSE settings_row.bank_account_number END,
+    'default_payment_terms', settings_row.default_payment_terms,
+    'invoice_prefix', settings_row.invoice_prefix,
+    'invoice_notes', settings_row.invoice_notes,
+    'invoice_footer', settings_row.invoice_footer,
+    'show_bank_details_on_invoice', settings_row.show_bank_details_on_invoice,
+    'show_logo_on_invoice', settings_row.show_logo_on_invoice,
+    'logo_url', settings_row.logo_url,
+    'work_rates', settings_row.work_rates,
+    'day_shift_end_time', settings_row.day_shift_end_time,
+    'night_shift_end_time', settings_row.night_shift_end_time,
+    'auto_invoice_sync', settings_row.auto_invoice_sync
+  );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to update business settings
-CREATE OR REPLACE FUNCTION update_business_settings(settings JSONB)
-RETURNS JSONB AS $$
+-- STEP 5: Create API function to update business settings
+CREATE OR REPLACE FUNCTION update_business_settings(settings_data JSONB, encryption_key TEXT DEFAULT NULL)
+RETURNS JSON AS $$
 DECLARE
-  result JSONB;
+  settings_id UUID;
 BEGIN
+  -- Get or create settings row
+  SELECT id INTO settings_id FROM business_settings LIMIT 1;
+  
+  IF settings_id IS NULL THEN
+    INSERT INTO business_settings (id) VALUES (gen_random_uuid()) RETURNING id INTO settings_id;
+  END IF;
+  
+  -- Update all fields
   UPDATE business_settings SET
-    business_name = COALESCE(settings->>'business_name', business_name),
-    logo_url = COALESCE(settings->>'logo_url', logo_url),
-    address = COALESCE(settings->>'address', address),
-    phone = COALESCE(settings->>'phone', phone),
-    email = COALESCE(settings->>'email', email),
-    bank_name = COALESCE(settings->>'bank_name', bank_name),
-    bank_account_name = COALESCE(settings->>'bank_account_name', bank_account_name),
-    tax_rate = COALESCE((settings->>'tax_rate')::DECIMAL, tax_rate),
-    default_payment_terms = COALESCE((settings->>'default_payment_terms')::INTEGER, default_payment_terms),
-    invoice_prefix = COALESCE(settings->>'invoice_prefix', invoice_prefix),
-    receipt_prefix = COALESCE(settings->>'receipt_prefix', receipt_prefix),
-    quote_prefix = COALESCE(settings->>'quote_prefix', quote_prefix),
-    currency = COALESCE(settings->>'currency', currency),
-    currency_symbol = COALESCE(settings->>'currency_symbol', currency_symbol),
-    date_format = COALESCE(settings->>'date_format', date_format),
-    fiscal_year_start = COALESCE((settings->>'fiscal_year_start')::INTEGER, fiscal_year_start),
-    default_job_duration = COALESCE((settings->>'default_job_duration')::INTEGER, default_job_duration),
-    working_hours_start = COALESCE((settings->>'working_hours_start')::TIME, working_hours_start),
-    working_hours_end = COALESCE((settings->>'working_hours_end')::TIME, working_hours_end),
-    whatsapp_enabled = COALESCE((settings->>'whatsapp_enabled')::BOOLEAN, whatsapp_enabled),
-    email_notifications = COALESCE((settings->>'email_notifications')::BOOLEAN, email_notifications),
-    auto_backup = COALESCE((settings->>'auto_backup')::BOOLEAN, auto_backup),
-    settings_json = COALESCE(settings->'settings_json', settings_json),
+    company_name = COALESCE(settings_data->>'company_name', company_name),
+    company_email = COALESCE(settings_data->>'company_email', company_email),
+    address = COALESCE(settings_data->>'address', address),
+    phone = COALESCE(settings_data->>'phone', phone),
+    mobile = COALESCE(settings_data->>'mobile', mobile),
+    fax = COALESCE(settings_data->>'fax', fax),
+    website = COALESCE(settings_data->>'website', website),
+    contact_name = COALESCE(settings_data->>'contact_name', contact_name),
+    contact_position = COALESCE(settings_data->>'contact_position', contact_position),
+    vat_percentage = COALESCE((settings_data->>'vat_percentage')::NUMERIC, vat_percentage),
+    bank_account_name = COALESCE(settings_data->>'bank_account_name', bank_account_name),
+    bank_name = COALESCE(settings_data->>'bank_name', bank_name),
+    default_payment_terms = COALESCE(settings_data->>'default_payment_terms', default_payment_terms),
+    invoice_prefix = COALESCE(settings_data->>'invoice_prefix', invoice_prefix),
+    invoice_notes = COALESCE(settings_data->>'invoice_notes', invoice_notes),
+    invoice_footer = COALESCE(settings_data->>'invoice_footer', invoice_footer),
+    show_bank_details_on_invoice = COALESCE((settings_data->>'show_bank_details_on_invoice')::BOOLEAN, show_bank_details_on_invoice),
+    show_logo_on_invoice = COALESCE((settings_data->>'show_logo_on_invoice')::BOOLEAN, show_logo_on_invoice),
+    logo_url = COALESCE(settings_data->>'logo_url', logo_url),
+    work_rates = COALESCE(settings_data->'work_rates', work_rates),
+    -- Encrypt sensitive fields if key provided
+    bank_account_number_encrypted = CASE WHEN encryption_key IS NOT NULL AND settings_data->>'bank_account_number' IS NOT NULL
+      THEN encrypt_sensitive(settings_data->>'bank_account_number', encryption_key)
+      ELSE bank_account_number_encrypted END,
+    bank_branch_encrypted = CASE WHEN encryption_key IS NOT NULL AND settings_data->>'bank_branch' IS NOT NULL
+      THEN encrypt_sensitive(settings_data->>'bank_branch', encryption_key)
+      ELSE bank_branch_encrypted END,
+    registration_number_encrypted = CASE WHEN encryption_key IS NOT NULL AND settings_data->>'registration_number' IS NOT NULL
+      THEN encrypt_sensitive(settings_data->>'registration_number', encryption_key)
+      ELSE registration_number_encrypted END,
     updated_at = NOW()
-  WHERE id = (SELECT id FROM business_settings LIMIT 1)
-  RETURNING jsonb_build_object('success', true, 'updated_at', updated_at) INTO result;
+  WHERE id = settings_id;
   
-  RETURN COALESCE(result, jsonb_build_object('success', false, 'error', 'No settings found'));
+  RETURN json_build_object('success', true, 'id', settings_id);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Grant execute to authenticated users
-GRANT EXECUTE ON FUNCTION get_business_settings() TO authenticated;
-GRANT EXECUTE ON FUNCTION update_business_settings(JSONB) TO authenticated;
 
 -- Record this migration
 INSERT INTO schema_migrations (version, name, applied_by, notes)
-VALUES ('012', 'expand-business-settings', 'v0', 'Added columns for all business settings, replacing localStorage')
+VALUES ('012', 'expand-business-settings', 'v0', 'Added columns for all business data currently stored in localStorage')
 ON CONFLICT (version) DO UPDATE SET applied_at = NOW();

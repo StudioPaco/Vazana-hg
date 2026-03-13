@@ -12,13 +12,11 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const authenticated = clientAuth.isAuthenticated()
-      console.log("Checking authentication state:", authenticated)
-
-      if (authenticated) {
-        const user = clientAuth.getCurrentUser()
-        console.log("User is authenticated:", user?.username)
+    const checkAuth = async () => {
+      const user = await clientAuth.getCurrentUserAsync()
+      
+      if (user) {
+        console.log("User is authenticated:", user.username)
         setIsLoggedIn(true)
       } else {
         console.log("User not authenticated, redirecting to login")
@@ -26,6 +24,8 @@ export default function HomePage() {
       }
       setIsLoading(false)
     }
+    
+    checkAuth()
   }, [router])
 
   if (isLoading) {

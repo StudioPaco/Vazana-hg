@@ -9,8 +9,8 @@ export interface User {
   email?: string
   role: "admin" | "user"
   full_name?: string
-  loginTime: string
-  sessionDuration: number // in hours
+  loginTime?: string
+  sessionDuration?: number
 }
 
 export interface AuthResult {
@@ -19,15 +19,25 @@ export interface AuthResult {
   error?: string
 }
 
+/**
+ * UnifiedAuth - Client-side auth manager
+ * 
+ * Source of truth: HTTP-only cookies (set by /api/auth/simple-login)
+ * localStorage: Used only as a cache to reduce API calls
+ * 
+ * The session is verified server-side via /api/auth/session
+ */
 class UnifiedAuth {
   private supabase = createClient()
-  private readonly SESSION_KEY = "vazana_user"
-  private readonly LOGIN_STATUS_KEY = "vazana_logged_in"
+  private readonly CACHE_KEY = "vazana_user_cache"
+  private readonly CACHE_TIMESTAMP_KEY = "vazana_cache_timestamp"
   private readonly LOGIN_ATTEMPTS_KEY = "vazana_login_attempts"
-  private readonly DEVICE_TOKEN_KEY = "vazana_device_token"
-  private readonly DEFAULT_SESSION_HOURS = 24
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes cache
   private readonly MAX_LOGIN_ATTEMPTS = 3
   private readonly LOCKOUT_DELAYS = [60, 300, 900] // 1min, 5min, 15min in seconds
+
+  // In-memory cache for the current request lifecycle
+  private memoryCache: { user: User | null; timestamp: number } | null = null
 
   /**
    * Check if account is locked due to failed attempts
@@ -40,28 +50,22 @@ class UnifiedAuth {
     
     try {
       const attempts = JSON.parse(attemptsStr)
-      const now = new Date().getTime()
+      const now = Date.now()
       
       // Clean old attempts (older than 1 hour)
-      const recentAttempts = attempts.filter((attempt: number) => 
-        now - attempt < 3600000 // 1 hour in milliseconds
-      )
+      const recentAttempts = attempts.filter((attempt: number) => now - attempt < 3600000)
       
       if (recentAttempts.length < this.MAX_LOGIN_ATTEMPTS) {
         return { locked: false }
       }
       
-      // Calculate lockout time based on attempt count
       const lockoutIndex = Math.min(recentAttempts.length - this.MAX_LOGIN_ATTEMPTS, this.LOCKOUT_DELAYS.length - 1)
-      const lockoutDuration = this.LOCKOUT_DELAYS[lockoutIndex] * 1000 // Convert to milliseconds
+      const lockoutDuration = this.LOCKOUT_DELAYS[lockoutIndex] * 1000
       const lastAttempt = Math.max(...recentAttempts)
       const lockoutEnd = lastAttempt + lockoutDuration
       
       if (now < lockoutEnd) {
-        return { 
-          locked: true, 
-          timeRemaining: Math.ceil((lockoutEnd - now) / 1000) // seconds
-        }
+        return { locked: true, timeRemaining: Math.ceil((lockoutEnd - now) / 1000) }
       }
       
       return { locked: false }
@@ -70,45 +74,71 @@ class UnifiedAuth {
     }
   }
   
-  /**
-   * Record failed login attempt
-   */
   private recordFailedAttempt(username: string): void {
     if (typeof window === "undefined") return
-    
     const attemptsStr = localStorage.getItem(`${this.LOGIN_ATTEMPTS_KEY}_${username}`)
     const attempts = attemptsStr ? JSON.parse(attemptsStr) : []
-    attempts.push(new Date().getTime())
-    
+    attempts.push(Date.now())
     localStorage.setItem(`${this.LOGIN_ATTEMPTS_KEY}_${username}`, JSON.stringify(attempts))
   }
   
-  /**
-   * Clear login attempts on successful login
-   */
   private clearLoginAttempts(username: string): void {
     if (typeof window === "undefined") return
     localStorage.removeItem(`${this.LOGIN_ATTEMPTS_KEY}_${username}`)
   }
-  
+
   /**
-   * Generate or get device token for device recognition
+   * Update the local cache with user data
    */
-  private getDeviceToken(): string {
-    if (typeof window === "undefined") return "server"
+  private updateCache(user: User | null): void {
+    if (typeof window === "undefined") return
     
-    let token = localStorage.getItem(this.DEVICE_TOKEN_KEY)
-    if (!token) {
-      // Generate device fingerprint based on browser characteristics
-      const fingerprint = `${navigator.userAgent}-${screen.width}x${screen.height}-${Intl.DateTimeFormat().resolvedOptions().timeZone}`
-      token = btoa(fingerprint + Date.now()).slice(0, 32)
-      localStorage.setItem(this.DEVICE_TOKEN_KEY, token)
+    this.memoryCache = { user, timestamp: Date.now() }
+    
+    if (user) {
+      localStorage.setItem(this.CACHE_KEY, JSON.stringify(user))
+      localStorage.setItem(this.CACHE_TIMESTAMP_KEY, Date.now().toString())
+    } else {
+      localStorage.removeItem(this.CACHE_KEY)
+      localStorage.removeItem(this.CACHE_TIMESTAMP_KEY)
     }
-    return token
   }
-  
+
   /**
-   * Simple unified login: supports root user + database users
+   * Get cached user if still valid
+   */
+  private getCachedUser(): User | null {
+    if (typeof window === "undefined") return null
+    
+    // Check memory cache first
+    if (this.memoryCache && Date.now() - this.memoryCache.timestamp < this.CACHE_TTL_MS) {
+      return this.memoryCache.user
+    }
+    
+    // Check localStorage cache
+    const timestampStr = localStorage.getItem(this.CACHE_TIMESTAMP_KEY)
+    if (!timestampStr) return null
+    
+    const cacheAge = Date.now() - parseInt(timestampStr, 10)
+    if (cacheAge > this.CACHE_TTL_MS) {
+      // Cache expired, clear it
+      this.updateCache(null)
+      return null
+    }
+    
+    try {
+      const userStr = localStorage.getItem(this.CACHE_KEY)
+      if (!userStr) return null
+      const user = JSON.parse(userStr) as User
+      this.memoryCache = { user, timestamp: Date.now() }
+      return user
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Login - authenticates via server API which sets HTTP-only cookies
    */
   async login(username: string, password: string): Promise<AuthResult> {
     try {
@@ -116,178 +146,149 @@ class UnifiedAuth {
       const lockout = this.isAccountLocked(username)
       if (lockout.locked) {
         const minutes = Math.ceil(lockout.timeRemaining! / 60)
-        return { 
-          success: false, 
-          error: `חשבון נעול ל-${minutes} דקות עקב ניסיונות התחברות כושלים` 
-        }
+        return { success: false, error: `חשבון נעול ל-${minutes} דקות עקב ניסיונות התחברות כושלים` }
       }
       
-      // Authenticate via server-side API (root credentials never exposed to client)
+      // Authenticate via server API (sets HTTP-only cookies)
       const response = await fetch("/api/auth/simple-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include", // Important: include cookies
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          // Root user authenticated server-side
-          const user: User = {
-            id: data.user?.id || "root",
-            username: data.user?.username || username,
-            email: data.user?.email || `${username}@vazana.com`,
-            role: data.user?.role || "admin",
-            full_name: data.user?.full_name || "מנהל מערכת",
-            loginTime: new Date().toISOString(),
-            sessionDuration: this.DEFAULT_SESSION_HOURS,
-          }
-          this.clearLoginAttempts(username)
-          this.storeSession(user)
-          return { success: true, user }
-        }
-      }
+      const data = await response.json()
 
-      // Check database users via Supabase client
-      const { data: dbUsers, error } = await this.supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("username", username)
-        .eq("is_active", true)
-        .single()
-
-      if (error || !dbUsers) {
-        this.recordFailedAttempt(username)
-        return { success: false, error: "שם משתמש או סיסמה שגויים" }
-      }
-
-      // Verify password using bcrypt
-      if (dbUsers.password_hash && (await bcrypt.compare(password, dbUsers.password_hash))) {
+      if (response.ok && data.success) {
         const user: User = {
-          id: dbUsers.id,
-          username: dbUsers.username,
-          email: dbUsers.email || `${dbUsers.username}@vazana.local`,
-          role: dbUsers.role || "user",
-          full_name: dbUsers.full_name || dbUsers.username,
+          id: data.user?.id || username,
+          username: data.user?.username || username,
+          email: data.user?.email || `${username}@vazana.local`,
+          role: data.user?.role || "user",
+          full_name: data.user?.full_name || username,
           loginTime: new Date().toISOString(),
-          sessionDuration: this.DEFAULT_SESSION_HOURS,
         }
+        
         this.clearLoginAttempts(username)
-        this.storeSession(user)
+        this.updateCache(user)
         return { success: true, user }
       }
 
-      // Record failed attempt and return error
       this.recordFailedAttempt(username)
-      return { success: false, error: "שם משתמש או סיסמה שגויים" }
+      return { success: false, error: data.error || "שם משתמש או סיסמה שגויים" }
       
     } catch (error) {
-      console.error('Login error:', error)
+      console.error("Login error:", error)
       return { success: false, error: "אירעה שגיאה בלתי צפויה" }
     }
   }
 
   /**
-   * Store session in localStorage with timestamp for timeout management
+   * Get current user - verifies session via server API
+   * Uses cache to reduce API calls
    */
-  private storeSession(user: User): void {
-    if (typeof window === "undefined") return
+  async getCurrentUserAsync(): Promise<User | null> {
+    // Check cache first
+    const cached = this.getCachedUser()
+    if (cached) return cached
     
-    localStorage.setItem(this.SESSION_KEY, JSON.stringify(user))
-    localStorage.setItem(this.LOGIN_STATUS_KEY, "true")
-  }
-
-  /**
-   * Get current user if session is valid
-   */
-  getCurrentUser(): User | null {
-    if (typeof window === "undefined") return null
-    
-    const userStr = localStorage.getItem(this.SESSION_KEY)
-    if (!userStr) return null
-
+    // Verify session with server
     try {
-      const user = JSON.parse(userStr) as User
+      const response = await fetch("/api/auth/session", {
+        method: "GET",
+        credentials: "include",
+      })
       
-      // Check if session is expired (avoid circular dependency)
-      const loginTime = new Date(user.loginTime)
-      const now = new Date()
-      const hoursSinceLogin = (now.getTime() - loginTime.getTime()) / (1000 * 60 * 60)
+      const data = await response.json()
       
-      if (hoursSinceLogin >= user.sessionDuration) {
-        this.logout() // Auto-logout on expired session
-        return null
+      if (data.authenticated && data.user) {
+        const user: User = {
+          id: data.user.id,
+          username: data.user.username,
+          email: data.user.email,
+          role: data.user.role as "admin" | "user",
+          full_name: data.user.full_name,
+        }
+        this.updateCache(user)
+        return user
       }
       
-      return user
-    } catch {
-      this.logout() // Clear invalid session data
+      this.updateCache(null)
+      return null
+    } catch (error) {
+      console.error("Session check error:", error)
       return null
     }
   }
 
   /**
-   * Check if current session is valid (not expired)
+   * Synchronous getCurrentUser - returns cached user only
+   * For async session verification, use getCurrentUserAsync()
    */
-  isSessionValid(): boolean {
-    if (typeof window === "undefined") return false
-    
-    const userStr = localStorage.getItem(this.SESSION_KEY)
-    if (!userStr) return false
-
-    try {
-      const user = JSON.parse(userStr) as User
-      const loginTime = new Date(user.loginTime)
-      const now = new Date()
-      const hoursSinceLogin = (now.getTime() - loginTime.getTime()) / (1000 * 60 * 60)
-      
-      return hoursSinceLogin < user.sessionDuration
-    } catch {
-      return false
-    }
+  getCurrentUser(): User | null {
+    return this.getCachedUser()
   }
 
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated (synchronous, cache-based)
+   * For accurate check, use isAuthenticatedAsync()
    */
   isAuthenticated(): boolean {
     return this.getCurrentUser() !== null
   }
 
   /**
-   * Logout user and clear session
+   * Async authentication check - verifies with server
    */
-  logout(): void {
-    if (typeof window === "undefined") return
-    
-    localStorage.removeItem(this.SESSION_KEY)
-    localStorage.removeItem(this.LOGIN_STATUS_KEY)
+  async isAuthenticatedAsync(): Promise<boolean> {
+    const user = await this.getCurrentUserAsync()
+    return user !== null
   }
 
   /**
-   * Update session duration for current user
+   * Check if session is valid (synchronous, cache-based)
    */
-  updateSessionDuration(hours: number): void {
-    const user = this.getCurrentUser()
-    if (user) {
-      user.sessionDuration = hours
-      this.storeSession(user)
+  isSessionValid(): boolean {
+    return this.isAuthenticated()
+  }
+
+  /**
+   * Logout - clears server session and local cache
+   */
+  async logout(): Promise<void> {
+    try {
+      await fetch("/api/auth/session", {
+        method: "DELETE",
+        credentials: "include",
+      })
+    } catch (error) {
+      console.error("Logout error:", error)
     }
+    
+    // Clear local cache
+    this.updateCache(null)
+    this.memoryCache = null
   }
 
   /**
-   * Get time remaining in session (in minutes)
+   * Synchronous logout for components that can't await
+   */
+  logoutSync(): void {
+    // Fire and forget the API call
+    fetch("/api/auth/session", { method: "DELETE", credentials: "include" }).catch(() => {})
+    this.updateCache(null)
+    this.memoryCache = null
+  }
+
+  /**
+   * Get session time remaining (returns 0 if no session info available)
    */
   getSessionTimeRemaining(): number {
-    const user = this.getCurrentUser()
-    if (!user) return 0
-
-    const loginTime = new Date(user.loginTime)
-    const now = new Date()
-    const minutesSinceLogin = (now.getTime() - loginTime.getTime()) / (1000 * 60)
-    const totalSessionMinutes = user.sessionDuration * 60
-    
-    return Math.max(0, totalSessionMinutes - minutesSinceLogin)
+    // For now, return a default value
+    // In future, we can track expiry from the session API response
+    const cached = this.getCachedUser()
+    if (!cached) return 0
+    return 60 * 24 // Default 24 hours in minutes
   }
 
   /**
@@ -295,50 +296,39 @@ class UnifiedAuth {
    */
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 12
-    return await bcrypt.hash(password, saltRounds)
+    return bcrypt.hash(password, saltRounds)
   }
 
   /**
-   * Verify a password against stored hash
+   * Verify a password - checks via server API
    */
   async verifyPassword(username: string, password: string): Promise<boolean> {
     try {
-      // Verify root user via server-side API (credentials not exposed to client)
       const response = await fetch("/api/auth/simple-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) return true
-      }
-
-      // Check database users
-      const { data: dbUser, error } = await this.supabase
-        .from('user_profiles')
-        .select('password_hash')
-        .eq('username', username)
-        .eq('is_active', true)
-        .single()
-
-      if (error || !dbUser || !dbUser.password_hash) {
-        return false
-      }
-
-      // Verify password using bcrypt
-      return await bcrypt.compare(password, dbUser.password_hash)
-    } catch (error) {
-      console.error('Password verification error:', error)
+      const data = await response.json()
+      return response.ok && data.success
+    } catch {
       return false
     }
   }
 
   /**
-   * Check if user has admin privileges
+   * Check if current user is admin
    */
   isAdmin(): boolean {
     const user = this.getCurrentUser()
+    return user?.role === "admin"
+  }
+
+  /**
+   * Async admin check
+   */
+  async isAdminAsync(): Promise<boolean> {
+    const user = await this.getCurrentUserAsync()
     return user?.role === "admin"
   }
 
@@ -348,13 +338,22 @@ class UnifiedAuth {
   hasPermission(permission: string): boolean {
     const user = this.getCurrentUser()
     if (!user) return false
-    
-    // Admin has all permissions
     if (user.role === "admin") return true
     
-    // For now, regular users have basic permissions
     const basicPermissions = ["view_dashboard", "view_jobs", "view_clients", "create_jobs"]
     return basicPermissions.includes(permission)
+  }
+
+  /**
+   * Force refresh the session from server
+   */
+  async refreshSession(): Promise<User | null> {
+    this.memoryCache = null
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(this.CACHE_KEY)
+      localStorage.removeItem(this.CACHE_TIMESTAMP_KEY)
+    }
+    return this.getCurrentUserAsync()
   }
 }
 
