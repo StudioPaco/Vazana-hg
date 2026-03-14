@@ -57,6 +57,8 @@ export default function SettingsPage() {
   const [sessionTimeout, setSessionTimeout] = useState(24) // hours
   const [fontSize, setFontSize] = useState(16) // Base font size in px
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
+  const [addUserError, setAddUserError] = useState<string | null>(null)
+  const [addUserSuccess, setAddUserSuccess] = useState<string | null>(null)
   const [isPaymentTermsOpen, setIsPaymentTermsOpen] = useState(false)
   const [paymentTerms, setPaymentTerms] = useState([
     { id: 1, value: "immediate", label: "מיידי" },
@@ -320,28 +322,30 @@ export default function SettingsPage() {
   }
 
   const handleAddUser = async (userData: any) => {
+    setAddUserError(null)
+    setAddUserSuccess(null)
     try {
       // Basic validation
       if (!userData.username || !userData.password || !userData.role) {
-        alert("אנא מלא את כל השדות")
+        setAddUserError("אנא מלא את כל השדות")
         return
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(userData.username)) {
-        alert("שם משתמש חייב להיות בפורמט אימייל")
+        setAddUserError("שם משתמש חייב להיות בפורמט אימייל")
         return
       }
 
       if (userData.password.length < 8) {
-        alert("סיסמה חייבת להיות אורך 8 תווים לפחות")
+        setAddUserError("סיסמה חייבת להיות אורך 8 תווים לפחות")
         return
       }
       
       const hasLower = /[a-z]/.test(userData.password)
       const hasUpper = /[A-Z]/.test(userData.password)
       if (!hasLower || !hasUpper) {
-        alert("סיסמה חייבת לכלול אותיות קטנות וגדולות")
+        setAddUserError("סיסמה חייבת לכלול אותיות קטנות וגדולות")
         return
       }
 
@@ -361,18 +365,21 @@ export default function SettingsPage() {
       const result = await response.json()
 
       if (!response.ok) {
-        alert(`שגיאה ביצירת משתמש: ${result.error}`)
+        setAddUserError(`שגיאה ביצירת משתמש: ${result.error}`)
         return
       }
 
       // Reload users list from DB
       await loadUsers()
-      setIsAddUserOpen(false)
-      alert("משתמש חדש נוסף בהצלחה! כעת הוא יכול להתחבר למערכת")
+      setAddUserSuccess("משתמש חדש נוסף בהצלחה! כעת הוא יכול להתחבר למערכת")
+      setTimeout(() => {
+        setIsAddUserOpen(false)
+        setAddUserSuccess(null)
+      }, 2000)
     } catch (error) {
       console.error("Error adding user:", error)
       const errorMessage = error instanceof Error ? error.message : String(error)
-      alert(`שגיאה כללית בהוספת משתמש: ${errorMessage}`)
+      setAddUserError(`שגיאה כללית בהוספת משתמש: ${errorMessage}`)
     }
   }
 
@@ -1343,7 +1350,7 @@ export default function SettingsPage() {
               </Card>
 
               {/* Add User Dialog */}
-              <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+              <Dialog open={isAddUserOpen} onOpenChange={(open) => { setIsAddUserOpen(open); if (!open) { setAddUserError(null); setAddUserSuccess(null) } }}>
                 <DialogContent className="max-w-md" dir="rtl">
                   <DialogHeader>
                     <DialogTitle className="text-right font-hebrew">הוסף משתמש חדש</DialogTitle>
@@ -1351,6 +1358,17 @@ export default function SettingsPage() {
                       מלא את פרטי המשתמש החדש
                     </DialogDescription>
                   </DialogHeader>
+                  
+                  {addUserError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-right font-hebrew text-sm">
+                      {addUserError}
+                    </div>
+                  )}
+                  {addUserSuccess && (
+                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-right font-hebrew text-sm">
+                      {addUserSuccess}
+                    </div>
+                  )}
                   
                   <form onSubmit={(e) => {
                     e.preventDefault()
