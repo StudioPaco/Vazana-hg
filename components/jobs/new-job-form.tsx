@@ -56,6 +56,8 @@ export default function NewJobForm() {
     clientCity: "",
     clientPostalCode: "",
     clientPaymentTerms: "1",
+    clientSecurityRate: "",
+    clientInstallationRate: "",
     clientNotes: "",
     existingClientId: "",
     // Job resources
@@ -269,6 +271,8 @@ export default function NewJobForm() {
           city: formData.clientCity,
           po_box: formData.clientPostalCode || null,
           payment_method: parseInt(formData.clientPaymentTerms) || 1,
+          security_rate: parseFloat(formData.clientSecurityRate) || 0,
+          installation_rate: parseFloat(formData.clientInstallationRate) || 0,
           notes: formData.clientNotes || "",
           status: "active",
         }
@@ -622,6 +626,32 @@ export default function NewJobForm() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="clientSecurityRate" className="text-right block">
+                    תעריף אבטחה (₪)
+                  </Label>
+                  <Input
+                    id="clientSecurityRate"
+                    type="number"
+                    value={formData.clientSecurityRate}
+                    onChange={(e) => setFormData({ ...formData, clientSecurityRate: e.target.value })}
+                    placeholder="120"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientInstallationRate" className="text-right block">
+                    תעריף התקנה (₪)
+                  </Label>
+                  <Input
+                    id="clientInstallationRate"
+                    type="number"
+                    value={formData.clientInstallationRate}
+                    onChange={(e) => setFormData({ ...formData, clientInstallationRate: e.target.value })}
+                    placeholder="150"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="clientPaymentTerms" className="text-right block">
                     אופן תשלום
                   </Label>
@@ -781,11 +811,14 @@ export default function NewJobForm() {
                   city: "",
                   clientName: "",
                   clientPhone: "",
+                  clientPhoneNumber: "",
                   clientEmail: "",
                   clientAddress: "",
                   clientCity: "",
                   clientPostalCode: "",
-                  clientPaymentTerms: "immediate",
+                  clientPaymentTerms: "1",
+                  clientSecurityRate: "",
+                  clientInstallationRate: "",
                   clientNotes: "",
                   existingClientId: "",
                   employee: "",
