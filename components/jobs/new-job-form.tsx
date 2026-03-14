@@ -50,6 +50,7 @@ export default function NewJobForm() {
     // Client fields
     clientName: "",
     clientPhone: "",
+    clientPhoneNumber: "",
     clientEmail: "",
     clientAddress: "",
     clientCity: "",
@@ -262,11 +263,13 @@ export default function NewJobForm() {
         const clientPayload = {
           company_name: formData.clientName,
           contact_person: formData.clientPhone,
+          phone: formData.clientPhoneNumber || "",
           email: formData.clientEmail,
           address: formData.clientAddress,
           city: formData.clientCity,
           po_box: formData.clientPostalCode || null,
           payment_method: parseInt(formData.clientPaymentTerms) || 1,
+          notes: formData.clientNotes || "",
           status: "active",
         }
 
@@ -545,6 +548,19 @@ export default function NewJobForm() {
                   )}
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="clientPhoneNumber" className="text-right block">
+                    טלפון
+                  </Label>
+                  <Input
+                    id="clientPhoneNumber"
+                    value={formData.clientPhoneNumber}
+                    onChange={(e) => setFormData({ ...formData, clientPhoneNumber: e.target.value })}
+                    placeholder="050-1234567"
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="clientEmail" className="text-right block">
                     כתובת דוא"ל *
                   </Label>
@@ -617,11 +633,11 @@ export default function NewJobForm() {
                       <SelectValue placeholder="בחר אופן תשלום" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="immediate">מיידי</SelectItem>
-                      <SelectItem value="current+15">שוטף +15</SelectItem>
-                      <SelectItem value="current+30">שוטף +30</SelectItem>
-                      <SelectItem value="current+60">שוטף +60</SelectItem>
-                      <SelectItem value="current+90">שוטף +90</SelectItem>
+                      <SelectItem value="1">מיידי</SelectItem>
+                      <SelectItem value="2">שוטף +15</SelectItem>
+                      <SelectItem value="3">שוטף +30</SelectItem>
+                      <SelectItem value="4">שוטף +60</SelectItem>
+                      <SelectItem value="5">שוטף +90</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
