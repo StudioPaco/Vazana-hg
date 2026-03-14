@@ -173,7 +173,7 @@ CREATE OR REPLACE FUNCTION set_user_id()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.user_id = auth.uid();
-  NEW.updated_at = NOW();
+  NEW.updated_date = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -182,7 +182,7 @@ CREATE OR REPLACE FUNCTION set_created_by()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.created_by_id = auth.uid();
-  NEW.updated_at = NOW();
+  NEW.updated_date = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

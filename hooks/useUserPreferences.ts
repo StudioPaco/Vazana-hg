@@ -5,6 +5,7 @@ interface UserPreferences {
   show_finished_jobs: boolean;
   add_to_calendar_default: boolean;
   jobs_view_mode: 'list' | 'grid';
+  jobs_sort_by: 'number' | 'date';
   default_status_filter: string;
   default_client_filter: string;
 }
@@ -23,6 +24,7 @@ const defaultPreferences: UserPreferences = {
   show_finished_jobs: true, // Default to true
   add_to_calendar_default: false,
   jobs_view_mode: 'list',
+  jobs_sort_by: 'number',
   default_status_filter: 'all',
   default_client_filter: 'all'
 };

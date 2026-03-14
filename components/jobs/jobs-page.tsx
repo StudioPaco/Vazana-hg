@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import EditJobModal from "@/components/jobs/edit-job-modal"
+import ImportJobsModal from "@/components/jobs/import-jobs-modal"
 import { toast } from "@/hooks/use-toast"
 import StatusBadge from "@/components/ui/status-badge"
 
@@ -60,6 +61,7 @@ import {
   CheckCircle,
   Briefcase,
   RotateCcw,
+  Upload,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -96,7 +98,15 @@ export default function JobsPage() {
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set())
   const [editingJob, setEditingJob] = useState<Job | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [sortBy, setSortBy] = useState<'number' | 'date'>('number')
+  const [importModalOpen, setImportModalOpen] = useState(false)
+  const [sortBy, setSortBy] = useState<'number' | 'date'>(preferences?.jobs_sort_by || 'number')
+
+  // Sync sortBy from saved preferences once they load
+  useEffect(() => {
+    if (preferences?.jobs_sort_by) {
+      setSortBy(preferences.jobs_sort_by)
+    }
+  }, [preferences?.jobs_sort_by])
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -344,6 +354,15 @@ export default function JobsPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setImportModalOpen(true)}
+            className="font-hebrew"
+          >
+            <Upload className="w-4 h-4 ml-2" />
+            ייבוא מקובץ
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               const newViewMode = preferences?.jobs_view_mode === "list" ? "grid" : "list"
               updatePreference('jobs_view_mode', newViewMode)
@@ -359,7 +378,10 @@ export default function JobsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSortBy('number')}
+              onClick={() => {
+                setSortBy('number')
+                updatePreference('jobs_sort_by', 'number')
+              }}
               className={`font-hebrew text-xs px-3 py-1 transition-colors ${
                 sortBy === 'number' 
                   ? 'bg-teal-500 text-white hover:bg-teal-600' 
@@ -371,7 +393,10 @@ export default function JobsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSortBy('date')}
+              onClick={() => {
+                setSortBy('date')
+                updatePreference('jobs_sort_by', 'date')
+              }}
               className={`font-hebrew text-xs px-3 py-1 transition-colors ${
                 sortBy === 'date' 
                   ? 'bg-teal-500 text-white hover:bg-teal-600' 
@@ -711,6 +736,26 @@ export default function JobsPage() {
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
           onJobUpdated={handleJobUpdated}
+        />
+        
+        <ImportJobsModal
+          open={importModalOpen}
+          onOpenChange={setImportModalOpen}
+          onImportComplete={() => {
+            // Re-fetch jobs with full status calculation
+            fetch('/api/jobs')
+              .then(res => res.json())
+              .then(result => {
+                const allJobs = result.data || []
+                const jobsWithStatus = allJobs.map((job: Job) => ({
+                  ...job,
+                  job_status: calculateJobStatus(job.job_date),
+                  payment_status: calculatePaymentStatus(calculateJobStatus(job.job_date), job.payment_status),
+                }))
+                setJobs(jobsWithStatus)
+              })
+              .catch(err => console.error('Failed to refresh jobs after import:', err))
+          }}
         />
       </div>
     </div>

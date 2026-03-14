@@ -6,6 +6,7 @@ const defaultPreferences = {
   show_finished_jobs: true,
   add_to_calendar_default: false,
   jobs_view_mode: 'list',
+  jobs_sort_by: 'number',
   default_status_filter: 'all',
   default_client_filter: 'all',
 };
@@ -23,7 +24,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('user_preferences')
-      .select('show_deleted_jobs, show_finished_jobs, add_to_calendar_default, jobs_view_mode, default_status_filter, default_client_filter')
+      .select('show_deleted_jobs, show_finished_jobs, add_to_calendar_default, jobs_view_mode, jobs_sort_by, default_status_filter, default_client_filter')
       .eq('user_id', user.id)
       .single();
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
         { user_id: user.id, ...updateData, updated_at: new Date().toISOString() },
         { onConflict: 'user_id' }
       )
-      .select('show_deleted_jobs, show_finished_jobs, add_to_calendar_default, jobs_view_mode, default_status_filter, default_client_filter')
+      .select('show_deleted_jobs, show_finished_jobs, add_to_calendar_default, jobs_view_mode, jobs_sort_by, default_status_filter, default_client_filter')
       .single();
 
     if (error) {
