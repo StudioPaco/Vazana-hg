@@ -63,16 +63,16 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
           setProfile(userProfile)
         } else {
-          // No valid session — clear any stale cookies/tokens
-          await supabase.auth.signOut().catch(() => {})
+          // No valid session — fire-and-forget signOut (don't block loading)
+          supabase.auth.signOut().catch(() => {})
           if (!isAuthRoute) {
             router.replace("/auth/login")
           }
         }
       } catch (error) {
         console.error("Auth check failed:", error)
-        // Clear stale session on error
-        await supabase.auth.signOut().catch(() => {})
+        // Fire-and-forget signOut
+        supabase.auth.signOut().catch(() => {})
         if (!isAuthRoute) {
           router.replace("/auth/login")
         }

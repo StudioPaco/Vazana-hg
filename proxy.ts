@@ -9,10 +9,23 @@ import { createServerClient } from "@supabase/ssr"
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Start with a default "next" response so we can attach cookie updates
+  // --- Route classification (BEFORE any Supabase calls) ---
+  const isAuthRoute = pathname.startsWith("/auth")
+  const isAuthApi = pathname.startsWith("/api/auth")
+  const isStaticAsset =
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname.includes(".")
+
+  // Auth routes, auth API, and static assets: pass through immediately.
+  // Do NOT call getUser() here — if Supabase is slow/down, it blocks everything.
+  if (isAuthRoute || isAuthApi || isStaticAsset) {
+    return NextResponse.next({ request })
+  }
+
+  // --- Protected routes: check session ---
   let supabaseResponse = NextResponse.next({ request })
 
-  // Create a Supabase server client that can read/write cookies on the request/response
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,11 +35,9 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          // Forward cookie writes to the request (for downstream server components)
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          // Also forward to the response (so browser receives the updated cookies)
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -36,22 +47,18 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Refresh the session — this keeps the JWT alive and updates cookies
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // --- Auth enforcement ---
-  const isAuthRoute = pathname.startsWith("/auth")
-  const isAuthApi = pathname.startsWith("/api/auth")
-  const isStaticAsset =
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-
-  // Skip protection for auth routes, auth API, and static assets
-  if (isAuthRoute || isAuthApi || isStaticAsset) {
-    return supabaseResponse
+  // Race getUser against a 4-second timeout to prevent hanging
+  let user = null
+  try {
+    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000))
+    const authResult = await Promise.race([
+      supabase.auth.getUser().then((r) => r.data.user),
+      timeout,
+    ])
+    user = authResult
+  } catch {
+    // Auth check failed — treat as unauthenticated
+    user = null
   }
 
   // If not authenticated:
