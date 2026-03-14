@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,10 +13,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    // Use admin client to look up username (bypasses RLS — user isn't authenticated yet)
+    const admin = createAdminClient()
 
-    // Look up the user's email by username in user_profiles
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await admin
       .from("user_profiles")
       .select("email, username, is_active")
       .eq("username", username)
