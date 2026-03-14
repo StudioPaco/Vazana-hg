@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Authenticate via Supabase Auth using the email
+    // Authenticate via Supabase Auth using the email (server client sets session cookies)
+    const supabase = await createClient()
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email: profile.email,
       password,
