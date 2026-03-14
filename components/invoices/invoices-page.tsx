@@ -15,11 +15,11 @@ import StatusBadge from "@/components/ui/status-badge"
 
 interface Invoice {
   id: string
-  receipt_number: string
+  invoice_number: string
   client_id: string
   total_amount: number
   status: string
-  issue_date: string
+  invoice_date: string
   due_date: string
   notes: string
   clients: {
@@ -112,7 +112,7 @@ export default function InvoicesPage({
   useEffect(() => {
     let filtered = invoices.filter(
       (invoice) =>
-        invoice.receipt_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         invoice.clients.company_name.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
@@ -190,7 +190,7 @@ export default function InvoicesPage({
     const pendingInvoices = filteredInvoices.filter(inv => inv.status === "sent").length
     const overdueInvoices = filteredInvoices.filter(inv => isOverdue(inv.due_date, inv.status)).length
     const totalInvoicesThisMonth = filteredInvoices.filter(inv => {
-      const invoiceDate = new Date(inv.issue_date)
+      const invoiceDate = new Date(inv.invoice_date)
       const now = new Date()
       return invoiceDate.getMonth() === now.getMonth() && invoiceDate.getFullYear() === now.getFullYear()
     }).length
@@ -374,7 +374,7 @@ export default function InvoicesPage({
                   <div className="relative mb-4">
                     {/* Invoice info - positioned at top-right */}
                     <div className="absolute top-0 right-0 text-right">
-                      <h3 className="text-lg font-bold text-gray-900">חשבונית #{invoice.receipt_number}</h3>
+                      <h3 className="text-lg font-bold text-gray-900">חשבונית #{invoice.invoice_number}</h3>
                       <p className="text-sm text-gray-600">{invoice.clients.company_name}</p>
                       <Badge
                         className={getStatusColor(
@@ -390,7 +390,7 @@ export default function InvoicesPage({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownloadPDF(invoice.id, invoice.receipt_number)}
+                        onClick={() => handleDownloadPDF(invoice.id, invoice.invoice_number)}
                         className="bg-transparent border-gray-300 h-8 px-3 text-xs"
                       >
                         PDF
@@ -409,7 +409,7 @@ export default function InvoicesPage({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="text-right space-y-1">
                       <div className="flex items-center justify-end">
-                        <span className="mr-2 text-sm">{new Date(invoice.issue_date).toLocaleDateString("he-IL")}</span>
+                        <span className="mr-2 text-sm">{new Date(invoice.invoice_date).toLocaleDateString("he-IL")}</span>
                         <Calendar className="h-3 w-3 text-gray-500" />
                       </div>
                       <p className="text-xs text-gray-600">תאריך הפקה</p>

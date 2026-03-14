@@ -34,11 +34,11 @@ const LOGO_URL =
 
 interface InvoiceItem {
   id: string
-  receipt_number?: string
+  invoice_number?: string
   vat_percentage?: number
   notes?: string
   status?: string
-  issue_date?: string
+  invoice_date?: string
   client_id?: string
   total_amount?: number
   [key: string]: any
@@ -367,11 +367,11 @@ export default function ViewInvoice() {
     line_items = [],
     notes = "",
     status = "draft",
-    receipt_number = "N/A", // Changed from invoice_number
+    invoice_number = "N/A",
     client_name = "N/A",
     client_address = "",
     client_phone = "",
-    receipt_date, // Changed from invoice_date
+    invoice_date,
     period_start,
     period_end,
     expected_payment_date,
@@ -413,7 +413,7 @@ export default function ViewInvoice() {
             {/* Page Title (optional, if needed here or just rely on breadcrumbs/main title) */}
             <div className={`${isHebrew ? "text-left" : "text-right"}`}>
               <h1 className="text-xl font-semibold text-neutral-700">
-                {t.pageTitlePrefix} - {receipt_number}
+                {t.pageTitlePrefix} - {invoice_number}
               </h1>
             </div>
           </CardHeader>
@@ -430,11 +430,11 @@ export default function ViewInvoice() {
               <div className={`${isHebrew ? "md:text-left" : "md:text-right"}`}>
                 <h2 className="text-xl md:text-2xl font-bold text-neutral-900">{t.invoiceTitle}</h2>
                 <p className="text-neutral-600">
-                  <span className="font-medium">{t.invoiceNumberLabel}</span> {receipt_number}
+                  <span className="font-medium">{t.invoiceNumberLabel}</span> {invoice_number}
                 </p>
                 <p className="text-neutral-600">
                   <span className="font-medium">{t.dateIssuedLabel}:</span>{" "}
-                  {receipt_date ? format(parseISO(receipt_date), "dd/MM/yyyy") : "N/A"}
+                  {invoice_date ? format(parseISO(invoice_date), "dd/MM/yyyy") : "N/A"}
                 </p>
                 <p className="text-neutral-600">
                   <span className="font-medium">{t.billingPeriodLabel}:</span>

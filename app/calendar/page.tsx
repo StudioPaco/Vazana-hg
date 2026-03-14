@@ -2,13 +2,14 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "lucide-react"
-import SidebarNavigation from "@/components/layout/sidebar-navigation"
+import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
 
 export default function CalendarPage() {
+  const { isMinimized } = useSidebar()
   return (
     <div className="min-h-screen bg-gray-50">
       <SidebarNavigation />
-      <div className="mr-64 p-6">
+      <div className={`${isMinimized ? "mr-24" : "mr-64"} p-6 transition-all duration-300`}>
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}
           <div className="text-right">

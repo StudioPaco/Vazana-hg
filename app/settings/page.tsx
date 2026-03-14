@@ -423,11 +423,24 @@ export default function SettingsPage() {
     }
   }
 
-  const handleDeleteUser = (userId: string) => {
-    console.log("Deleting user:", userId)
-    if (confirm("האם אתה בטוח שברצונך למחוק את המשתמש?")) {
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("האם אתה בטוח שברצונך למחוק את המשתמש?")) return
+    try {
+      const { error } = await supabase
+        .from("user_profiles")
+        .delete()
+        .eq("id", userId)
+
+      if (error) {
+        console.error("Error deleting user:", error)
+        alert(`שגיאה במחיקת המשתמש: ${error.message}`)
+        return
+      }
       setUsers((prev) => prev.filter((user) => user.id !== userId))
       alert("משתמש נמחק בהצלחה!")
+    } catch (error) {
+      console.error("Error deleting user:", error)
+      alert("שגיאה במחיקת המשתמש")
     }
   }
 
@@ -687,18 +700,18 @@ export default function SettingsPage() {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <Switch />
-                    <Label className="font-hebrew">דרוש אימות דו-שלבי (בקרוב)</Label>
+                    <Switch disabled />
+                    <Label className="font-hebrew text-gray-400">דרוש אימות דו-שלבי (בקרוב)</Label>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <Switch />
-                    <Label className="font-hebrew">רשום פעילות משתמשים - זמין למנהלים בלבד</Label>
+                    <Switch disabled />
+                    <Label className="font-hebrew text-gray-400">רשום פעילות משתמשים (בקרוב)</Label>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <Switch />
-                    <Label className="font-hebrew">התראות צלילים</Label>
+                    <Switch disabled />
+                    <Label className="font-hebrew text-gray-400">התראות צלילים (בקרוב)</Label>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -1050,18 +1063,18 @@ export default function SettingsPage() {
                     <h3 className="text-lg font-semibold mb-4 text-right font-hebrew">אינטגרציה עם לוח חגים</h3>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <Switch />
-                        <Label className="font-hebrew">סמן אוטומטי חגים יהודיים</Label>
+                        <Switch disabled />
+                        <Label className="font-hebrew text-gray-400">סמן אוטומטי חגים יהודיים (בקרוב)</Label>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <Switch />
-                        <Label className="font-hebrew">סמן אוטומטי חגים כלליים</Label>
+                        <Switch disabled />
+                        <Label className="font-hebrew text-gray-400">סמן אוטומטי חגים כלליים (בקרוב)</Label>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <Switch defaultChecked />
-                        <Label className="font-hebrew">התראה על עבודות בימי חג</Label>
+                        <Switch disabled />
+                        <Label className="font-hebrew text-gray-400">התראה על עבודות בימי חג (בקרוב)</Label>
                       </div>
                       
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -1460,18 +1473,18 @@ export default function SettingsPage() {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <Switch defaultChecked />
-                        <Label className="font-hebrew">רשם כניסות ויציאות</Label>
+                        <Switch disabled />
+                        <Label className="font-hebrew text-gray-400">רשם כניסות ויציאות (בקרוב)</Label>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <Switch defaultChecked />
-                        <Label className="font-hebrew">רשם שינויי נתונים</Label>
+                        <Switch disabled />
+                        <Label className="font-hebrew text-gray-400">רשם שינויי נתונים (בקרוב)</Label>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <Switch defaultChecked />
-                        <Label className="font-hebrew">רשם מחיקות נתונים</Label>
+                        <Switch disabled />
+                        <Label className="font-hebrew text-gray-400">רשם מחיקות נתונים (בקרוב)</Label>
                       </div>
                       
                       <div className="border-t pt-4">
@@ -1486,19 +1499,10 @@ export default function SettingsPage() {
                         
                         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                           <h4 className="font-semibold text-right font-hebrew mb-2">פעילות אחרונה:</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-600">2 דקות</span>
-                              <span className="font-hebrew">עדכון פרטי לקוח - root</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-600">5 דקות</span>
-                              <span className="font-hebrew">יצירת עבודה חדשה - admin</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-600">12 דקות</span>
-                              <span className="font-hebrew">כניסה למערכת - user1</span>
-                            </div>
+                          <div className="text-center py-4 text-sm text-gray-500 font-hebrew">
+                            <Activity className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+                            <p>אין פעילות רשומות להצגה</p>
+                            <p className="text-xs text-gray-400 mt-1">יומן הפעילות יהיה זמין בעדכון עתידי</p>
                           </div>
                         </div>
                       </div>
@@ -1619,8 +1623,8 @@ export default function SettingsPage() {
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <Switch defaultChecked />
-                        <Label className="font-hebrew">התראה על קונפליקטי סינכרון</Label>
+                        <Switch disabled />
+                        <Label className="font-hebrew text-gray-400">התראה על קונפליקטי סינכרון (בקרוב)</Label>
                       </div>
                       
                       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -1765,8 +1769,8 @@ export default function SettingsPage() {
                     <h3 className="font-semibold mb-4 text-right font-hebrew">גיבוי אוטומטי מתוזמן</h3>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <Switch defaultChecked />
-                        <Label className="font-hebrew">הפעל גיבוי אוטומטי</Label>
+                        <Switch disabled />
+                        <Label className="font-hebrew text-gray-400">הפעל גיבוי אוטומטי (בקרוב)</Label>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
