@@ -44,7 +44,7 @@ import AppNavigation from "@/components/layout/app-navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useTheme } from "@/lib/theme-context"
-import { clientAuth } from "@/lib/client-auth"
+import { useAuth } from "@/components/auth/auth-provider"
 import { useSearchParams, useRouter } from "next/navigation"
 import ResourceModal from "@/components/settings/resource-modal"
 import DataExportImport from "@/components/settings/data-export-import"
@@ -118,7 +118,7 @@ export default function SettingsPage() {
     bankBranch: "",
     bankAccountNumber: "",
   })
-  const [users, setUsers] = useState([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת", isSystem: true }])
+  const [users, setUsers] = useState<Array<{ id: string; username: string; role: string; dbRole: string; description: string; full_name?: string }>>([])
   const [financialSettings, setFinancialSettings] = useState({
     vatPercentage: 18,
     autoInvoiceSync: false,
@@ -132,7 +132,7 @@ export default function SettingsPage() {
   const { pendingSettings, setPendingSettings, applySettings, colorThemes, isDark, sidebarMinimizedByDefault, roundedContainers, colorTheme } = useTheme()
   const supabase = createClient()
   const [activeTab, setActiveTab] = useState("general")
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const { profile: authProfile } = useAuth()
 
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab")
@@ -143,10 +143,6 @@ export default function SettingsPage() {
     }
     loadBusinessSettings()
     loadUsers()
-    
-    // Load current user
-    const user = clientAuth.getCurrentUser()
-    setCurrentUser(user)
     
     // Load payment terms from localStorage
     const savedPaymentTerms = localStorage.getItem('vazana-payment-terms')
@@ -202,18 +198,17 @@ export default function SettingsPage() {
       const { data, error } = await supabase.from("user_profiles").select("*")
 
       if (data) {
-        const formattedUsers = data
-          .filter(user => user.username !== "root") // Exclude root from DB users
-          .map((user) => ({
-            id: user.id,
-            username: user.username,
-            role: user.role === "admin" ? "מנהל" : "משתמש",
-            description: user.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
-            isSystem: false
-          }))
-        
-        // Only include the hardcoded root user
-        setUsers([{ id: "root", username: "root", role: "מנהל", description: "מנהל מערכת", isSystem: true }, ...formattedUsers])
+        const roleDisplayMap: Record<string, string> = { owner: "בעלים", admin: "מנהל", staff: "משתמש" }
+        const descriptionMap: Record<string, string> = { owner: "בעלים — מנהל ראשי", admin: "מנהל מערכת", staff: "משתמש רגיל" }
+        const formattedUsers = data.map((user) => ({
+          id: user.id,
+          username: user.username,
+          role: roleDisplayMap[user.role] || "משתמש",
+          dbRole: user.role,
+          description: descriptionMap[user.role] || "משתמש רגיל",
+          full_name: user.full_name,
+        }))
+        setUsers(formattedUsers)
       }
     } catch (error) {
       console.error("Error loading users:", error)
@@ -327,20 +322,12 @@ export default function SettingsPage() {
         return
       }
 
-      // Validate username is email format (except for root)
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (userData.username !== "root" && !emailRegex.test(userData.username)) {
+      if (!emailRegex.test(userData.username)) {
         alert("שם משתמש חייב להיות בפורמט אימייל")
         return
       }
 
-      // Prevent creating another root user
-      if (userData.username === "root") {
-        alert("לא ניתן ליצור משתמש root נוסף")
-        return
-      }
-
-      // Validate password complexity
       if (userData.password.length < 8) {
         alert("סיסמה חייבת להיות אורך 8 תווים לפחות")
         return
@@ -348,64 +335,33 @@ export default function SettingsPage() {
       
       const hasLower = /[a-z]/.test(userData.password)
       const hasUpper = /[A-Z]/.test(userData.password)
-      
       if (!hasLower || !hasUpper) {
         alert("סיסמה חייבת לכלול אותיות קטנות וגדולות")
         return
       }
 
-      // Check if username already exists
-      const { data: existingUser } = await supabase
-        .from("user_profiles")
-        .select("username")
-        .eq("username", userData.username)
-        .single()
+      // Create user via API (creates both auth.users and user_profiles)
+      const response = await fetch("/api/auth/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userData.username,
+          password: userData.password,
+          full_name: userData.full_name || userData.username,
+          phone: userData.phone_number || null,
+          role: userData.role,
+        }),
+      })
 
-      if (existingUser) {
-        alert("שם משתמש כבר קיים במערכת")
+      const result = await response.json()
+
+      if (!response.ok) {
+        alert(`שגיאה ביצירת משתמש: ${result.error}`)
         return
       }
 
-      // Hash the password before storing
-      const hashedPassword = await clientAuth.hashPassword(userData.password)
-      const currentUser = clientAuth.getCurrentUser()
-      
-      const userInsertData = {
-        username: userData.username,
-        full_name: userData.full_name || userData.username,
-        password_hash: hashedPassword,
-        role: userData.role,
-        is_active: true,
-        permissions: userData.role === "admin" ? 
-          { maintenance: true, delete_jobs: true, delete_invoices: true, user_management: true } : 
-          { maintenance: false, delete_jobs: false, delete_invoices: false, user_management: false },
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-      
-      console.log("Attempting to insert user data:", userInsertData)
-
-      const { data, error } = await supabase
-        .from("user_profiles")
-        .insert(userInsertData)
-        .select()
-        .single()
-
-      if (error) {
-        console.error("Supabase error creating user:", error)
-        alert(`שגיאה במסד הנתונים: ${error.message}`)
-        return
-      }
-
-      console.log("User created successfully:", data)
-      const newUser = {
-        id: data.id,
-        username: data.username,
-        role: data.role === "admin" ? "מנהל" : "משתמש",
-        description: data.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
-        isSystem: false,
-      }
-      setUsers((prev) => [...prev, newUser])
+      // Reload users list from DB
+      await loadUsers()
       setIsAddUserOpen(false)
       alert("משתמש חדש נוסף בהצלחה! כעת הוא יכול להתחבר למערכת")
     } catch (error) {
@@ -424,6 +380,11 @@ export default function SettingsPage() {
   }
 
   const handleDeleteUser = async (userId: string) => {
+    const targetUser = users.find(u => u.id === userId)
+    if (targetUser?.dbRole === "owner") {
+      alert("לא ניתן למחוק את בעל המערכת")
+      return
+    }
     if (!confirm("האם אתה בטוח שברצונך למחוק את המשתמש?")) return
     try {
       const { error } = await supabase
@@ -1318,19 +1279,25 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-start mb-4">
-                    <Button onClick={() => setIsAddUserOpen(true)} className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
-                      <Plus className="ml-2 w-4 h-4" />
-                      הוסף משתמש
-                    </Button>
-                  </div>
+                  {(authProfile?.role === 'owner' || authProfile?.role === 'admin') && (
+                    <div className="flex justify-start mb-4">
+                      <Button onClick={() => setIsAddUserOpen(true)} className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
+                        <Plus className="ml-2 w-4 h-4" />
+                        הוסף משתמש
+                      </Button>
+                    </div>
+                  )}
                   
                   <div className="space-y-3">
-                    {users.map((user) => (
-                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex gap-2">
-                          {!user.isSystem && (
-                            <>
+                    {users.map((user) => {
+                      const isAdmin = authProfile?.role === "owner" || authProfile?.role === "admin"
+                      const isSelf = authProfile?.id === user.id
+                      const canEdit = isAdmin || isSelf
+                      const canDelete = isAdmin && user.dbRole !== "owner" && !isSelf
+                      return (
+                        <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex gap-2">
+                            {canEdit && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1338,6 +1305,8 @@ export default function SettingsPage() {
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
+                            )}
+                            {canDelete && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1346,24 +1315,24 @@ export default function SettingsPage() {
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
-                            </>
-                          )}
-                          {user.isSystem && (
-                            <Badge variant="secondary" className="text-xs font-hebrew">
-                              מערכת
+                            )}
+                            {user.dbRole === "owner" && (
+                              <Badge variant="secondary" className="text-xs font-hebrew">
+                                בעלים
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          <div className="text-right">
+                            <h3 className="font-medium">{user.full_name || user.username}</h3>
+                            <p className="text-sm text-gray-600">{user.username}</p>
+                            <Badge variant={user.dbRole === "owner" || user.dbRole === "admin" ? "default" : "secondary"} className="text-xs font-hebrew">
+                              {user.role}
                             </Badge>
-                          )}
+                          </div>
                         </div>
-                        
-                        <div className="text-right">
-                          <h3 className="font-medium">{user.username}</h3>
-                          <p className="text-sm text-gray-600">{user.description}</p>
-                          <Badge variant={user.role === "מנהל" ? "default" : "secondary"} className="text-xs font-hebrew">
-                            {user.role}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -1441,7 +1410,7 @@ export default function SettingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin" className="font-hebrew">מנהל</SelectItem>
-                          <SelectItem value="user" className="font-hebrew">משתמש</SelectItem>
+                          <SelectItem value="staff" className="font-hebrew">משתמש</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1459,7 +1428,7 @@ export default function SettingsPage() {
               </Dialog>
               
               {/* Audit Trail Section - Admin/Root Only */}
-              {(currentUser?.role === 'admin' || currentUser?.username === 'root') && (
+              {(authProfile?.role === 'owner' || authProfile?.role === 'admin') && (
                 <Card className="mt-6">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between font-hebrew">
@@ -1516,16 +1485,9 @@ export default function SettingsPage() {
                 user={editingUser}
                 open={userEditModalOpen}
                 onOpenChange={setUserEditModalOpen}
-                onUserUpdated={(updatedUser) => {
-                  setUsers(users.map(user => 
-                    user.id === updatedUser.id ? {
-                      id: updatedUser.id,
-                      username: updatedUser.username || '',
-                      role: updatedUser.role === 'admin' ? 'מנהל' : 'משתמש',
-                      description: updatedUser.description || (updatedUser.role === 'admin' ? 'מנהל מערכת' : 'משתמש רגיל'),
-                      isSystem: false
-                    } : user
-                  ))
+                isAdmin={authProfile?.role === 'owner' || authProfile?.role === 'admin'}
+                onUserUpdated={() => {
+                  loadUsers()
                   setEditingUser(null)
                 }}
               />
@@ -1826,7 +1788,7 @@ export default function SettingsPage() {
                   </div>
                   
                   {/* Audit Trail Export */}
-                  {(currentUser?.role === 'admin' || currentUser?.username === 'root') && (
+                  {(authProfile?.role === 'owner' || authProfile?.role === 'admin') && (
                     <div className="border-t pt-4">
                       <h3 className="font-semibold mb-4 text-right font-hebrew">יציאת יומן פעילות</h3>
                       <div className="space-y-4">

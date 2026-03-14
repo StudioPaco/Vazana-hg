@@ -32,8 +32,9 @@ import {
 import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
 import { BackButton } from "@/components/ui/back-button"
 import { createClient } from "@/lib/supabase/client"
-import { clientAuth } from "@/lib/client-auth"
+import { useAuth } from "@/components/auth/auth-provider"
 import { useRouter } from "next/navigation"
+import { Download } from "lucide-react"
 
 interface LogEntry {
   id: string
@@ -63,8 +64,10 @@ interface SystemHealth {
 export default function MaintenancePage() {
   const { isMinimized } = useSidebar()
   const router = useRouter()
+  const { profile: authProfile, isLoading: authLoading } = useAuth()
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [hasAccess, setHasAccess] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const [isLogging, setIsLogging] = useState(true)
   const [features, setFeatures] = useState<FeatureStatus[]>([])
   const [systemHealth, setSystemHealth] = useState<SystemHealth>({
@@ -82,7 +85,7 @@ export default function MaintenancePage() {
     if (!isLogging) return
 
     const newLog: LogEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique IDs
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
       level,
       message,
@@ -90,7 +93,14 @@ export default function MaintenancePage() {
       details,
     }
 
-    setLogs((prev) => [...prev.slice(-99), newLog]) // Keep last 100 logs
+    setLogs((prev) => [...prev.slice(-199), newLog]) // Keep last 200 logs in UI
+
+    // Persist to Supabase (fire-and-forget)
+    fetch("/api/maintenance-logs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ level, message, component, details: details ? JSON.stringify(details) : null }),
+    }).catch((err) => console.warn("Failed to persist log:", err))
 
     // Auto-scroll to bottom
     setTimeout(() => {
@@ -98,8 +108,57 @@ export default function MaintenancePage() {
     }, 100)
   }
 
-  const clearLogs = () => {
+  const loadLogHistory = async () => {
+    setLoadingHistory(true)
+    try {
+      const res = await fetch("/api/maintenance-logs?limit=200")
+      if (res.ok) {
+        const { data } = await res.json()
+        if (data && data.length > 0) {
+          const historicLogs: LogEntry[] = data.map((row: any) => ({
+            id: row.id,
+            timestamp: new Date(row.timestamp),
+            level: row.level,
+            message: row.message,
+            component: row.component,
+            details: row.details,
+          }))
+          // Prepend history (oldest first) then append any current session logs
+          setLogs((prev) => [...historicLogs.reverse(), ...prev])
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load log history:", err)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const exportLogs = () => {
+    const exportData = logs.map((log) => ({
+      timestamp: log.timestamp.toISOString(),
+      level: log.level,
+      message: log.message,
+      component: log.component || "",
+      details: log.details,
+    }))
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `maintenance-logs-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const clearLogs = async () => {
     setLogs([])
+    // Also clear persisted logs
+    try {
+      await fetch("/api/maintenance-logs", { method: "DELETE" })
+    } catch (err) {
+      console.warn("Failed to clear persisted logs:", err)
+    }
     addLog("info", "Logs cleared", "System")
   }
 
@@ -175,87 +234,105 @@ export default function MaintenancePage() {
   const checkDataIntegrity = async (): Promise<FeatureStatus[]> => {
     const features: FeatureStatus[] = []
 
+    // Helper: count rows in a table
+    const countTable = async (table: string) => {
+      const { count, error } = await supabase.from(table).select("*", { count: "exact", head: true })
+      return { count: count ?? 0, error }
+    }
+
     try {
-      // Check Workers
-      addLog("info", "Checking workers data...", "Data Integrity")
-      const { data: workers, error: workersError } = await supabase.from("workers").select("id, name").limit(5)
+      // --- Core resource checks with row counts ---
+      const tables = [
+        { table: "workers", name: "Workers", icon: Users, category: "Data" },
+        { table: "vehicles", name: "Vehicles", icon: Car, category: "Data" },
+        { table: "carts", name: "Carts", icon: ShoppingCart, category: "Data" },
+        { table: "clients", name: "Clients", icon: Users, category: "Data" },
+        { table: "jobs", name: "Jobs", icon: Briefcase, category: "Data" },
+        { table: "work_types", name: "Work Types", icon: Settings, category: "Configuration" },
+      ]
 
+      for (const t of tables) {
+        addLog("info", `Checking ${t.name}...`, "Data Integrity")
+        const { count, error } = await countTable(t.table)
+        features.push({
+          name: t.name,
+          status: error ? "error" : count > 0 ? "healthy" : "warning",
+          lastChecked: new Date(),
+          message: error ? error.message : `${count} rows`,
+          icon: t.icon,
+          category: t.category,
+        })
+        if (count > 0) addLog("success", `${t.name}: ${count} rows`, "Data Integrity")
+      }
+
+      // --- Invoices table check ---
+      addLog("info", "Checking invoices...", "Data Integrity")
+      const { count: invoiceCount, error: invErr } = await countTable("invoices")
       features.push({
-        name: "Workers Management",
-        status: workersError ? "error" : workers && workers.length > 0 ? "healthy" : "warning",
+        name: "Invoices",
+        status: invErr ? "error" : "healthy",
         lastChecked: new Date(),
-        message: workersError ? workersError.message : `${workers?.length || 0} workers found`,
-        icon: Users,
+        message: invErr ? invErr.message : `${invoiceCount} invoices`,
+        icon: FileText,
         category: "Data",
       })
 
-      // Check Vehicles
-      addLog("info", "Checking vehicles data...", "Data Integrity")
-      const { data: vehicles, error: vehiclesError } = await supabase.from("vehicles").select("id, name").limit(5)
-
+      // --- Business settings check ---
+      addLog("info", "Checking business settings...", "Data Integrity")
+      const { data: bsData, error: bsErr } = await supabase
+        .from("business_settings")
+        .select("id, company_name, company_email, phone")
+        .limit(1)
+        .single()
+      const bsMissing = bsData && (!bsData.company_email && !bsData.phone)
       features.push({
-        name: "Vehicles Management",
-        status: vehiclesError ? "error" : vehicles && vehicles.length > 0 ? "healthy" : "warning",
+        name: "Business Settings",
+        status: bsErr ? "error" : bsMissing ? "warning" : "healthy",
         lastChecked: new Date(),
-        message: vehiclesError ? vehiclesError.message : `${vehicles?.length || 0} vehicles found`,
-        icon: Car,
-        category: "Data",
-      })
-
-      // Check Carts
-      addLog("info", "Checking carts data...", "Data Integrity")
-      const { data: carts, error: cartsError } = await supabase.from("carts").select("id, name").limit(5)
-
-      features.push({
-        name: "Carts Management",
-        status: cartsError ? "error" : carts && carts.length > 0 ? "healthy" : "warning",
-        lastChecked: new Date(),
-        message: cartsError ? cartsError.message : `${carts?.length || 0} carts found`,
-        icon: ShoppingCart,
-        category: "Data",
-      })
-
-      // Check Clients
-      addLog("info", "Checking clients data...", "Data Integrity")
-      const { data: clients, error: clientsError } = await supabase.from("clients").select("id, company_name").limit(5)
-
-      features.push({
-        name: "Clients Management",
-        status: clientsError ? "error" : clients && clients.length > 0 ? "healthy" : "warning",
-        lastChecked: new Date(),
-        message: clientsError ? clientsError.message : `${clients?.length || 0} clients found`,
-        icon: Users,
-        category: "Data",
-      })
-
-      // Check Jobs
-      addLog("info", "Checking jobs data...", "Data Integrity")
-      const { data: jobs, error: jobsError } = await supabase.from("jobs").select("id, job_number").limit(5)
-
-      features.push({
-        name: "Jobs Management",
-        status: jobsError ? "error" : "healthy",
-        lastChecked: new Date(),
-        message: jobsError ? jobsError.message : `${jobs?.length || 0} jobs found`,
-        icon: Briefcase,
-        category: "Data",
-      })
-
-      // Check Work Types
-      addLog("info", "Checking work types data...", "Data Integrity")
-      const { data: workTypes, error: workTypesError } = await supabase
-        .from("work_types")
-        .select("id, name_he")
-        .limit(5)
-
-      features.push({
-        name: "Work Types",
-        status: workTypesError ? "error" : workTypes && workTypes.length > 0 ? "healthy" : "warning",
-        lastChecked: new Date(),
-        message: workTypesError ? workTypesError.message : `${workTypes?.length || 0} work types found`,
+        message: bsErr ? bsErr.message : bsMissing ? "Missing email/phone — update in Settings" : `${bsData?.company_name || "Configured"}`,
         icon: Settings,
         category: "Configuration",
       })
+
+      // --- User profiles check ---
+      addLog("info", "Checking user profiles...", "Data Integrity")
+      const { data: users, error: usersErr } = await supabase
+        .from("user_profiles")
+        .select("id, username, role, is_active")
+      const activeUsers = users?.filter(u => u.is_active) || []
+      const ownerCount = users?.filter(u => u.role === "owner").length || 0
+      features.push({
+        name: "User Profiles",
+        status: usersErr ? "error" : ownerCount === 0 ? "error" : "healthy",
+        lastChecked: new Date(),
+        message: usersErr ? usersErr.message : `${activeUsers.length} active users (${ownerCount} owner)`,
+        icon: Users,
+        category: "Security",
+      })
+      if (ownerCount === 0) addLog("error", "No owner user found!", "Data Integrity")
+
+      // --- Stale data warnings ---
+      addLog("info", "Checking for stale data...", "Data Integrity")
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const { count: stalePendingJobs } = await supabase
+        .from("jobs")
+        .select("*", { count: "exact", head: true })
+        .eq("payment_status", "ממתין")
+        .lt("job_date", thirtyDaysAgo.toISOString().split("T")[0])
+
+      if (stalePendingJobs && stalePendingJobs > 0) {
+        addLog("warning", `${stalePendingJobs} jobs pending payment for 30+ days`, "Data Integrity")
+        features.push({
+          name: "Stale Pending Jobs",
+          status: "warning",
+          lastChecked: new Date(),
+          message: `${stalePendingJobs} jobs pending payment 30+ days`,
+          icon: Clock,
+          category: "Data",
+        })
+      }
+
     } catch (error) {
       addLog("error", `Data integrity check failed: ${error}`, "Data Integrity", error)
     }
@@ -415,28 +492,20 @@ export default function MaintenancePage() {
     try {
       addLog("info", "Testing authentication system...", "Authentication")
       
-      // Test current user session
-      const currentUser = clientAuth.getCurrentUser()
-      if (!currentUser) {
-        addLog("error", "No authenticated user found", "Authentication")
+      // Test Supabase Auth session
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
+        addLog("error", "No Supabase Auth session found", "Authentication")
         return "error"
       }
+      addLog("success", `Auth user: ${authUser.email}`, "Authentication")
       
-      addLog("success", `Current user: ${currentUser.username} (${currentUser.role})`, "Authentication")
-      
-      // Test session validity
-      const isSessionValid = clientAuth.isSessionValid()
-      if (!isSessionValid) {
-        addLog("warning", "Current session is expired", "Authentication")
-        return "warning"
+      // Test auth profile from context
+      if (authProfile) {
+        addLog("success", `Profile: ${authProfile.username} (${authProfile.role})`, "Authentication")
+      } else {
+        addLog("warning", "Auth profile not loaded from context", "Authentication")
       }
-      
-      const timeRemaining = Math.floor(clientAuth.getSessionTimeRemaining())
-      addLog("info", `Session time remaining: ${timeRemaining} minutes`, "Authentication")
-      
-      // Test admin permissions
-      const isAdmin = clientAuth.isAdmin()
-      addLog("info", `Admin privileges: ${isAdmin ? 'Yes' : 'No'}`, "Authentication")
       
       // Test user database table
       const { data: users, error: usersError } = await supabase
@@ -460,35 +529,34 @@ export default function MaintenancePage() {
 
   const testUserCreationFlow = async (): Promise<"healthy" | "warning" | "error"> => {
     try {
-      addLog("info", "Testing user creation flow...", "User Management")
-      
-      // Check if we can hash passwords
-      const testPassword = "test123"
-      const hashedPassword = await clientAuth.hashPassword(testPassword)
-      
-      if (!hashedPassword || hashedPassword === testPassword) {
-        addLog("error", "Password hashing failed", "User Management")
-        return "error"
-      }
-      
-      addLog("success", "Password hashing working correctly", "User Management")
+      addLog("info", "Testing user management flow...", "User Management")
       
       // Test database table structure
       const { data: tableInfo, error: tableError } = await supabase
         .from('user_profiles')
-        .select('username, password_hash, full_name, role, is_active, permissions, created_by')
+        .select('username, full_name, role, is_active, permissions')
         .limit(1)
       
       if (tableError) {
-        addLog("error", `User profiles table structure error: ${tableError.message}`, "User Management")
+        addLog("error", `User profiles table error: ${tableError.message}`, "User Management")
         return "error"
       }
       
-      addLog("success", "User profiles table structure is correct", "User Management")
-      return "healthy"
+      addLog("success", "User profiles table accessible", "User Management")
       
+      // Test create-user API endpoint reachability
+      addLog("info", "Testing create-user API...", "User Management")
+      const res = await fetch("/api/auth/create-user", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
+      if (res.status === 400 || res.status === 401 || res.status === 403) {
+        addLog("success", "Create-user API reachable (validation/auth working)", "User Management")
+      } else if (res.status === 500) {
+        addLog("warning", "Create-user API returned 500 — check server logs", "User Management")
+        return "warning"
+      }
+      
+      return "healthy"
     } catch (error) {
-      addLog("error", `User creation test failed: ${error}`, "User Management", error)
+      addLog("error", `User management test failed: ${error}`, "User Management", error)
       return "error"
     }
   }
@@ -533,20 +601,22 @@ export default function MaintenancePage() {
   }
 
   useEffect(() => {
-    // Check admin access first
-    if (!clientAuth.isAuthenticated()) {
+    if (authLoading) return
+
+    // Check admin access using auth provider
+    if (!authProfile) {
       router.push("/auth/login")
       return
     }
 
-    if (!clientAuth.isAdmin()) {
-      addLog("error", "Access denied - Admin privileges required", "Security")
+    if (authProfile.role !== "owner" && authProfile.role !== "admin") {
       setHasAccess(false)
       return
     }
 
     setHasAccess(true)
     addLog("info", "Maintenance dashboard initialized", "System")
+    loadLogHistory()
     
     // Check if we should auto-run the system check
     const shouldAutoCheck = () => {
@@ -560,7 +630,7 @@ export default function MaintenancePage() {
         
         return hoursSinceLastCheck >= 24
       } catch (error) {
-        return true // If localStorage fails, run the check
+        return true
       }
     }
     
@@ -574,7 +644,7 @@ export default function MaintenancePage() {
         addLog("info", `מערכת נבדקה לאחרונה ב-${lastCheckTime.toLocaleString('he-IL')}`, "System")
       }
     }
-  }, [router])
+  }, [authProfile, authLoading, router])
 
   const healthyFeatures = features.filter((f) => f.status === "healthy").length
   const warningFeatures = features.filter((f) => f.status === "warning").length
@@ -841,6 +911,10 @@ export default function MaintenancePage() {
                     מעקב בזמן אמת על כל הפעילות במערכת
                   </CardDescription>
                   <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={exportLogs} className="font-hebrew bg-transparent">
+                      <Download className="w-4 h-4 ml-1" />
+                      יצא לוגים
+                    </Button>
                     <Button variant="outline" size="sm" onClick={clearLogs} className="font-hebrew bg-transparent">
                       <Trash2 className="w-4 h-4 ml-1" />
                       נקה לוגים

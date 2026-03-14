@@ -9,16 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Save, Eye, EyeOff, User, Lock } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { clientAuth } from "@/lib/client-auth"
 
 interface User {
   id: string
   username: string
   role: string
+  dbRole?: string
   description?: string
-  isSystem?: boolean
   full_name?: string
-  phone?: string // Only for non-root users
+  phone?: string
 }
 
 interface UserEditModalProps {
@@ -26,9 +25,10 @@ interface UserEditModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onUserUpdated: (updatedUser: User) => void
+  isAdmin?: boolean
 }
 
-export default function UserEditModal({ user, open, onOpenChange, onUserUpdated }: UserEditModalProps) {
+export default function UserEditModal({ user, open, onOpenChange, onUserUpdated, isAdmin = false }: UserEditModalProps) {
   const [userData, setUserData] = useState({
     usernameEmail: "", // Combined username/email field
     fullName: "",
@@ -56,17 +56,6 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated 
   }, [user, open])
 
   const loadUserProfile = async (userId: string) => {
-    if (userId === "root") {
-      // Hardcoded root user data - no phone preset
-      setUserData({
-        usernameEmail: "root@vazana.com",
-        fullName: "מנהל מערכת",
-        phone: "", // Don't preset phone number
-        role: "admin",
-      })
-      return
-    }
-
     setLoadingProfile(true)
     try {
       const { data, error } = await supabase
@@ -149,66 +138,54 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated 
 
     if (!validatePasswords()) return
     
-    // Validate phone number for non-root users
-    if (user.id !== "root" && !validatePhoneNumber(userData.phone)) {
+    if (!validatePhoneNumber(userData.phone)) {
       alert("מספר טלפון לא תקין. אנא הכנס 10 ספרות המתחילות ב-05/06/07, או 9 ספרות המתחילות ב-0 (לא 05/06/07)")
       return
     }
 
     setLoading(true)
     try {
-      let updatedData = null
+      // Update user profile
+      const updateData: any = {
+        full_name: userData.fullName,
+        phone: userData.phone,
+        updated_at: new Date().toISOString(),
+      }
       
-      // Only update profile for non-root users
-      if (user.id !== "root") {
-        // Update user profile
-        const updateData: any = {
-          username: userData.usernameEmail,
-          full_name: userData.fullName,
-          phone: userData.phone,
-          role: userData.role,
-          updated_at: new Date().toISOString(),
-        }
-
-        const { data: profileData, error: profileError } = await supabase
-          .from("user_profiles")
-          .update(updateData)
-          .eq("id", user.id)
-          .select()
-          .single()
-
-        if (profileError) {
-          console.error("Profile update error:", profileError)
-          throw new Error(`Failed to update profile: ${profileError.message}`)
-        }
-        
-        updatedData = profileData
+      // Only admin/owner can change roles (and not for the owner user)
+      if (isAdmin && user.dbRole !== "owner") {
+        updateData.role = userData.role
       }
 
-      // Handle password change if requested
+      const { data: updatedData, error: profileError } = await supabase
+        .from("user_profiles")
+        .update(updateData)
+        .eq("id", user.id)
+        .select()
+        .single()
+
+      if (profileError) {
+        console.error("Profile update error:", profileError)
+        throw new Error(`Failed to update profile: ${profileError.message}`)
+      }
+
+      // Handle password change if requested — via Supabase Auth API
       if (passwordData.newPassword) {
         try {
-          // Verify current password first
-          const isCurrentPasswordValid = await clientAuth.verifyPassword(
-            userData.usernameEmail,
-            passwordData.currentPassword
-          )
+          const pwResponse = await fetch("/api/auth/change-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: user.id,
+              currentPassword: passwordData.currentPassword,
+              newPassword: passwordData.newPassword,
+            }),
+          })
 
-          if (!isCurrentPasswordValid) {
-            alert("סיסמה נוכחית שגויה")
+          const pwResult = await pwResponse.json()
+          if (!pwResponse.ok) {
+            alert(pwResult.error || "שגיאה בעדכון סיסמה")
             return
-          }
-
-          // Update password
-          const passwordHash = await clientAuth.hashPassword(passwordData.newPassword)
-          const { error: passwordError } = await supabase
-            .from("user_profiles")
-            .update({ password_hash: passwordHash })
-            .eq("id", user.id)
-
-          if (passwordError) {
-            console.error("Password update error:", passwordError)
-            throw new Error(`Failed to update password: ${passwordError.message}`)
           }
         } catch (passwordError: any) {
           console.error("Password update error:", passwordError)
@@ -220,14 +197,10 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated 
       // Create updated user object for callback
       const updatedUser: User = {
         ...user,
-        // Only update these fields for non-root users
-        ...(user.id !== "root" && {
-          username: userData.usernameEmail,
-          role: userData.role === "admin" ? "מנהל" : "משתמש",
-          description: userData.role === "admin" ? "מנהל מערכת" : "משתמש רגיל",
-          full_name: userData.fullName,
-          phone: userData.phone,
-        })
+        username: userData.usernameEmail,
+        role: userData.role,
+        full_name: userData.fullName,
+        phone: userData.phone,
       }
 
       onUserUpdated(updatedUser)
@@ -275,78 +248,64 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated 
             </div>
           ) : (
             <>
-              {/* User Details Section - Only show for non-root users */}
-              {user.id !== "root" && (
-                <>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">שם משתמש / אימייל</Label>
-                      <Input
-                        value={userData.usernameEmail}
-                        onChange={(e) => setUserData({ ...userData, usernameEmail: e.target.value })}
-                        className="text-right font-hebrew"
-                        dir="rtl"
-                        type="email"
-                        placeholder="user@example.com"
-                      />
-                    </div>
+              {/* User Details Section */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="font-hebrew text-right block">שם משתמש / אימייל</Label>
+                  <Input
+                    value={userData.usernameEmail}
+                    disabled
+                    className="text-right font-hebrew bg-gray-50"
+                    dir="rtl"
+                    type="email"
+                  />
+                  <p className="text-xs text-gray-500 font-hebrew">לא ניתן לשנות שם משתמש</p>
+                </div>
 
-                    <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">שם מלא</Label>
-                      <Input
-                        value={userData.fullName}
-                        onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
-                        className="text-right font-hebrew"
-                        dir="rtl"
-                        placeholder="שם מלא"
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <Label className="font-hebrew text-right block">שם מלא</Label>
+                  <Input
+                    value={userData.fullName}
+                    onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
+                    className="text-right font-hebrew"
+                    dir="rtl"
+                    placeholder="שם מלא"
+                  />
+                </div>
 
-                    <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">טלפון</Label>
-                      <Input
-                        value={userData.phone}
-                        onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
-                        className="text-right font-hebrew"
-                        dir="rtl"
-                        placeholder="050-1234567"
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <Label className="font-hebrew text-right block">טלפון</Label>
+                  <Input
+                    value={userData.phone}
+                    onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
+                    className="text-right font-hebrew"
+                    dir="rtl"
+                    placeholder="050-1234567"
+                  />
+                </div>
 
-                    <div className="space-y-2">
-                      <Label className="font-hebrew text-right block">תפקיד</Label>
+                {/* Role field - admin only, read-only for owner */}
+                {isAdmin && (
+                  <div className="space-y-2">
+                    <Label className="font-hebrew text-right block">תפקיד</Label>
+                    {user.dbRole === "owner" ? (
+                      <Input value="בעלים" disabled className="text-right font-hebrew bg-gray-50" dir="rtl" />
+                    ) : (
                       <Select value={userData.role} onValueChange={(value) => setUserData({ ...userData, role: value })}>
                         <SelectTrigger className="text-right font-hebrew">
                           <SelectValue placeholder="בחר תפקיד..." />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin" className="font-hebrew">מנהל</SelectItem>
-                          <SelectItem value="user" className="font-hebrew">משתמש</SelectItem>
+                          <SelectItem value="staff" className="font-hebrew">משתמש</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
+                    )}
                   </div>
-                  
-                  <Separator />
-                </>
-              )}
+                )}
+              </div>
               
-              {/* Root user info display */}
-              {user.id === "root" && (
-                <>
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-vazana-teal" />
-                      <Label className="font-hebrew text-sm font-medium">משתמש מנהל ראשי</Label>
-                    </div>
-                    <p className="text-sm text-gray-600 font-hebrew">שם משתמש: root</p>
-                    <p className="text-sm text-gray-600 font-hebrew">תפקיד: מנהל מערכת ראשי</p>
-                    <p className="text-xs text-gray-500 font-hebrew">ניתן לשנות רק את הסיסמה</p>
-                  </div>
-                  
-                  <Separator />
-                </>
-              )}
+              <Separator />
 
               {/* Password Change Section */}
               <div className="space-y-4">

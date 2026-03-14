@@ -412,7 +412,7 @@ export default function NewInvoicePage() {
         due_date: dueDate.toISOString().split('T')[0],
         notes,
         payment_terms: paymentTerms,
-        created_by: 'root' // Will be updated with proper auth
+        // created_by handled by Supabase auth.uid() column default
       }
       
       const { data: invoice, error: invoiceError } = await supabase
