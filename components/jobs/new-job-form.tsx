@@ -39,6 +39,7 @@ export default function NewJobForm() {
   const { carts, loading: cartsLoading, error: cartsError } = useCarts()
   const [clientType, setClientType] = useState<"new" | "existing">("existing")
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [clientRates, setClientRates] = useState<{ work_type_id: string; rate: number }[]>([])
   const [formData, setFormData] = useState({
     jobType: "",
     date: "",
@@ -53,8 +54,6 @@ export default function NewJobForm() {
     clientCity: "",
     clientPostalCode: "",
     clientPaymentTerms: "1",
-    clientHourlyRate: "",
-    clientMaintenanceRate: "",
     clientNotes: "",
     existingClientId: "",
     // Job resources
@@ -63,8 +62,8 @@ export default function NewJobForm() {
     cart: "",
     description: "",
     calendarSync: preferences?.add_to_calendar_default ?? false,
-    totalAmount: null,
-    jobSpecificShiftRate: null,
+    totalAmount: null as number | null,
+    jobSpecificShiftRate: null as number | null,
     notes: null,
     receiptId: null,
     isSample: false,
@@ -106,6 +105,38 @@ export default function NewJobForm() {
       }))
     }
   }, [preferences])
+
+  // Fetch client rates when existing client is selected
+  useEffect(() => {
+    if (clientType === "existing" && formData.existingClientId) {
+      const fetchRates = async () => {
+        try {
+          const res = await fetch(`/api/clients/${formData.existingClientId}/rates`)
+          if (res.ok) {
+            const result = await res.json()
+            setClientRates(result.data || [])
+          } else {
+            setClientRates([])
+          }
+        } catch {
+          setClientRates([])
+        }
+      }
+      fetchRates()
+    } else {
+      setClientRates([])
+    }
+  }, [clientType, formData.existingClientId])
+
+  // Auto-fill jobSpecificShiftRate when client + work type are both selected
+  useEffect(() => {
+    if (clientRates.length > 0 && formData.jobType) {
+      const match = clientRates.find(r => r.work_type_id === formData.jobType)
+      if (match) {
+        setFormData(prev => ({ ...prev, jobSpecificShiftRate: match.rate }))
+      }
+    }
+  }, [clientRates, formData.jobType])
 
   useEffect(() => {
     const fetchJobNumber = async () => {
@@ -179,14 +210,11 @@ export default function NewJobForm() {
       })
     }
 
-    // Check if selected existing client has at least one rate defined
-    if (clientType === "existing" && formData.existingClientId) {
-      const selected = clients.find((c) => c.id === formData.existingClientId)
-      if (selected && !(selected as any).security_rate && !(selected as any).installation_rate) {
-        setValidationErrors({ existingClientId: "ללקוח זה לא הוגדרו תעריפים. הגדר תעריף לפני שיוך לעבודה" })
-        customAlert("ללקוח זה לא הוגדרו תעריפים. הגדר תעריף לפני שיוך לעבודה")
-        return
-      }
+    // Check if selected existing client has at least one rate defined (from client_work_type_rates)
+    if (clientType === "existing" && formData.existingClientId && clientRates.length === 0) {
+      setValidationErrors({ existingClientId: "ללקוח זה לא הוגדרו תעריפים. הגדר תעריף לפני שיוך לעבודה" })
+      customAlert("ללקוח זה לא הוגדרו תעריפים. הגדר תעריף לפני שיוך לעבודה")
+      return
     }
     if (clientType === "new") {
       requiredFields.push(
@@ -234,8 +262,6 @@ export default function NewJobForm() {
           city: formData.clientCity,
           po_box: formData.clientPostalCode || null,
           payment_method: parseInt(formData.clientPaymentTerms) || 1,
-          security_rate: 0,
-          installation_rate: 0,
           status: "active",
         }
 
@@ -594,32 +620,6 @@ export default function NewJobForm() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clientHourlyRate" className="text-right block">
-                    תעריף שעתי (₪)
-                  </Label>
-                  <Input
-                    id="clientHourlyRate"
-                    type="number"
-                    value={formData.clientHourlyRate}
-                    onChange={(e) => setFormData({ ...formData, clientHourlyRate: e.target.value })}
-                    placeholder="120"
-                    className="text-right"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clientMaintenanceRate" className="text-right block">
-                    תעריף הערכה (₪)
-                  </Label>
-                  <Input
-                    id="clientMaintenanceRate"
-                    type="number"
-                    value={formData.clientMaintenanceRate}
-                    onChange={(e) => setFormData({ ...formData, clientMaintenanceRate: e.target.value })}
-                    placeholder="150"
-                    className="text-right"
-                  />
-                </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="clientNotes" className="text-right block">
                     הערות על הלקוח
@@ -765,8 +765,6 @@ export default function NewJobForm() {
                   clientCity: "",
                   clientPostalCode: "",
                   clientPaymentTerms: "immediate",
-                  clientHourlyRate: "",
-                  clientMaintenanceRate: "",
                   clientNotes: "",
                   existingClientId: "",
                   employee: "",

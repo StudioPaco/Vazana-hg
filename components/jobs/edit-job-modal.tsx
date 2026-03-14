@@ -113,6 +113,27 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
     receiptId: "",
   })
 
+  // Fetch and auto-fill shift rate when client + work type change
+  useEffect(() => {
+    if (!open || !formData.clientId || !formData.jobType) return
+    const fetchRate = async () => {
+      try {
+        const res = await fetch(`/api/clients/${formData.clientId}/rates`)
+        if (res.ok) {
+          const result = await res.json()
+          const rates = result.data || []
+          const match = rates.find((r: any) => r.work_type_id === formData.jobType)
+          if (match) {
+            setFormData(prev => ({ ...prev, jobSpecificShiftRate: match.rate.toString() }))
+          }
+        }
+      } catch {
+        // silent — rate auto-fill is convenience, not critical
+      }
+    }
+    fetchRate()
+  }, [open, formData.clientId, formData.jobType])
+
   // Reset form from job prop when modal opens or job changes
   useEffect(() => {
     if (job && open) {
