@@ -40,10 +40,17 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthRoute = pathname.startsWith("/auth")
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session with safety timeout
     const getSession = async () => {
       try {
-        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        // Race the auth check against a timeout to prevent infinite loading
+        const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+          setTimeout(() => resolve({ data: { user: null } }), 5000)
+        )
+        const { data: { user: currentUser } } = await Promise.race([
+          supabase.auth.getUser(),
+          timeoutPromise,
+        ])
         setUser(currentUser)
 
         if (currentUser) {
@@ -55,12 +62,17 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
             .single()
 
           setProfile(userProfile)
-        } else if (!isAuthRoute) {
-          // Not authenticated and not on auth page → redirect
-          router.replace("/auth/login")
+        } else {
+          // No valid session — clear any stale cookies/tokens
+          await supabase.auth.signOut().catch(() => {})
+          if (!isAuthRoute) {
+            router.replace("/auth/login")
+          }
         }
       } catch (error) {
         console.error("Auth check failed:", error)
+        // Clear stale session on error
+        await supabase.auth.signOut().catch(() => {})
         if (!isAuthRoute) {
           router.replace("/auth/login")
         }

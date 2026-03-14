@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Validate payment_status if provided
-    if (body.payment_status && !['ממתין', 'בוצע', 'לתשלום', 'שולם'].includes(body.payment_status)) {
+    // Validate payment_status if provided — must match DB CHECK constraint
+    if (body.payment_status && !['ממתין לתשלום', 'שולם', 'מאוחר', 'לא רלוונטי'].includes(body.payment_status)) {
       return NextResponse.json({ 
-        error: `Invalid payment_status: ${body.payment_status}. Must be one of: ממתין, בוצע, לתשלום, שולם` 
+        error: `Invalid payment_status: ${body.payment_status}. Must be one of: ממתין לתשלום, שולם, מאוחר, לא רלוונטי` 
       }, { status: 400 })
     }
 

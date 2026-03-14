@@ -272,7 +272,7 @@ export default function NewJobForm() {
         cart_id: selectedCart ? selectedCart.id : null,
         service_description: formData.description || null,
         add_to_calendar: formData.calendarSync,
-        payment_status: "ממתין",
+        payment_status: "לא רלוונטי",
         // Let database handle created_date/updated_date with DEFAULT NOW()
         // created_by_id defaults to auth.uid() via column default
         total_amount: formData.totalAmount,
