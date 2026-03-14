@@ -126,7 +126,7 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
         address: client.address || "",
         city: client.city || "",
         po_box: client.po_box || "",
-        payment_method: client.payment_method || "מיידי",
+        payment_method: String(client.payment_method || "1"),
         notes: client.notes || "",
         security_rate: client.security_rate || 0,
         installation_rate: client.installation_rate || 0,
@@ -457,11 +457,11 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
                         <SelectValue placeholder="בחר אופן תשלום" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="מיידי">מיידי</SelectItem>
-                        <SelectItem value="שוטף +15">שוטף +15</SelectItem>
-                        <SelectItem value="שוטף +30">שוטף +30</SelectItem>
-                        <SelectItem value="שוטף +60">שוטף +60</SelectItem>
-                        <SelectItem value="שוטף +90">שוטף +90</SelectItem>
+                        <SelectItem value="1">מיידי</SelectItem>
+                        <SelectItem value="2">שוטף +15</SelectItem>
+                        <SelectItem value="3">שוטף +30</SelectItem>
+                        <SelectItem value="4">שוטף +60</SelectItem>
+                        <SelectItem value="5">שוטף +90</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

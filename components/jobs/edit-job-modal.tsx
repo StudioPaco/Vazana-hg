@@ -113,9 +113,15 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
     receiptId: "",
   })
 
-  // Fetch and auto-fill shift rate when client + work type change
+  // Track the original client/workType to detect user-initiated changes
+  const [initialClientId, setInitialClientId] = useState("")
+  const [initialJobType, setInitialJobType] = useState("")
+
+  // Fetch and auto-fill shift rate ONLY when user changes client or work type
   useEffect(() => {
     if (!open || !formData.clientId || !formData.jobType) return
+    // Skip auto-fill if values haven't changed from what was loaded from the job
+    if (formData.clientId === initialClientId && formData.jobType === initialJobType) return
     const fetchRate = async () => {
       try {
         const res = await fetch(`/api/clients/${formData.clientId}/rates`)
@@ -132,20 +138,24 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
       }
     }
     fetchRate()
-  }, [open, formData.clientId, formData.jobType])
+  }, [open, formData.clientId, formData.jobType, initialClientId, initialJobType])
 
   // Reset form from job prop when modal opens or job changes
   useEffect(() => {
     if (job && open) {
       const workType = workTypes.find(wt => wt.name_he === job.work_type)
+      const clientId = job.client_id || ""
+      const jobTypeId = workType?.id || ""
       
+      setInitialClientId(clientId)
+      setInitialJobType(jobTypeId)
       setFormData({
-        jobType: workType?.id || "",
+        jobType: jobTypeId,
         date: job.job_date,
         location: job.site,
         shiftType: job.shift_type,
         city: job.city,
-        clientId: job.client_id || "",
+        clientId: clientId,
         employee: job.worker_id || "",
         vehicle: job.vehicle_id || "",
         cart: job.cart_id || "",

@@ -76,6 +76,7 @@ interface Job {
   vehicle_name: string
   cart_name: string
   total_amount: number
+  job_specific_shift_rate?: number
   payment_status: string
   job_status: string
   notes: string
@@ -143,6 +144,7 @@ export default function JobsPage() {
         job.job_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         job.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         job.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
         job.worker_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         job.work_type.toLowerCase().includes(searchTerm.toLowerCase()),
     )
@@ -686,7 +688,7 @@ export default function JobsPage() {
                         </div>
                         <div className="text-right">
                           <p className={`font-bold text-vazana-dark ${isExpanded ? "text-lg" : "text-sm"}`}>
-                            ₪{job.total_amount}
+                            ₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}
                           </p>
                         </div>
                       </div>

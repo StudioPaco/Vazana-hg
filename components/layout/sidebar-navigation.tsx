@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Activity,
 } from "lucide-react"
-// import Image from "next/image"
+import Image from "next/image"
 import { useState, createContext, useContext, useEffect } from "react"
 import { useLoading } from "./loading-overlay"
 import { createClient } from "@/lib/supabase/client"
@@ -102,9 +102,14 @@ export default function SidebarNavigation() {
 
         {!isMinimized && (
           <div className="flex flex-col items-center justify-center space-y-3">
-            <div className="w-[120px] h-[60px] bg-vazana-yellow rounded-md flex items-center justify-center">
-              <span className="text-vazana-dark font-bold text-lg font-hebrew">Vazana</span>
-            </div>
+            <Image
+              src="/VazanaLogo-02.png"
+              alt="Vazana Logo"
+              width={140}
+              height={70}
+              className="object-contain"
+              priority
+            />
             <div className="text-center">
               <p className="text-sm text-gray-600 font-hebrew">ניהול לקוחות ועבודות</p>
             </div>
@@ -113,9 +118,13 @@ export default function SidebarNavigation() {
 
         {isMinimized && (
           <div className="flex justify-center mt-8">
-            <div className="w-8 h-8 bg-vazana-yellow rounded-md flex items-center justify-center">
-              <span className="text-vazana-dark font-bold text-sm">V</span>
-            </div>
+            <Image
+              src="/VazanaLogo-02.png"
+              alt="V"
+              width={32}
+              height={32}
+              className="object-contain rounded-md"
+            />
           </div>
         )}
       </div>

@@ -427,8 +427,10 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
 
                     <div className="text-right space-y-1">
                       <div>
-                        <p className="text-xs text-gray-600">אופן תשלום (יומי)</p>
-                        <p className="font-medium text-sm">{client.payment_method || 'לא הוגדר'}</p>
+                        <p className="text-xs text-gray-600">אופן תשלום</p>
+                        <p className="font-medium text-sm">{{
+                          '1': 'מיידי', '2': 'שוטף +15', '3': 'שוטף +30', '4': 'שוטף +60', '5': 'שוטף +90'
+                        }[String(client.payment_method)] || client.payment_method || 'לא הוגדר'}</p>
                       </div>
                       {client.notes && (
                         <div>
