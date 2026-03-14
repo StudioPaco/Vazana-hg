@@ -11,6 +11,16 @@ export interface ImportColumnDef {
   validate?: (value: any) => string | null // returns error message or null
 }
 
+export interface ExistingJob {
+  job_date: string
+  client_id: string | null
+  worker_id: string | null
+  shift_type: string
+  site: string
+  client_name: string
+  worker_name: string
+}
+
 export interface LookupMaps {
   clients: { id: string; company_name: string }[]
   workers: { id: string; name: string }[]
@@ -24,6 +34,7 @@ export interface ParsedRow {
   data: Record<string, any> // raw cell values keyed by dbField
   resolved: Record<string, any> | null // DB-ready object (null if invalid)
   errors: { field: string; message: string }[]
+  warnings: { field: string; message: string }[]
   valid: boolean
 }
 
@@ -31,6 +42,8 @@ export interface ParseResult {
   rows: ParsedRow[]
   validCount: number
   errorCount: number
+  duplicateCount: number
+  warningCount: number
 }
 
 // Shift type mapping: Hebrew → DB value
@@ -207,17 +220,37 @@ export function generateTemplate(): void {
 }
 
 // ---------------------------------------------------------------------------
+// Duplicate detection fingerprints (3 tiers)
+// ---------------------------------------------------------------------------
+
+// Tier 1 — Exact duplicate: same date + client + worker + shift + site
+function fpExact(date: string, clientId: string, workerId: string, shiftType: string, site: string): string {
+  return `exact|${date}|${clientId}|${workerId}|${shiftType}|${site.trim().toLowerCase()}`
+}
+
+// Tier 2 — Worker scheduling conflict: same date + worker + shift (can't be in two places)
+function fpWorkerShift(date: string, workerId: string, shiftType: string): string {
+  return `ws|${date}|${workerId}|${shiftType}`
+}
+
+// Tier 3 — Suspicious: same date + client + site (might be same job with different details)
+function fpClientSite(date: string, clientId: string, site: string): string {
+  return `cs|${date}|${clientId}|${site.trim().toLowerCase()}`
+}
+
+// ---------------------------------------------------------------------------
 // Parse & validate uploaded file
 // ---------------------------------------------------------------------------
 
 export function parseAndValidateFile(
   data: ArrayBuffer,
   lookups: LookupMaps,
+  existingJobs: ExistingJob[] = [],
 ): ParseResult {
   const wb = XLSX.read(data, { type: 'array', cellDates: true })
   const ws = wb.Sheets[wb.SheetNames[0]]
   if (!ws) {
-    return { rows: [], validCount: 0, errorCount: 0 }
+    return { rows: [], validCount: 0, errorCount: 0, duplicateCount: 0, warningCount: 0 }
   }
 
   // Read all rows as array of objects keyed by header
@@ -239,6 +272,29 @@ export function parseAndValidateFile(
   const vehicleByPlate = new Map(lookups.vehicles.map((v) => [v.license_plate.trim().toLowerCase(), v]))
   const cartMap = new Map(lookups.carts.map((c) => [c.name.trim().toLowerCase(), c]))
 
+  // Build existing-jobs fingerprint sets (3 tiers) for duplicate detection
+  const dbExact = new Set<string>()
+  const dbWorkerShift = new Map<string, ExistingJob>()  // fp → job info for error messages
+  const dbClientSite = new Map<string, ExistingJob>()
+  for (const ej of existingJobs) {
+    const date = ej.job_date ? ej.job_date.split('T')[0] : ''
+    if (!date) continue
+    if (ej.client_id && ej.worker_id) {
+      dbExact.add(fpExact(date, ej.client_id, ej.worker_id, ej.shift_type || '', ej.site || ''))
+    }
+    if (ej.worker_id) {
+      dbWorkerShift.set(fpWorkerShift(date, ej.worker_id, ej.shift_type || ''), ej)
+    }
+    if (ej.client_id) {
+      dbClientSite.set(fpClientSite(date, ej.client_id, ej.site || ''), ej)
+    }
+  }
+
+  // Track fingerprints within the file itself (intra-file duplicates) — 3 tiers
+  const fileExact = new Set<string>()
+  const fileWorkerShift = new Map<string, { rowIndex: number; workerName: string }>()
+  const fileClientSite = new Map<string, { rowIndex: number; clientName: string; site: string }>()
+
   const rows: ParsedRow[] = rawRows.map((raw, idx) => {
     // Skip example/hint rows that contain slash hints
     const firstVal = String(Object.values(raw)[0] || '')
@@ -252,6 +308,7 @@ export function parseAndValidateFile(
           data: {},
           resolved: null,
           errors: [{ field: '_row', message: 'שורת דוגמה — נדלגה' }],
+          warnings: [],
           valid: false,
         }
       }
@@ -326,10 +383,10 @@ export function parseAndValidateFile(
     }
 
     // Build resolved DB-ready object
-    const valid = errors.length === 0
+    const warnings: { field: string; message: string }[] = []
     let resolved: Record<string, any> | null = null
 
-    if (valid) {
+    if (errors.length === 0) {
       // Normalize date
       let jobDate: string
       if (data.job_date instanceof Date) {
@@ -338,44 +395,116 @@ export function parseAndValidateFile(
         jobDate = String(data.job_date).trim()
       }
 
-      resolved = {
-        work_type: String(data.work_type).trim(),
-        job_date: jobDate,
-        shift_type: SHIFT_MAP[String(data.shift_type).trim()] || 'day',
-        site: String(data.site).trim(),
-        city: String(data.city).trim(),
-        client_name: resolvedClient!.company_name,
-        client_id: resolvedClient!.id,
-        worker_name: resolvedWorker!.name,
-        worker_id: resolvedWorker!.id,
-        vehicle_name: resolvedVehicle ? `${resolvedVehicle.license_plate} - ${resolvedVehicle.name}` : '',
-        vehicle_id: resolvedVehicle!.id,
-        cart_name: resolvedCart?.name || null,
-        cart_id: resolvedCart?.id || null,
-        job_specific_shift_rate: data.job_specific_shift_rate ? Number(data.job_specific_shift_rate) : null,
-        total_amount: data.total_amount ? Number(data.total_amount) : null,
-        service_description: data.service_description ? String(data.service_description).trim() : null,
-        notes: data.notes ? String(data.notes).trim() : null,
-        payment_status: 'לא רלוונטי',
-        is_sample: false,
+      const shiftDb = SHIFT_MAP[String(data.shift_type).trim()] || 'day'
+      const siteStr = String(data.site).trim()
+      const clientId = resolvedClient!.id
+      const workerId = resolvedWorker!.id
+      const clientName = resolvedClient!.company_name
+      const workerName = resolvedWorker!.name
+
+      // ---- Tier 1: Exact duplicate (BLOCK) ----
+      const fp1 = fpExact(jobDate, clientId, workerId, shiftDb, siteStr)
+      if (dbExact.has(fp1)) {
+        errors.push({
+          field: '_duplicate',
+          message: `כפילות מדויקת — עבודה זהה כבר קיימת במערכת (${jobDate}, ${clientName}, ${workerName}, ${siteStr})`,
+        })
+      } else if (fileExact.has(fp1)) {
+        errors.push({
+          field: '_duplicate',
+          message: `כפילות בקובץ — שורה זהה מופיעה מוקדם יותר בקובץ (${jobDate}, ${clientName}, ${workerName})`,
+        })
+      }
+
+      // ---- Tier 2: Worker scheduling conflict (BLOCK) ----
+      if (errors.length === 0) {
+        const fp2 = fpWorkerShift(jobDate, workerId, shiftDb)
+        const dbConflict = dbWorkerShift.get(fp2)
+        const fileConflict = fileWorkerShift.get(fp2)
+        if (dbConflict) {
+          errors.push({
+            field: '_conflict',
+            message: `סתירת תיאום — ${workerName} כבר משובץ לעבודה ב${jobDate} משמרת ${shiftDb === 'day' ? 'יום' : shiftDb === 'night' ? 'לילה' : 'כפול'} (אצל ${dbConflict.client_name}, ${dbConflict.site})`,
+          })
+        } else if (fileConflict) {
+          errors.push({
+            field: '_conflict',
+            message: `סתירת תיאום בקובץ — ${workerName} כבר משובץ בשורה ${fileConflict.rowIndex} לאותו תאריך+משמרת`,
+          })
+        }
+      }
+
+      // ---- Tier 3: Suspicious match (WARNING — still importable) ----
+      if (errors.length === 0) {
+        const fp3 = fpClientSite(jobDate, clientId, siteStr)
+        const dbSuspect = dbClientSite.get(fp3)
+        const fileSuspect = fileClientSite.get(fp3)
+        if (dbSuspect) {
+          warnings.push({
+            field: '_warning',
+            message: `חשוד — כבר קיימת עבודה באותו תאריך+לקוח+אתר (${dbSuspect.worker_name})`,
+          })
+        } else if (fileSuspect) {
+          warnings.push({
+            field: '_warning',
+            message: `חשוד — שורה ${fileSuspect.rowIndex} עם אותו תאריך+לקוח+אתר`,
+          })
+        }
+      }
+
+      // Register this row's fingerprints for intra-file checks
+      fileExact.add(fp1)
+      fileWorkerShift.set(fpWorkerShift(jobDate, workerId, shiftDb), { rowIndex: idx + 2, workerName })
+      fileClientSite.set(fpClientSite(jobDate, clientId, siteStr), { rowIndex: idx + 2, clientName, site: siteStr })
+
+      // Only build resolved if no blocking errors
+      if (errors.length === 0) {
+        resolved = {
+          work_type: String(data.work_type).trim(),
+          job_date: jobDate,
+          shift_type: shiftDb,
+          site: siteStr,
+          city: String(data.city).trim(),
+          client_name: clientName,
+          client_id: clientId,
+          worker_name: workerName,
+          worker_id: workerId,
+          vehicle_name: resolvedVehicle ? `${resolvedVehicle.license_plate} - ${resolvedVehicle.name}` : '',
+          vehicle_id: resolvedVehicle!.id,
+          cart_name: resolvedCart?.name || null,
+          cart_id: resolvedCart?.id || null,
+          job_specific_shift_rate: data.job_specific_shift_rate ? Number(data.job_specific_shift_rate) : null,
+          total_amount: data.total_amount ? Number(data.total_amount) : null,
+          service_description: data.service_description ? String(data.service_description).trim() : null,
+          notes: data.notes ? String(data.notes).trim() : null,
+          payment_status: 'לא רלוונטי',
+          is_sample: false,
+        }
       }
     }
+
+    const valid = errors.length === 0
 
     return {
       rowIndex: idx + 2,
       data,
       resolved,
       errors,
+      warnings,
       valid,
     }
   })
 
   // Filter out skipped example rows from counts
   const dataRows = rows.filter((r) => !r.errors.some((e) => e.field === '_row'))
+  const duplicates = dataRows.filter((r) => r.errors.some((e) => e.field === '_duplicate' || e.field === '_conflict'))
+  const warned = dataRows.filter((r) => r.valid && r.warnings.length > 0)
 
   return {
     rows,
     validCount: dataRows.filter((r) => r.valid).length,
     errorCount: dataRows.filter((r) => !r.valid).length,
+    duplicateCount: duplicates.length,
+    warningCount: warned.length,
   }
 }

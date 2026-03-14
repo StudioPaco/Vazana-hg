@@ -22,6 +22,7 @@ import {
   type ParseResult,
   type ParsedRow,
   type LookupMaps,
+  type ExistingJob,
 } from "@/lib/jobs-import-utils"
 
 // Same status logic as jobs-page.tsx
@@ -65,26 +66,26 @@ export default function ImportJobsModal({
   } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Fetch reference data for name→ID resolution
-  const fetchLookups = useCallback(async (): Promise<LookupMaps | null> => {
-    if (lookups) return lookups
-
+  // Fetch reference data for name→ID resolution + existing jobs for duplicate check
+  const fetchLookups = useCallback(async (): Promise<{ maps: LookupMaps; existingJobs: ExistingJob[] } | null> => {
     setLookupsLoading(true)
     try {
-      const [clientsRes, workersRes, vehiclesRes, cartsRes, workTypesRes] = await Promise.all([
+      const [clientsRes, workersRes, vehiclesRes, cartsRes, workTypesRes, jobsRes] = await Promise.all([
         fetch("/api/clients"),
         fetch("/api/workers"),
         fetch("/api/vehicles"),
         fetch("/api/carts"),
         fetch("/api/work-types"),
+        fetch("/api/jobs"),
       ])
 
-      const [clientsData, workersData, vehiclesData, cartsData, workTypesData] = await Promise.all([
+      const [clientsData, workersData, vehiclesData, cartsData, workTypesData, jobsData] = await Promise.all([
         clientsRes.json(),
         workersRes.json(),
         vehiclesRes.json(),
         cartsRes.json(),
         workTypesRes.json(),
+        jobsRes.json(),
       ])
 
       const maps: LookupMaps = {
@@ -95,8 +96,20 @@ export default function ImportJobsModal({
         workTypes: workTypesData.data || [],
       }
 
+      const existingJobs: ExistingJob[] = (jobsData.data || [])
+        .filter((j: any) => !j.is_deleted)
+        .map((j: any) => ({
+          job_date: j.job_date,
+          client_id: j.client_id,
+          worker_id: j.worker_id,
+          shift_type: j.shift_type,
+          site: j.site,
+          client_name: j.client_name,
+          worker_name: j.worker_name,
+        }))
+
       setLookups(maps)
-      return maps
+      return { maps, existingJobs }
     } catch (err) {
       console.error("Failed to fetch lookup data:", err)
       toast({ title: "שגיאה בטעינת נתוני מערכת", variant: "destructive" })
@@ -104,7 +117,7 @@ export default function ImportJobsModal({
     } finally {
       setLookupsLoading(false)
     }
-  }, [lookups])
+  }, [])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -116,12 +129,12 @@ export default function ImportJobsModal({
       return
     }
 
-    const maps = await fetchLookups()
-    if (!maps) return
+    const lookupsResult = await fetchLookups()
+    if (!lookupsResult) return
 
     try {
       const buffer = await file.arrayBuffer()
-      const result = parseAndValidateFile(buffer, maps)
+      const result = parseAndValidateFile(buffer, lookupsResult.maps, lookupsResult.existingJobs)
 
       if (result.rows.length === 0) {
         toast({ title: "הקובץ ריק או לא מכיל שורות נתונים", variant: "destructive" })
@@ -267,18 +280,27 @@ export default function ImportJobsModal({
           <div className="space-y-4 py-2">
             {/* Summary bar */}
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span className="text-sm font-hebrew font-semibold text-green-700">
                     {parseResult.validCount} תקינות
                   </span>
                 </div>
+                {parseResult.warningCount > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                    <span className="text-sm font-hebrew font-semibold text-yellow-600">
+                      {parseResult.warningCount} חשודות
+                    </span>
+                  </div>
+                )}
                 {parseResult.errorCount > 0 && (
                   <div className="flex items-center gap-1.5">
                     <XCircle className="h-4 w-4 text-red-500" />
                     <span className="text-sm font-hebrew font-semibold text-red-600">
-                      {parseResult.errorCount} שגויות
+                      {parseResult.errorCount} נחסמו
+                      {parseResult.duplicateCount > 0 && ` (${parseResult.duplicateCount} כפילויות/סתירות)`}
                     </span>
                   </div>
                 )}
@@ -394,26 +416,35 @@ export default function ImportJobsModal({
 
 function PreviewRow({ row }: { row: ParsedRow }) {
   const [expanded, setExpanded] = useState(false)
+  const hasWarnings = row.warnings && row.warnings.length > 0
+  const hasDetails = !row.valid || hasWarnings
 
   // Calculate job status for valid rows
   const jobStatus = row.valid && row.resolved?.job_date
     ? calculateJobStatus(row.resolved.job_date)
     : null
 
+  // Row background: red for errors, yellow tint for warnings, default for clean
+  const rowBg = !row.valid
+    ? "bg-red-50"
+    : hasWarnings
+    ? "bg-yellow-50"
+    : ""
+
   return (
     <>
       <tr
-        className={`border-b cursor-pointer hover:bg-gray-50 ${
-          row.valid ? "" : "bg-red-50"
-        }`}
-        onClick={() => setExpanded(!expanded)}
+        className={`border-b cursor-pointer hover:bg-gray-50 ${rowBg}`}
+        onClick={() => hasDetails && setExpanded(!expanded)}
       >
         <td className="px-3 py-2 font-hebrew">{row.rowIndex}</td>
         <td className="px-3 py-2">
-          {row.valid ? (
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          ) : (
+          {!row.valid ? (
             <XCircle className="h-4 w-4 text-red-500" />
+          ) : hasWarnings ? (
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          ) : (
+            <CheckCircle className="h-4 w-4 text-green-600" />
           )}
         </td>
         <td className="px-3 py-2 font-hebrew">{row.data.work_type || "—"}</td>
@@ -434,21 +465,31 @@ function PreviewRow({ row }: { row: ParsedRow }) {
           )}
         </td>
         <td className="px-3 py-2">
-          {!row.valid && (
+          {!row.valid ? (
             <span className="text-xs text-red-500 font-hebrew">
               {row.errors.length} שגיאות
             </span>
-          )}
+          ) : hasWarnings ? (
+            <span className="text-xs text-yellow-600 font-hebrew">
+              אזהרה
+            </span>
+          ) : null}
         </td>
       </tr>
-      {expanded && !row.valid && (
-        <tr className="bg-red-50">
+      {expanded && hasDetails && (
+        <tr className={!row.valid ? "bg-red-50" : "bg-yellow-50"}>
           <td colSpan={8} className="px-6 py-2">
             <ul className="space-y-1">
               {row.errors.map((err, i) => (
-                <li key={i} className="text-xs text-red-600 font-hebrew flex items-center gap-1">
+                <li key={`e-${i}`} className="text-xs text-red-600 font-hebrew flex items-center gap-1">
                   <XCircle className="h-3 w-3 flex-shrink-0" />
                   {err.message}
+                </li>
+              ))}
+              {(row.warnings || []).map((warn, i) => (
+                <li key={`w-${i}`} className="text-xs text-yellow-700 font-hebrew flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                  {warn.message}
                 </li>
               ))}
             </ul>
