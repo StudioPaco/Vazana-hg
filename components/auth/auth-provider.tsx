@@ -39,31 +39,32 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthRoute = pathname.startsWith("/auth")
 
+  // Fetch profile via server API (reliable — avoids browser cookie issues)
+  const fetchProfile = async (): Promise<UserProfile | null> => {
+    try {
+      const res = await fetch("/api/auth/profile")
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.profile ?? null
+    } catch {
+      return null
+    }
+  }
+
   useEffect(() => {
-    // Get initial session with safety timeout
     const getSession = async () => {
       try {
-        // Race the auth check against a timeout to prevent infinite loading
-        const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
-          setTimeout(() => resolve({ data: { user: null } }), 5000)
-        )
-        const { data: { user: currentUser } } = await Promise.race([
-          supabase.auth.getUser(),
-          timeoutPromise,
-        ])
-        setUser(currentUser)
+        // Use the server API to get both auth state and profile in one call
+        const res = await fetch("/api/auth/profile")
+        const data = res.ok ? await res.json() : { user: null, profile: null }
 
-        if (currentUser) {
-          // Fetch user profile for role/name info
-          const { data: userProfile } = await supabase
-            .from("user_profiles")
-            .select("id, username, email, full_name, role")
-            .eq("id", currentUser.id)
-            .single()
-
-          setProfile(userProfile)
+        if (data.user && data.profile) {
+          // Reconstruct a minimal User object for context consumers
+          setUser({ id: data.user.id, email: data.user.email } as User)
+          setProfile(data.profile)
         } else {
-          // No valid session — fire-and-forget signOut (don't block loading)
+          setUser(null)
+          setProfile(null)
           supabase.auth.signOut().catch(() => {})
           if (!isAuthRoute) {
             router.replace("/auth/login")
@@ -71,7 +72,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error("Auth check failed:", error)
-        // Fire-and-forget signOut
         supabase.auth.signOut().catch(() => {})
         if (!isAuthRoute) {
           router.replace("/auth/login")
@@ -90,13 +90,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         setUser(currentUser)
 
         if (currentUser) {
-          const { data: userProfile } = await supabase
-            .from("user_profiles")
-            .select("id, username, email, full_name, role")
-            .eq("id", currentUser.id)
-            .single()
-
-          setProfile(userProfile)
+          const profile = await fetchProfile()
+          setProfile(profile)
         } else {
           setProfile(null)
           if (!isAuthRoute) {

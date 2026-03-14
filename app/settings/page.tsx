@@ -195,12 +195,17 @@ export default function SettingsPage() {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase.from("user_profiles").select("*")
+      const res = await fetch("/api/users")
+      if (!res.ok) {
+        console.error("Failed to load users:", res.status)
+        return
+      }
+      const data = await res.json()
 
-      if (data) {
+      if (Array.isArray(data)) {
         const roleDisplayMap: Record<string, string> = { owner: "בעלים", admin: "מנהל", staff: "משתמש" }
         const descriptionMap: Record<string, string> = { owner: "בעלים — מנהל ראשי", admin: "מנהל מערכת", staff: "משתמש רגיל" }
-        const formattedUsers = data.map((user) => ({
+        const formattedUsers = data.map((user: any) => ({
           id: user.id,
           username: user.username,
           role: roleDisplayMap[user.role] || "משתמש",
