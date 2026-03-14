@@ -45,7 +45,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
     address: "",
     city: "",
     postalCode: "",
-    paymentTerms: "מיידי",
+    paymentTerms: "1",
     hourlyRate: "",
     maintenanceRate: "",
     notes: "",
@@ -73,7 +73,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
           address: formData.address,
           city: formData.city,
           po_box: formData.postalCode,
-          payment_method: formData.paymentTerms, // Store the actual payment terms string
+          payment_method: parseInt(formData.paymentTerms) || 1, // Integer FK to payment terms
           security_rate: Number.parseFloat(formData.hourlyRate) || 0, // Fixed: matches DB schema
           installation_rate: Number.parseFloat(formData.maintenanceRate) || 0, // Fixed: matches DB schema
           notes: formData.notes,
@@ -100,11 +100,11 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
         address: "",
         city: "",
         postalCode: "",
-        paymentTerms: "מיידי",
-        hourlyRate: "",
-        maintenanceRate: "",
-        notes: "",
-      })
+      paymentTerms: "1",
+      hourlyRate: "",
+      maintenanceRate: "",
+      notes: "",
+    })
       
       onClientCreated(result.data)
       onOpenChange(false)
@@ -126,7 +126,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
       address: "",
       city: "",
       postalCode: "",
-      paymentTerms: "מיידי",
+      paymentTerms: "1",
       hourlyRate: "",
       maintenanceRate: "",
       notes: "",
@@ -254,11 +254,11 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
                     <SelectValue placeholder="בחר אופן תשלום" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="מיידי">מיידי</SelectItem>
-                    <SelectItem value="שוטף +15">שוטף +15</SelectItem>
-                    <SelectItem value="שוטף +30">שוטף +30</SelectItem>
-                    <SelectItem value="שוטף +60">שוטף +60</SelectItem>
-                    <SelectItem value="שוטף +90">שוטף +90</SelectItem>
+                    <SelectItem value="1">מיידי</SelectItem>
+                    <SelectItem value="2">שוטף +15</SelectItem>
+                    <SelectItem value="3">שוטף +30</SelectItem>
+                    <SelectItem value="4">שוטף +60</SelectItem>
+                    <SelectItem value="5">שוטף +90</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

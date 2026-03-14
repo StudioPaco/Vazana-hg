@@ -92,6 +92,8 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
   const { carts, loading: cartsLoading } = useCarts()
   
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [editError, setEditError] = useState<string | null>(null)
+  const [editSuccess, setEditSuccess] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
     jobType: "",
@@ -111,9 +113,9 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
     receiptId: "",
   })
 
+  // Reset form from job prop when modal opens or job changes
   useEffect(() => {
-    if (job) {
-      // Find the work type ID from the name
+    if (job && open) {
       const workType = workTypes.find(wt => wt.name_he === job.work_type)
       
       setFormData({
@@ -133,8 +135,11 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
         notes: job.notes || "",
         receiptId: job.receipt_id || "",
       })
+      setValidationErrors({})
+      setEditError(null)
+      setEditSuccess(null)
     }
-  }, [job, workTypes])
+  }, [job, workTypes, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -165,7 +170,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
     if (missingFields.length > 0) {
       setValidationErrors(errors)
       const fieldNames = missingFields.map(({ name }) => name).join(", ")
-      alert(`שדות חובה חסרים: ${fieldNames}`)
+      setEditError(`שדות חובה חסרים: ${fieldNames}`)
       setSaving(false)
       return
     }
@@ -210,7 +215,9 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update job')
+        const errData = await response.json().catch(() => ({}))
+        setEditError(`שגיאה בעדכון העבודה: ${errData.error || response.statusText}`)
+        return
       }
 
       const result = await response.json()
@@ -226,12 +233,12 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
         payment_status: getPaymentStatus(refreshedJobStatus)
       }
       onJobUpdated(updatedJob)
-      onOpenChange(false)
-      alert("העבודה עודכנה בהצלחה!")
+      setEditSuccess("העבודה עודכנה בהצלחה!")
+      setTimeout(() => onOpenChange(false), 1500)
 
     } catch (error) {
       console.error("Failed to update job:", error)
-      alert("שגיאה בעדכון העבודה")
+      setEditError("שגיאה בעדכון העבודה")
     } finally {
       setSaving(false)
     }
@@ -254,6 +261,16 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
         </DialogHeader>
         
         <div className="overflow-y-auto px-1 max-h-[calc(75vh-120px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          {editError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-right font-hebrew text-sm mb-4">
+              {editError}
+            </div>
+          )}
+          {editSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-right font-hebrew text-sm mb-4">
+              {editSuccess}
+            </div>
+          )}
           <form id="edit-job-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Job Info Section */}
             <div className="bg-gray-50 p-4 rounded-lg">

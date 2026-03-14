@@ -11,8 +11,24 @@ import { useUserPreferences } from "@/hooks/useUserPreferences"
 import EditJobModal from "@/components/jobs/edit-job-modal"
 import StatusBadge from "@/components/ui/status-badge"
 
-// Note: Job statuses are now managed solely through database values
-// Status calculation is handled by manual updates or edit modal
+// Job status is calculated client-side based on date rules:
+//   Past (>24h ago) → "הושלם" (completed/green)
+//   Within ±24h     → "בתהליך" (in progress/yellow)
+//   Future          → "ממתין" (waiting/default)
+const calculateJobStatus = (jobDate: string): string => {
+  const now = new Date()
+  const date = new Date(jobDate)
+  const diffHours = (date.getTime() - now.getTime()) / (1000 * 3600)
+  if (diffHours < -24) return "הושלם"
+  if (diffHours <= 24) return "בתהליך"
+  return "ממתין"
+}
+
+const calculatePaymentStatus = (jobStatus: string, currentPayment: string): string => {
+  if (jobStatus === "הושלם" && currentPayment !== "שולם") return "ממתין לתשלום"
+  if (jobStatus !== "הושלם") return "לא רלוונטי"
+  return currentPayment
+}
 
 // Convert shift type to Hebrew
 const getShiftTypeInHebrew = (shiftType: string): string => {
@@ -96,10 +112,14 @@ export default function JobsPage() {
         
         console.log("Successfully fetched jobs:", allJobs)
         
-        // Use jobs exactly as they come from the database - no status calculation
-        console.log("Using job statuses directly from database")
+        // Calculate display status based on date rules
+        const jobsWithStatus = allJobs.map((job: Job) => ({
+          ...job,
+          job_status: calculateJobStatus(job.job_date),
+          payment_status: calculatePaymentStatus(calculateJobStatus(job.job_date), job.payment_status),
+        }))
         
-        setJobs(allJobs)
+        setJobs(jobsWithStatus)
         setFilteredJobs(allJobs)
       } catch (error) {
         console.error("Failed to fetch jobs:", error)

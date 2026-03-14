@@ -1,24 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/client"
-import { verifyToken } from "@/lib/auth-custom"
-
-async function getAuthenticatedUser(request: NextRequest) {
-  const token = request.cookies.get("auth-token")?.value
-  if (!token) {
-    return null
-  }
-  return await verifyToken(token)
-}
+import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await getAuthenticatedUser(request)
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { id } = await params
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const { data: job, error } = await supabase
       .from("jobs")
@@ -31,7 +17,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         invoices:receipt_id(invoice_number, status, total_amount)
       `)
       .eq("id", id)
-      .eq("created_by_id", user.id)
       .single()
 
     if (error) {
@@ -46,10 +31,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Temporarily bypass authentication for job updates
     const { id } = await params
     const body = await request.json()
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const updateData = {
       ...body,
@@ -87,15 +71,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await getAuthenticatedUser(request)
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { id } = await params
-    const supabase = createClient()
+    const supabase = await createClient()
 
-    const { error } = await supabase.from("jobs").delete().eq("id", id).eq("created_by_id", user.id)
+    const { error } = await supabase.from("jobs").delete().eq("id", id)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

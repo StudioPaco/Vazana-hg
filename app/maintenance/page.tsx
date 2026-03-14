@@ -603,9 +603,10 @@ export default function MaintenancePage() {
   useEffect(() => {
     if (authLoading) return
 
-    // Check admin access using auth provider
+    // Auth is already verified by proxy middleware.
+    // Just check role-based access here.
     if (!authProfile) {
-      router.push("/auth/login")
+      // Profile not loaded yet — wait (don't redirect, proxy already checked auth)
       return
     }
 
