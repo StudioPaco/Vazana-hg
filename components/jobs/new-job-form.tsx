@@ -41,6 +41,7 @@ export default function NewJobForm() {
   const [clientType, setClientType] = useState<"new" | "existing">("existing")
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [clientRates, setClientRates] = useState<{ work_type_id: string; rate: number }[]>([])
+  const [newClientRates, setNewClientRates] = useState<{ id: string; work_type_id: string; rate: number }[]>([])
   const [formData, setFormData] = useState({
     jobType: "",
     date: "",
@@ -56,8 +57,6 @@ export default function NewJobForm() {
     clientCity: "",
     clientPostalCode: "",
     clientPaymentTerms: "1",
-    clientSecurityRate: "",
-    clientInstallationRate: "",
     clientNotes: "",
     existingClientId: "",
     // Job resources
@@ -271,8 +270,6 @@ export default function NewJobForm() {
           city: formData.clientCity,
           po_box: formData.clientPostalCode || null,
           payment_method: parseInt(formData.clientPaymentTerms) || 1,
-          security_rate: parseFloat(formData.clientSecurityRate) || 0,
-          installation_rate: parseFloat(formData.clientInstallationRate) || 0,
           notes: formData.clientNotes || "",
           status: "active",
         }
@@ -291,6 +288,18 @@ export default function NewJobForm() {
 
         const clientResult = await clientResponse.json()
         newClientId = clientResult.data?.id || null
+
+        // Save work-type rates for the new client
+        const validRates = newClientRates.filter(r => r.work_type_id && r.rate > 0)
+        if (newClientId && validRates.length > 0) {
+          await fetch(`/api/clients/${newClientId}/rates`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              rates: validRates.map(r => ({ work_type_id: r.work_type_id, rate: r.rate })),
+            }),
+          })
+        }
       }
 
       const jobData = {
@@ -626,32 +635,6 @@ export default function NewJobForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="clientSecurityRate" className="text-right block">
-                    תעריף אבטחה (₪)
-                  </Label>
-                  <Input
-                    id="clientSecurityRate"
-                    type="number"
-                    value={formData.clientSecurityRate}
-                    onChange={(e) => setFormData({ ...formData, clientSecurityRate: e.target.value })}
-                    placeholder="120"
-                    className="text-right"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clientInstallationRate" className="text-right block">
-                    תעריף התקנה (₪)
-                  </Label>
-                  <Input
-                    id="clientInstallationRate"
-                    type="number"
-                    value={formData.clientInstallationRate}
-                    onChange={(e) => setFormData({ ...formData, clientInstallationRate: e.target.value })}
-                    placeholder="150"
-                    className="text-right"
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="clientPaymentTerms" className="text-right block">
                     אופן תשלום
                   </Label>
@@ -671,6 +654,56 @@ export default function NewJobForm() {
                     </SelectContent>
                   </Select>
                 </div>
+                {/* Dynamic work-type rates */}
+                <div className="space-y-3 md:col-span-2 border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewClientRates([...newClientRates, { id: `new-${Date.now()}`, work_type_id: '', rate: 0 }])}
+                      className="text-teal-600 border-teal-300 hover:bg-teal-50"
+                    >
+                      + הוסף תעריף
+                    </Button>
+                    <Label className="text-right block font-semibold">תעריפים לפי סוג עבודה</Label>
+                  </div>
+                  {newClientRates.map((rate) => (
+                    <div key={rate.id} className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setNewClientRates(newClientRates.filter(r => r.id !== rate.id))}
+                        className="text-red-500 hover:text-red-700 px-2"
+                      >
+                        ✕
+                      </Button>
+                      <Input
+                        type="number"
+                        value={rate.rate || ''}
+                        onChange={(e) => setNewClientRates(newClientRates.map(r => r.id === rate.id ? { ...r, rate: parseFloat(e.target.value) || 0 } : r))}
+                        placeholder="תעריף ₪"
+                        className="w-28 text-right"
+                      />
+                      <select
+                        value={rate.work_type_id}
+                        onChange={(e) => setNewClientRates(newClientRates.map(r => r.id === rate.id ? { ...r, work_type_id: e.target.value } : r))}
+                        className="flex-1 p-2 border rounded text-right"
+                        dir="rtl"
+                      >
+                        <option value="">בחר סוג עבודה</option>
+                        {workTypes.map((wt) => (
+                          <option key={wt.id} value={wt.id}>{wt.name_he}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                  {newClientRates.length === 0 && (
+                    <p className="text-sm text-gray-500 text-right">לחץ "הוסף תעריף" להגדיר תעריף לסוג עבודה</p>
+                  )}
+                </div>
+
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="clientNotes" className="text-right block">
                     הערות על הלקוח
@@ -817,8 +850,6 @@ export default function NewJobForm() {
                   clientCity: "",
                   clientPostalCode: "",
                   clientPaymentTerms: "1",
-                  clientSecurityRate: "",
-                  clientInstallationRate: "",
                   clientNotes: "",
                   existingClientId: "",
                   employee: "",
@@ -833,6 +864,7 @@ export default function NewJobForm() {
                   isSample: false,
                 })
                 setClientType("existing")
+                setNewClientRates([])
                 setValidationErrors({})
                 toast({ title: 'טיוטת העבודה אופסה בהצלחה!', variant: 'success' })
               }
