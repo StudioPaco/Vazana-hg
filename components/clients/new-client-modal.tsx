@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserIcon, Save, X } from "lucide-react"
 import { getModalClasses } from "@/lib/modal-utils"
+import { toast } from "@/hooks/use-toast"
 
 interface Client {
   id: string
@@ -84,7 +85,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
       if (!response.ok) {
         const errorData = await response.json()
         console.error("Error creating client:", errorData)
-        alert("שגיאה ביצירת הלקוח: " + (errorData.error || "שגיאה לא ידועה"))
+        toast({ title: "שגיאה ביצירת הלקוח: " + (errorData.error || "שגיאה לא ידועה"), variant: "destructive" })
         return
       }
 
@@ -108,10 +109,10 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
       
       onClientCreated(result.data)
       onOpenChange(false)
-      alert("הלקוח נוצר בהצלחה!")
+      toast({ title: "הלקוח נוצר בהצלחה!", variant: "success" })
     } catch (error) {
       console.error("Failed to create client:", error)
-      alert("שגיאה ביצירת הלקוח: בעיית רשת או שרת")
+      toast({ title: "שגיאה ביצירת הלקוח: בעיית רשת או שרת", variant: "destructive" })
     }
     setIsSubmitting(false)
   }

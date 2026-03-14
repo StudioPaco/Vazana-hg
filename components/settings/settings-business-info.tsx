@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -191,7 +192,7 @@ export default function SettingsBusinessInfo() {
       setTimeout(() => setIsSaved(false), 3000)
     } catch (error) {
       console.error("Failed to save business settings:", error)
-      alert(isHebrew ? "שגיאה בשמירת ההגדרות. נסה שוב." : "Failed to save settings. Please try again.")
+      toast({ title: isHebrew ? "שגיאה בשמירת ההגדרות. נסה שוב." : "Failed to save settings. Please try again.", variant: "destructive" })
     } finally {
       setIsSaving(false)
     }
@@ -206,7 +207,7 @@ export default function SettingsBusinessInfo() {
       //    (This implies Receipt entity needs fields like business_name_snapshot, business_address_snapshot etc.)
       // 3. Save each updated invoice.
       // 4. Provide feedback to the user.
-      alert("Mock Action: Business information would be applied to relevant invoices.")
+      toast({ title: "Mock Action: Business information would be applied to relevant invoices.", variant: "destructive" })
       console.log("Applying to invoices (mock):", {
         businessName,
         businessAddress,

@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { Receipt, Client, Job } from "@/entities/all" // Changed from Invoice, added Job
 import { Button } from "@/components/ui/button"
@@ -247,7 +248,7 @@ export default function ViewInvoice() {
         navigate("/invoices") // Navigate to Invoices archive
       } catch (error) {
         console.error("Error deleting item:", error)
-        alert(t.deleteFailed)
+        toast({ title: t.deleteFailed, variant: "destructive" })
       }
       setIsDeleting(false)
     }
@@ -260,10 +261,10 @@ export default function ViewInvoice() {
       await Receipt.update(item.id, { notes: tempNotes }) // Use Receipt.update
       setItem((prev) => (prev ? { ...prev, notes: tempNotes } : null)) // Renamed
       setEditingNotes(false)
-      alert(t.notesSaved)
+      toast({ title: t.notesSaved, variant: "success" })
     } catch (error) {
       console.error("Error saving notes:", error)
-      alert(isHebrew ? "שגיאה בשמירת הערות." : "Error saving notes.") // Added specific alert
+      toast({ title: isHebrew ? "שגיאה בשמירת הערות." : "Error saving notes.", variant: "destructive" })
     }
     setIsSavingNotes(false)
   }
@@ -279,10 +280,10 @@ export default function ViewInvoice() {
         const jobUpdatePromises = item.job_ids.map((jobId: string) => Job.update(jobId, { payment_status: "שולם" }))
         await Promise.all(jobUpdatePromises)
       }
-      alert(t.invoicePaidSuccessfully)
+      toast({ title: t.invoicePaidSuccessfully, variant: "success" })
     } catch (error) {
       console.error("Error marking item as paid:", error) // Changed
-      alert(isHebrew ? "שגיאה בסימון החשבונית כשולמה." : "Error marking invoice as paid.") // Added specific alert
+      toast({ title: isHebrew ? "שגיאה בסימון החשבונית כשולמה." : "Error marking invoice as paid.", variant: "destructive" })
     }
     setIsMarkingPaid(false)
   }
@@ -588,7 +589,7 @@ export default function ViewInvoice() {
             <Button
               variant="outline"
               className="flex items-center gap-2 border-neutral-300 text-neutral-700 hover:bg-neutral-200 bg-transparent"
-              onClick={() => alert(isHebrew ? "שליחה באימייל (מדומה)" : "Send by Email (Mock)")}
+              onClick={() => toast({ title: isHebrew ? "שליחה באימייל (מדומה)" : "Send by Email (Mock)" })}
             >
               <Mail className="w-4 h-4" /> {t.sendByEmail}
             </Button>

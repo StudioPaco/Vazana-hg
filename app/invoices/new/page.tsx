@@ -736,7 +736,7 @@ export default function NewInvoicePage() {
                           setSearchPerformed(false)
                           setLastSearchedClient("")
                           setLastSearchedMonth("")
-                          alert('טיוטת החשבונית אופסה בהצלחה!')
+                          toast({ title: 'טיוטת החשבונית אופסה בהצלחה!', variant: 'success' })
                         }
                       }}
                       variant="outline"

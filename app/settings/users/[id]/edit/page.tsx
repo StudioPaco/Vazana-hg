@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,7 +36,7 @@ export default function EditUserPage() {
 
   const handleSave = () => {
     console.log("Saving user data:", userData)
-    alert("פרטי המשתמש נשמרו בהצלחה!")
+    toast({ title: "פרטי המשתמש נשמרו בהצלחה!", variant: "success" })
     router.push("/settings")
   }
 

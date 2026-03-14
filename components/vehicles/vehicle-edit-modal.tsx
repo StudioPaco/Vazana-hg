@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Truck, Save } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { getModalClasses } from "@/lib/modal-utils"
+import { toast } from "@/hooks/use-toast"
 
 interface Vehicle {
   id: string
@@ -48,7 +49,7 @@ export default function VehicleEditModal({ vehicle, open, onOpenChange, onVehicl
     if (!vehicle) return
 
     if (!formData.name.trim() || !formData.license_plate.trim()) {
-      alert("שם הרכב ומספר הרכב הם שדות חובה")
+      toast({ title: "שם הרכב ומספר הרכב הם שדות חובה", variant: "destructive" })
       return
     }
 
@@ -65,16 +66,16 @@ export default function VehicleEditModal({ vehicle, open, onOpenChange, onVehicl
 
       if (error) {
         console.error("Error updating vehicle:", error)
-        alert(`שגיאה בעדכון הרכב: ${error.message}`)
+        toast({ title: `שגיאה בעדכון הרכב: ${error.message}`, variant: "destructive" })
         return
       }
 
       onVehicleUpdated(updatedVehicle)
       onOpenChange(false)
-      alert("הרכב עודכן בהצלחה!")
+      toast({ title: "הרכב עודכן בהצלחה!", variant: "success" })
     } catch (error) {
       console.error("Failed to update vehicle:", error)
-      alert("שגיאה בעדכון הרכב")
+      toast({ title: "שגיאה בעדכון הרכב", variant: "destructive" })
     } finally {
       setIsSubmitting(false)
     }

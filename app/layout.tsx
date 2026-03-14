@@ -9,6 +9,7 @@ import { LoadingProvider } from "@/components/layout/loading-overlay"
 import AppWrapper from "@/components/layout/app-wrapper"
 import GlobalAlertProvider from "@/components/layout/global-alert-provider"
 import AuthProvider from "@/components/auth/auth-provider"
+import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: "Vazana Studio - וזאנה סטודיו",
@@ -38,6 +39,7 @@ export default function RootLayout({
                   <GlobalAlertProvider>
                     <AuthProvider>
                       <AppWrapper>{children}</AppWrapper>
+                      <Toaster />
                     </AuthProvider>
                   </GlobalAlertProvider>
                 </SidebarProvider>

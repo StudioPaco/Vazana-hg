@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -76,7 +77,7 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
       }
     } catch (error) {
       console.error("Error loading user profile:", error)
-      alert("שגיאה בטעינת פרטי המשתמש")
+      toast({ title: "שגיאה בטעינת פרטי המשתמש", variant: "destructive" })
     } finally {
       setLoadingProfile(false)
     }
@@ -108,17 +109,17 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
     }
 
     if (!passwordData.currentPassword) {
-      alert("נדרשת סיסמה נוכחית לשינוי סיסמה")
+      toast({ title: "נדרשת סיסמה נוכחית לשינוי סיסמה", variant: "destructive" })
       return false
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("סיסמאות חדשות לא תואמות")
+      toast({ title: "סיסמאות חדשות לא תואמות", variant: "destructive" })
       return false
     }
 
     if (passwordData.newPassword.length < 8) {
-      alert("סיסמה חדשה חייבת להיות אורך 8 תווים לפחות")
+      toast({ title: "סיסמה חדשה חייבת להיות אורך 8 תווים לפחות", variant: "destructive" })
       return false
     }
 
@@ -126,7 +127,7 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
     const hasUpper = /[A-Z]/.test(passwordData.newPassword)
 
     if (!hasLower || !hasUpper) {
-      alert("סיסמה חדשה חייבת לכלול אותיות קטנות וגדולות")
+      toast({ title: "סיסמה חדשה חייבת לכלול אותיות קטנות וגדולות", variant: "destructive" })
       return false
     }
 
@@ -139,7 +140,7 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
     if (!validatePasswords()) return
     
     if (!validatePhoneNumber(userData.phone)) {
-      alert("מספר טלפון לא תקין. אנא הכנס 10 ספרות המתחילות ב-05/06/07, או 9 ספרות המתחילות ב-0 (לא 05/06/07)")
+      toast({ title: "מספר טלפון לא תקין. אנא הכנס 10 ספרות המתחילות ב-05/06/07, או 9 ספרות המתחילות ב-0 (לא 05/06/07)", variant: "destructive" })
       return
     }
 
@@ -184,12 +185,12 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
 
           const pwResult = await pwResponse.json()
           if (!pwResponse.ok) {
-            alert(pwResult.error || "שגיאה בעדכון סיסמה")
+            toast({ title: pwResult.error || "שגיאה בעדכון סיסמה", variant: "destructive" })
             return
           }
         } catch (passwordError: any) {
           console.error("Password update error:", passwordError)
-          alert(`שגיאה בעדכון סיסמה: ${passwordError.message || passwordError}`)
+          toast({ title: `שגיאה בעדכון סיסמה: ${passwordError.message || passwordError}`, variant: "destructive" })
           return
         }
       }
@@ -213,11 +214,11 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
         confirmPassword: "",
       })
 
-      alert("פרטי המשתמש נשמרו בהצלחה!")
+      toast({ title: "פרטי המשתמש נשמרו בהצלחה!", variant: "success" })
     } catch (error: any) {
       console.error("Error updating user:", error)
       const errorMessage = error?.message || error?.toString() || "Unknown error"
-      alert(`שגיאה בעדכון פרטי המשתמש: ${errorMessage}`)
+      toast({ title: `שגיאה בעדכון פרטי המשתמש: ${errorMessage}`, variant: "destructive" })
     } finally {
       setLoading(false)
     }

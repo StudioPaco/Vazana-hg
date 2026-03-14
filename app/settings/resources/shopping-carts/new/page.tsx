@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import type React from "react"
 
 import { useState } from "react"
@@ -23,7 +24,7 @@ export default function NewCartPage() {
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      alert("שם העגלה/נגרר הוא שדה חובה")
+      toast({ title: "שם העגלה/נגרר הוא שדה חובה", variant: "destructive" })
       return
     }
 
@@ -33,15 +34,15 @@ export default function NewCartPage() {
 
       if (error) {
         console.error("Error creating cart:", error)
-        alert(`שגיאה ביצירת העגלה: ${error.message}`)
+        toast({ title: `שגיאה ביצירת העגלה: ${error.message}`, variant: "destructive" })
         return
       }
 
-      alert("העגלה נוצרה בהצלחה!")
+      toast({ title: "העגלה נוצרה בהצלחה!", variant: "success" })
       router.push("/settings/resources/shopping-carts")
     } catch (error) {
       console.error("Failed to create cart:", error)
-      alert("שגיאה ביצירת העגלה")
+      toast({ title: "שגיאה ביצירת העגלה", variant: "destructive" })
     }
   }
 

@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { getModalClasses } from "@/lib/modal-utils"
+import { toast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface Client {
@@ -265,7 +266,7 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
       onOpenChange(false)
     } catch (error) {
       console.error("Error updating client:", error)
-      alert("שגיאה בעדכון הלקוח")
+      toast({ title: "שגיאה בעדכון הלקוח", variant: "destructive" })
     }
     setIsSubmitting(false)
   }
@@ -279,7 +280,7 @@ export default function ClientEditModal({ client, open, onOpenChange, onClientUp
   const addCustomRate = () => {
     const nextAvailableSlot = customRates.findIndex(rate => !rate.work_type_id && rate.rate === 0)
     if (nextAvailableSlot === -1) {
-      alert("כל המקומות הפנויים לתעריפים מותאמים אישית בשימוש")
+      toast({ title: "כל המקומות הפנויים לתעריפים מותאמים אישית בשימוש", variant: "destructive" })
       return
     }
     // Don't need to add anything, just expand the UI

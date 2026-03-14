@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Edit2, Trash2, Save, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "@/hooks/use-toast"
 
 export default function WorkTypesPage() {
   const [workTypes, setWorkTypes] = useState<any[]>([])
@@ -34,7 +35,7 @@ export default function WorkTypesPage() {
 
       if (error) {
         console.error("Error loading work types:", error)
-        alert(`שגיאה בטעינת סוגי עבודה: ${error.message}`)
+        toast({ title: `שגיאה בטעינת סוגי עבודה: ${error.message}`, variant: "destructive" })
         setWorkTypes([])
       } else {
         console.log("Successfully loaded work types:", data)
@@ -42,7 +43,7 @@ export default function WorkTypesPage() {
       }
     } catch (error) {
       console.error("Failed to load work types:", error)
-      alert("שגיאת חיבור - בדוק את החיבור לאינטרנט")
+      toast({ title: "שגיאת חיבור - בדוק את החיבור לאינטרנט", variant: "destructive" })
       setWorkTypes([])
     }
     setIsLoading(false)
@@ -57,7 +58,7 @@ export default function WorkTypesPage() {
     e.preventDefault()
 
     if (!formData.name_he.trim() || !formData.name_en.trim()) {
-      alert("שם בעברית ובאנגלית הם שדות חובה")
+      toast({ title: "שם בעברית ובאנגלית הם שדות חובה", variant: "destructive" })
       return
     }
 
@@ -92,7 +93,7 @@ export default function WorkTypesPage() {
       loadWorkTypes()
     } catch (error) {
       console.error("Error saving work type:", error)
-      alert("שגיאה בשמירת סוג העבודה")
+      toast({ title: "שגיאה בשמירת סוג העבודה", variant: "destructive" })
     }
     setIsSubmitting(false)
   }
@@ -127,7 +128,7 @@ export default function WorkTypesPage() {
         }
       } catch (error) {
         console.error("Error deleting work type:", error)
-        alert("שגיאה במחיקת סוג העבודה")
+        toast({ title: "שגיאה במחיקת סוג העבודה", variant: "destructive" })
       }
     }
   }

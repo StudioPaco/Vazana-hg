@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -229,12 +230,12 @@ export default function SettingsPage() {
       const phoneRegex = /^[\d\-\+\(\)\s]+$/
       
       if (companyData.email && !emailRegex.test(companyData.email)) {
-        alert("אימייל לא תקין. אנא הזן אימייל בפורמט נכון")
+        toast({ title: "אימייל לא תקין. אנא הזן אימייל בפורמט נכון", variant: "destructive" })
         return
       }
       
       if (companyData.phone && !phoneRegex.test(companyData.phone)) {
-        alert("מספר טלפון לא תקין. אנא הזן רק מספרים וסימנים מיוחדים")
+        toast({ title: "מספר טלפון לא תקין. אנא הזן רק מספרים וסימנים מיוחדים", variant: "destructive" })
         return
       }
       
@@ -304,20 +305,20 @@ export default function SettingsPage() {
         
         // Check if it's a missing column error
         if (error.message && error.message.includes('bank_account')) {
-          alert("השמירה בבסיס הנתונים נכשלה - ערוצי חשבון הבנק חסרים. הנתונים נשמרו באחסון מקומי.")
+          toast({ title: "השמירה בבסיס הנתונים נכשלה - ערוצי חשבון הבנק חסרים. הנתונים נשמרו באחסון מקומי.", variant: "success" })
         } else {
-          alert(`שגיאה בשמירה לבסיס נתונים: ${error.message}. הנתונים נשמרו באחסון מקומי.`)
+          toast({ title: `שגיאה בשמירה לבסיס נתונים: ${error.message}. הנתונים נשמרו באחסון מקומי.`, variant: "success" })
         }
       } else {
         // Update the ID in case this was an insert
         if (data && !companyData.id) {
           setCompanyData(prev => ({ ...prev, id: data.id }))
         }
-        alert("פרטי העסק נשמרו בהצלחה!")
+        toast({ title: "פרטי העסק נשמרו בהצלחה!", variant: "success" })
       }
     } catch (error) {
       console.error("Error saving business settings:", error)
-      alert("שגיאה בשמירת פרטי העסק")
+      toast({ title: "שגיאה בשמירת פרטי העסק", variant: "destructive" })
     }
   }
 
@@ -394,7 +395,7 @@ export default function SettingsPage() {
   const handleDeleteUser = async (userId: string) => {
     const targetUser = users.find(u => u.id === userId)
     if (targetUser?.dbRole === "owner") {
-      alert("לא ניתן למחוק את בעל המערכת")
+      toast({ title: "לא ניתן למחוק את בעל המערכת", variant: "destructive" })
       return
     }
     if (!confirm("האם אתה בטוח שברצונך למחוק את המשתמש?")) return
@@ -406,14 +407,14 @@ export default function SettingsPage() {
 
       if (error) {
         console.error("Error deleting user:", error)
-        alert(`שגיאה במחיקת המשתמש: ${error.message}`)
+        toast({ title: `שגיאה במחיקת המשתמש: ${error.message}`, variant: "destructive" })
         return
       }
       setUsers((prev) => prev.filter((user) => user.id !== userId))
-      alert("משתמש נמחק בהצלחה!")
+      toast({ title: "משתמש נמחק בהצלחה!", variant: "success" })
     } catch (error) {
       console.error("Error deleting user:", error)
-      alert("שגיאה במחיקת המשתמש")
+      toast({ title: "שגיאה במחיקת המשתמש", variant: "destructive" })
     }
   }
 
@@ -703,12 +704,12 @@ export default function SettingsPage() {
                             // Clear all saved form drafts from localStorage
                             localStorage.removeItem('new-job-draft')
                             localStorage.removeItem('new-invoice-draft')
-                            alert('השמירה האוטומטית בוטלה וכל הטיוטות נמחקו!')
+                            toast({ title: 'השמירה האוטומטית בוטלה וכל הטיוטות נמחקו!', variant: 'success' })
                           }
                         } else {
                           setAutoSaveForms(true)
                           localStorage.setItem('vazana-auto-save-forms', 'true')
-                          alert('השמירה האוטומטית של טפסים הופעלה!')
+                          toast({ title: 'השמירה האוטומטית של טפסים הופעלה!', variant: 'success' })
                         }
                       }}
                     />
@@ -759,7 +760,7 @@ export default function SettingsPage() {
                             localStorage.removeItem("vazana_theme_settings")
                             localStorage.removeItem("new-job-draft")
                             localStorage.removeItem("new-invoice-draft")
-                            alert("כל ההגדרות אופסו לערכי ברירת המחדל וכל הטיוטות נמחקו!")
+                            toast({ title: "כל ההגדרות אופסו לערכי ברירת המחדל וכל הטיוטות נמחקו!", variant: "success" })
                             // Refresh the page to apply changes
                             window.location.reload()
                           }
@@ -1679,7 +1680,7 @@ export default function SettingsPage() {
                       onClick={() => {
                         console.log('שמירת הגדרות WhatsApp')
                         setIsWhatsAppSetupOpen(false)
-                        alert('הגדרות WhatsApp נשמרו בהצלחה!')
+                        toast({ title: 'הגדרות WhatsApp נשמרו בהצלחה!', variant: 'success' })
                       }}
                       className="bg-green-600 hover:bg-green-700 font-hebrew"
                     >

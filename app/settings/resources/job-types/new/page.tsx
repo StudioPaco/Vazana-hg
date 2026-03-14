@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import type React from "react"
 
 import { useState } from "react"
@@ -27,15 +28,15 @@ export default function NewJobTypePage() {
 
       if (error) {
         console.error("Error creating work type:", error)
-        alert("שגיאה ביצירת סוג העבודה")
+        toast({ title: "שגיאה ביצירת סוג העבודה", variant: "destructive" })
         return
       }
 
-      alert("סוג העבודה נוצר בהצלחה!")
+      toast({ title: "סוג העבודה נוצר בהצלחה!", variant: "success" })
       router.push("/settings/resources/job-types")
     } catch (error) {
       console.error("Failed to create work type:", error)
-      alert("שגיאה ביצירת סוג העבודה")
+      toast({ title: "שגיאה ביצירת סוג העבודה", variant: "destructive" })
     }
   }
 

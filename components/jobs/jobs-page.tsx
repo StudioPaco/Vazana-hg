@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import EditJobModal from "@/components/jobs/edit-job-modal"
+import { toast } from "@/hooks/use-toast"
 import StatusBadge from "@/components/ui/status-badge"
 
 // Job status is calculated client-side based on date rules:
@@ -199,7 +200,7 @@ export default function JobsPage() {
         ))
       } catch (error) {
         console.error("Failed to delete job:", error)
-        alert("שגיאה במחיקת העבודה")
+        toast({ title: "שגיאה במחיקת העבודה", variant: "destructive" })
       }
     }
   }
@@ -235,7 +236,7 @@ export default function JobsPage() {
         ))
       } catch (error) {
         console.error("Failed to restore job:", error)
-        alert("שגיאה בשחזור העבודה")
+        toast({ title: "שגיאה בשחזור העבודה", variant: "destructive" })
       }
     }
   }

@@ -8,6 +8,7 @@ import { Plus, Search, Truck, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import VehicleEditModal from "@/components/vehicles/vehicle-edit-modal"
+import { toast } from "@/hooks/use-toast"
 
 interface Vehicle {
   id: string
@@ -67,13 +68,13 @@ export default function VehiclesPage() {
 
         if (error) {
           console.error("Error deleting vehicle:", error)
-          alert("שגיאה במחיקת הרכב. נסה שוב.")
+          toast({ title: "שגיאה במחיקת הרכב. נסה שוב.", variant: "destructive" })
           return
         }
         setVehicles(vehicles.filter((vehicle) => vehicle.id !== id))
       } catch (error) {
         console.error("Failed to delete vehicle:", error)
-        alert("שגיאה במחיקת הרכב. נסה שוב.")
+        toast({ title: "שגיאה במחיקת הרכב. נסה שוב.", variant: "destructive" })
       }
     }
   }

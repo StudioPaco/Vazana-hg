@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import type React from "react"
 
 import { useState } from "react"
@@ -29,7 +30,7 @@ export default function NewWorkerPage() {
     e.preventDefault()
 
     if (!formData.name.trim() || !formData.phone_number.trim()) {
-      alert("שם העובד ומספר הטלפון הם שדות חובה")
+      toast({ title: "שם העובד ומספר הטלפון הם שדות חובה", variant: "destructive" })
       return
     }
 
@@ -51,16 +52,16 @@ export default function NewWorkerPage() {
 
       if (error) {
         console.error("Error creating worker:", error)
-        alert(`שגיאה ביצירת העובד: ${error.message}`)
+        toast({ title: `שגיאה ביצירת העובד: ${error.message}`, variant: "destructive" })
         return
       }
 
       console.log("Worker created successfully:", data)
-      alert("העובד נוצר בהצלחה!")
+      toast({ title: "העובד נוצר בהצלחה!", variant: "success" })
       router.push("/settings/resources/workers")
     } catch (error) {
       console.error("Failed to create worker:", error)
-      alert("שגיאת ביצוע הבקשה")
+      toast({ title: "שגיאת ביצוע הבקשה", variant: "destructive" })
     }
   }
 

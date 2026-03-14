@@ -16,7 +16,8 @@ import DatabaseDropdown from "@/components/ui/database-dropdown"
 import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/hooks/use-job-form-data"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import { SimpleAutoSave } from "@/lib/simple-auto-save"
-import { customAlert, customConfirm } from "@/lib/custom-alert"
+import { customConfirm } from "@/lib/custom-alert"
+import { toast } from "@/hooks/use-toast"
 import { downloadJobICS } from "@/lib/ics-calendar"
 
 // Standardized shift types - single source of truth
@@ -210,11 +211,15 @@ export default function NewJobForm() {
       })
     }
 
-    // Check if selected existing client has at least one rate defined (from client_work_type_rates)
-    if (clientType === "existing" && formData.existingClientId && clientRates.length === 0) {
-      setValidationErrors({ existingClientId: "ללקוח זה לא הוגדרו תעריפים. הגדר תעריף לפני שיוך לעבודה" })
-      customAlert("ללקוח זה לא הוגדרו תעריפים. הגדר תעריף לפני שיוך לעבודה")
-      return
+    // Soft check: warn if no rates found (from client_work_type_rates OR client row)
+    if (clientType === "existing" && formData.existingClientId) {
+      const selected = clients.find((c) => c.id === formData.existingClientId)
+      const hasWorkTypeRates = clientRates.length > 0
+      const hasClientRowRates = selected && ((selected as any).security_rate > 0 || (selected as any).installation_rate > 0)
+      if (!hasWorkTypeRates && !hasClientRowRates) {
+        setValidationErrors({ existingClientId: "ללקוח זה לא הוגדרו תעריפים. ניתן להמשיך, אך מומלץ להגדיר תעריף" })
+        // Don't block — just warn
+      }
     }
     if (clientType === "new") {
       requiredFields.push(
@@ -238,7 +243,7 @@ export default function NewJobForm() {
     if (missingFields.length > 0) {
       setValidationErrors(errors)
       const fieldNames = missingFields.map(({ name }) => name).join(", ")
-      customAlert(`שדות חובה חסרים: ${fieldNames}`)
+      toast({ title: `שדות חובה חסרים: ${fieldNames}`, variant: "destructive" })
       return
     }
 
@@ -273,7 +278,7 @@ export default function NewJobForm() {
 
         if (!clientResponse.ok) {
           const errData = await clientResponse.json()
-          alert(`שגיאה ביצירת הלקוח: ${errData.error || "שגיאה לא ידועה"}`)
+          toast({ title: `שגיאה ביצירת הלקוח: ${errData.error || "שגיאה לא ידועה"}`, variant: "destructive" })
           return
         }
 
@@ -317,7 +322,7 @@ export default function NewJobForm() {
 
       if (error) {
         console.error("Error creating job:", error)
-        alert(`שגיאה ביצירת העבודה: ${error.message}`)
+        toast({ title: `שגיאה ביצירת העבודה: ${error.message}`, variant: "destructive" })
         return
       }
 
@@ -343,11 +348,11 @@ export default function NewJobForm() {
         })
       }
       
-      alert("העבודה נוצרה בהצלחה!")
+      toast({ title: "העבודה נוצרה בהצלחה!", variant: "success" })
       router.push("/jobs")
     } catch (error) {
       console.error("Failed to create job:", error)
-      alert("שגיאה ביצירת העבודה")
+      toast({ title: "שגיאה ביצירת העבודה", variant: "destructive" })
     }
   }
 
@@ -780,7 +785,7 @@ export default function NewJobForm() {
                 })
                 setClientType("existing")
                 setValidationErrors({})
-                customAlert('טיוטת העבודה אופסה בהצלחה!')
+                toast({ title: 'טיוטת העבודה אופסה בהצלחה!', variant: 'success' })
               }
             }}
             className="px-4 text-orange-600 border-orange-300 hover:bg-orange-50"

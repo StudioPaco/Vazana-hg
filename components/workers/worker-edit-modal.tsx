@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, Save } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { getModalClasses } from "@/lib/modal-utils"
+import { toast } from "@/hooks/use-toast"
 
 interface Worker {
   id: string
@@ -61,7 +62,7 @@ export default function WorkerEditModal({ worker, open, onOpenChange, onWorkerUp
     if (!worker) return
 
     if (!formData.name.trim() || !formData.phone_number.trim()) {
-      alert("שם העובד ומספר הטלפון הם שדות חובה")
+      toast({ title: "שם העובד ומספר הטלפון הם שדות חובה", variant: "destructive" })
       return
     }
 
@@ -87,16 +88,16 @@ export default function WorkerEditModal({ worker, open, onOpenChange, onWorkerUp
 
       if (error) {
         console.error("Error updating worker:", error)
-        alert(`שגיאה בעדכון העובד: ${error.message}`)
+        toast({ title: `שגיאה בעדכון העובד: ${error.message}`, variant: "destructive" })
         return
       }
 
       onWorkerUpdated(updatedWorker)
       onOpenChange(false)
-      alert("העובד עודכן בהצלחה!")
+      toast({ title: "העובד עודכן בהצלחה!", variant: "success" })
     } catch (error) {
       console.error("Failed to update worker:", error)
-      alert("שגיאה בעדכון העובד")
+      toast({ title: "שגיאה בעדכון העובד", variant: "destructive" })
     } finally {
       setIsSubmitting(false)
     }

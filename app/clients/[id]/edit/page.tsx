@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -92,7 +93,7 @@ export default function EditClientPage() {
 
       if (error) {
         console.error("Error updating client:", error)
-        alert("שגיאה בעדכון הלקוח")
+        toast({ title: "שגיאה בעדכון הלקוח", variant: "destructive" })
         return
       }
 
@@ -100,7 +101,7 @@ export default function EditClientPage() {
       router.push("/clients")
     } catch (error) {
       console.error("Failed to update client:", error)
-      alert("שגיאה בעדכון הלקוח")
+      toast({ title: "שגיאה בעדכון הלקוח", variant: "destructive" })
     }
   }
 

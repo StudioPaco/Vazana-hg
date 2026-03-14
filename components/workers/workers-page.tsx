@@ -9,6 +9,7 @@ import { Plus, Search, Phone, MapPin, Calendar, Edit, Trash2 } from "lucide-reac
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import WorkerEditModal from "@/components/workers/worker-edit-modal"
+import { toast } from "@/hooks/use-toast"
 
 interface Worker {
   id: string
@@ -73,13 +74,13 @@ export default function WorkersPage() {
 
         if (error) {
           console.error("Error deleting worker:", error)
-          alert("שגיאה במחיקת העובד. נסה שוב.")
+          toast({ title: "שגיאה במחיקת העובד. נסה שוב.", variant: "destructive" })
           return
         }
         setWorkers(workers.filter((worker) => worker.id !== id))
       } catch (error) {
         console.error("Failed to delete worker:", error)
-        alert("שגיאה במחיקת העובד. נסה שוב.")
+        toast({ title: "שגיאה במחיקת העובד. נסה שוב.", variant: "destructive" })
       }
     }
   }

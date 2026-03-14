@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Edit2, Trash2, Save, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "@/hooks/use-toast"
 
 interface Field {
   name: string
@@ -135,7 +136,7 @@ export default function ManageGenericList({
     // Validate required fields
     for (const field of fields) {
       if (field.required && !formData[field.name]?.trim()) {
-        alert(`${isHebrew ? field.labelHe : field.labelEn} ${t.fieldRequired}`)
+        toast({ title: `${isHebrew ? field.labelHe : field.labelEn} ${t.fieldRequired}`, variant: "destructive" })
         return
       }
     }
@@ -152,7 +153,7 @@ export default function ManageGenericList({
       await loadItems()
     } catch (error: any) {
       console.error(`Error saving ${entityName}:`, error)
-      alert(`שגיאה בשמירת ${entityName}: ${error.message || "שגיאה לא ידועה"}`)
+      toast({ title: `שגיאה בשמירת ${entityName}: ${error.message || "שגיאה לא ידועה"}`, variant: "destructive" })
     }
     setIsSubmitting(false)
   }

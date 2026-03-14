@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -120,7 +121,7 @@ export default function DataExportImport({ open, onOpenChange }: DataExportImpor
 
     } catch (error) {
       console.error('Export error:', error)
-      alert('שגיאה בייצוא הנתונים')
+      toast({ title: 'שגיאה בייצוא הנתונים', variant: 'destructive' })
     }
 
     setIsExporting(false)
@@ -129,7 +130,7 @@ export default function DataExportImport({ open, onOpenChange }: DataExportImpor
 
   const handleImport = async () => {
     if (!importFile) {
-      alert('אנא בחר קובץ לייבוא')
+      toast({ title: 'אנא בחר קובץ לייבוא', variant: 'destructive' })
       return
     }
 
@@ -167,7 +168,7 @@ export default function DataExportImport({ open, onOpenChange }: DataExportImpor
 
     } catch (error) {
       console.error('Import error:', error)
-      alert('שגיאה בייבוא הנתונים')
+      toast({ title: 'שגיאה בייבוא הנתונים', variant: 'destructive' })
     }
 
     setIsImporting(false)
@@ -201,7 +202,7 @@ export default function DataExportImport({ open, onOpenChange }: DataExportImpor
       }
     } catch (error) {
       console.error('Error handling duplicate:', error)
-      alert('שגיאה בטיפול ברשומות כפולות')
+      toast({ title: 'שגיאה בטיפול ברשומות כפולות', variant: 'destructive' })
     }
   }
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import type React from "react"
 
 import { useState } from "react"
@@ -24,7 +25,7 @@ export default function NewVehiclePage() {
     e.preventDefault()
 
     if (!formData.name.trim() || !formData.license_plate.trim()) {
-      alert("שם הרכב ומספר הרכב הם שדות חובה")
+      toast({ title: "שם הרכב ומספר הרכב הם שדות חובה", variant: "destructive" })
       return
     }
 
@@ -34,15 +35,15 @@ export default function NewVehiclePage() {
 
       if (error) {
         console.error("Error creating vehicle:", error)
-        alert(`שגיאה ביצירת הרכב: ${error.message}`)
+        toast({ title: `שגיאה ביצירת הרכב: ${error.message}`, variant: "destructive" })
         return
       }
 
-      alert("הרכב נוצר בהצלחה!")
+      toast({ title: "הרכב נוצר בהצלחה!", variant: "success" })
       router.push("/settings/resources/vehicles")
     } catch (error) {
       console.error("Failed to create vehicle:", error)
-      alert("שגיאה ביצירת הרכב")
+      toast({ title: "שגיאה ביצירת הרכב", variant: "destructive" })
     }
   }
 

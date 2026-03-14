@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp, Edit } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "@/hooks/use-toast"
 import ClientEditModal from "@/components/clients/client-edit-modal"
 import NewClientModal from "@/components/clients/new-client-modal"
 import StatusBadge from "@/components/ui/status-badge"
@@ -192,7 +193,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         setClients(clients.filter((client) => client.id !== id))
       } catch (error) {
         console.error("Failed to delete client:", error)
-        alert("שגיאה במחיקת הלקוח. נסה שוב.")
+        toast({ title: "שגיאה במחיקת הלקוח. נסה שוב.", variant: "destructive" })
       }
     }
   }
@@ -202,7 +203,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
     const clientInfo = `${client.company_name}\n${client.contact_person}\n${client.phone}\n${client.email}${addressInfo ? `\n${addressInfo}` : ''}`
     try {
       await navigator.clipboard.writeText(clientInfo)
-      alert("פרטי הלקוח הועתקו ללוח")
+      toast({ title: "פרטי הלקוח הועתקו ללוח", variant: "success" })
     } catch (error) {
       console.error("Failed to copy client info:", error)
     }
