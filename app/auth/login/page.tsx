@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { useAuth } from "@/components/auth/auth-provider"
+import { createClient } from "@/lib/supabase/client"
 
 export default function LoginPage() {
   return (
@@ -31,6 +32,21 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isAuthenticated } = useAuth()
+
+  // Clear stale auth artifacts from previous auth system on login page load
+  useEffect(() => {
+    // Remove old localStorage-based auth tokens
+    localStorage.removeItem("vazana-auth-token")
+    localStorage.removeItem("vazana-auth-user")
+    localStorage.removeItem("vazana-session")
+    // Sign out any stale Supabase session so cookies are clean
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        supabase.auth.signOut().catch(() => {})
+      }
+    })
+  }, [])
 
   // If already authenticated, redirect to home (or ?next= param)
   if (isAuthenticated) {
