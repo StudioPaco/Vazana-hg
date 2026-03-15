@@ -83,9 +83,16 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        console.error("Error creating client:", errorData)
-        toast({ title: "שגיאה ביצירת הלקוח: " + (errorData.error || "שגיאה לא ידועה"), variant: "destructive" })
+        let errorMsg = "שגיאה לא ידועה"
+        try {
+          const errorData = await response.json()
+          console.error("Error creating client:", errorData)
+          errorMsg = errorData.error || errorData.details || errorMsg
+        } catch {
+          console.error("Error creating client: status", response.status)
+          errorMsg = `Server error (${response.status})`
+        }
+        toast({ title: "שגיאה ביצירת הלקוח: " + errorMsg, variant: "destructive" })
         return
       }
 

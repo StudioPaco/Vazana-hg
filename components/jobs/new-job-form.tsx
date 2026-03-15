@@ -270,6 +270,8 @@ export default function NewJobForm() {
           city: formData.clientCity,
           po_box: formData.clientPostalCode || null,
           payment_method: parseInt(formData.clientPaymentTerms) || 1,
+          security_rate: 0,
+          installation_rate: 0,
           notes: formData.clientNotes || "",
           status: "active",
         }

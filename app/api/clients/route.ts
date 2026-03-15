@@ -25,6 +25,13 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
+    // Get authenticated user for created_by_id
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      console.error("Auth error creating client:", authError)
+      return NextResponse.json({ error: "Authentication required. Please log in again." }, { status: 401 })
+    }
+
     const body = await request.json()
 
     // Basic validation to ensure required fields are present
@@ -32,23 +39,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Company name and contact person are required." }, { status: 400 })
     }
 
-    const clientData = {
+    const clientData: Record<string, any> = {
       company_name: body.company_name,
       contact_person: body.contact_person,
-      email: body.email,
-      phone: body.phone,
-      address: body.address,
-      city: body.city,
-      po_box: body.po_box,
-      payment_method: body.payment_method,
-      security_rate: body.security_rate,
-      installation_rate: body.installation_rate,
-      notes: body.notes,
+      email: body.email || null,
+      phone: body.phone || null,
+      address: body.address || null,
+      city: body.city || null,
+      po_box: body.po_box || null,
+      payment_method: body.payment_method || 1,
+      security_rate: body.security_rate ?? 0,
+      installation_rate: body.installation_rate ?? 0,
+      notes: body.notes || null,
       status: body.status || "active",
       created_date: new Date().toISOString(),
       updated_date: new Date().toISOString(),
       is_sample: false,
+      created_by_id: user.id,
     }
+
+    console.log("Inserting client with data keys:", Object.keys(clientData))
 
     const { data: client, error } = await supabase.from("clients").insert([clientData]).select().single()
 
@@ -56,18 +66,17 @@ export async function POST(request: NextRequest) {
       console.error("Error creating client in Supabase:", error)
       console.error("Full error details:", JSON.stringify(error, null, 2))
       return NextResponse.json({ 
-        error: `Supabase error: ${error.message}`, 
+        error: error.message || "Database error creating client", 
         details: error.details || error.hint || 'No additional details',
-        code: error.code || 'No error code'
+        code: error.code || 'UNKNOWN'
       }, { status: 500 })
     }
 
     return NextResponse.json({ data: client }, { status: 201 })
   } catch (error: any) {
     console.error("Internal error creating client:", error)
-    // Ensure a valid JSON response is always sent
     return NextResponse.json(
-      { error: "Internal server error.", details: error.message || "Unknown error" },
+      { error: error.message || "Internal server error" },
       { status: 500 },
     )
   }
