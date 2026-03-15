@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserIcon, Save, X } from "lucide-react"
 import { getModalClasses } from "@/lib/modal-utils"
 import { toast } from "@/hooks/use-toast"
+import { createClient } from "@/lib/supabase/client"
 
 interface Client {
   id: string
@@ -59,45 +60,54 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
 
     setIsSubmitting(true)
     try {
-      console.log("Submitting client form with data:", formData)
+      const supabase = createClient()
 
-      const response = await fetch("/api/clients", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          company_name: formData.companyName,
-          contact_person: formData.contactPerson, // Fixed: matches DB schema
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          po_box: formData.postalCode,
-          payment_method: parseInt(formData.paymentTerms) || 1, // Integer FK to payment terms
-          security_rate: Number.parseFloat(formData.hourlyRate) || 0, // Fixed: matches DB schema
-          installation_rate: Number.parseFloat(formData.maintenanceRate) || 0, // Fixed: matches DB schema
-          notes: formData.notes,
-          status: "active",
-        }),
-      })
-
-      if (!response.ok) {
-        let errorMsg = "שגיאה לא ידועה"
-        try {
-          const errorData = await response.json()
-          console.error("Error creating client:", errorData)
-          errorMsg = errorData.error || errorData.details || errorMsg
-        } catch {
-          console.error("Error creating client: status", response.status)
-          errorMsg = `Server error (${response.status})`
-        }
-        toast({ title: "שגיאה ביצירת הלקוח: " + errorMsg, variant: "destructive" })
+      // Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        toast({ title: "שגיאה: יש להתחבר מחדש למערכת", variant: "destructive" })
+        setIsSubmitting(false)
         return
       }
 
-      const result = await response.json()
-      console.log("Client created successfully:", result)
+      const clientData = {
+        company_name: formData.companyName,
+        contact_person: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address || null,
+        city: formData.city || null,
+        po_box: formData.postalCode || null,
+        payment_method: parseInt(formData.paymentTerms) || 1,
+        security_rate: Number.parseFloat(formData.hourlyRate) || 0,
+        installation_rate: Number.parseFloat(formData.maintenanceRate) || 0,
+        notes: formData.notes || null,
+        status: "active",
+        created_date: new Date().toISOString(),
+        updated_date: new Date().toISOString(),
+        is_sample: false,
+        created_by_id: user.id,
+      }
+
+      console.log("Inserting client directly via Supabase:", Object.keys(clientData))
+
+      const { data: newClient, error } = await supabase
+        .from("clients")
+        .insert([clientData])
+        .select()
+        .single()
+
+      if (error) {
+        console.error("Supabase insert error:", error)
+        toast({ 
+          title: `שגיאה ביצירת הלקוח: ${error.message || error.code || "שגיאת מסד נתונים"}`, 
+          variant: "destructive" 
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      console.log("Client created successfully:", newClient)
       
       // Reset form
       setFormData({
@@ -108,18 +118,18 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
         address: "",
         city: "",
         postalCode: "",
-      paymentTerms: "1",
-      hourlyRate: "",
-      maintenanceRate: "",
-      notes: "",
-    })
+        paymentTerms: "1",
+        hourlyRate: "",
+        maintenanceRate: "",
+        notes: "",
+      })
       
-      onClientCreated(result.data)
+      onClientCreated(newClient)
       onOpenChange(false)
       toast({ title: "הלקוח נוצר בהצלחה!", variant: "success" })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create client:", error)
-      toast({ title: "שגיאה ביצירת הלקוח: בעיית רשת או שרת", variant: "destructive" })
+      toast({ title: "שגיאה ביצירת הלקוח: " + (error?.message || "שגיאה לא צפויה"), variant: "destructive" })
     }
     setIsSubmitting(false)
   }
