@@ -50,7 +50,7 @@ export default function CartsPage() {
   }, [searchTerm, carts])
 
   const handleDeleteCart = async (id: string) => {
-    if (confirm("Are you sure you want to delete this cart?")) {
+    if (confirm("האם אתה בטוח שברצונך למחוק עגלה זו?")) {
       try {
         const supabase = createClient()
         const { error } = await supabase.from("carts").delete().eq("id", id)
@@ -98,12 +98,12 @@ export default function CartsPage() {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input
-          placeholder="Search carts..."
+          placeholder="חיפוש עגלות..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pr-10"
         />
       </div>
 
@@ -113,9 +113,9 @@ export default function CartsPage() {
           <CardContent className="text-center py-12">
             <div className="text-gray-500">
               <ShoppingCart className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-lg font-medium mb-2">No carts found</p>
+              <p className="text-lg font-medium mb-2">לא נמצאו עגלות</p>
               <p className="text-sm">
-                {searchTerm ? "Try adjusting your search terms" : "Add your first cart to get started"}
+                {searchTerm ? "נסה לשנות את מילות החיפוש" : "הוסף עגלה ראשונה כדי להתחיל"}
               </p>
             </div>
           </CardContent>
@@ -137,7 +137,7 @@ export default function CartsPage() {
               <CardContent className="space-y-4">
                 {cart.details && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Details:</p>
+                    <p className="text-sm text-gray-500 mb-1">פרטים:</p>
                     <p className="text-sm text-gray-700">{cart.details}</p>
                   </div>
                 )}
@@ -145,8 +145,8 @@ export default function CartsPage() {
                 <div className="flex space-x-2 pt-2">
                   <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
                     <Link href={`/carts/${cart.id}/edit`}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
+                      <Edit className="ml-2 h-4 w-4" />
+                      עריכה
                     </Link>
                   </Button>
                   <Button
