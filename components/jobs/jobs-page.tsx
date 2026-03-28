@@ -416,17 +416,24 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
             </Button>
           </div>
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              const newViewMode = preferences?.jobs_view_mode === "list" ? "grid" : "list"
-              updatePreference('jobs_view_mode', newViewMode)
-            }}
-            className="h-9 w-9"
-          >
-            {preferences?.jobs_view_mode === "list" ? <Grid3X3 className="w-4 h-4" /> : <List className="w-4 h-4" />}
-          </Button>
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => updatePreference('jobs_view_mode', 'list')}
+              className={`px-2 py-1 ${preferences?.jobs_view_mode !== 'grid' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => updatePreference('jobs_view_mode', 'grid')}
+              className={`px-2 py-1 ${preferences?.jobs_view_mode === 'grid' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
+            >
+              <Grid3X3 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {showHeader && (
@@ -632,8 +639,8 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                   </div>
 
                   <CardContent
-                    className={`pt-12 pb-2 transition-all duration-200 ${
-                      isExpanded ? "min-h-[200px]" : "min-h-[40px]"
+                    className={`transition-all duration-200 ${
+                      isExpanded ? "pt-12 pb-2 min-h-[200px]" : "pt-12 pb-1"
                     }`}
                     onClick={() => toggleJobExpansion(job.id)}
                   >
@@ -741,11 +748,11 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                         </div>
                       </div>
 
-                      <div className="text-center pt-1">
-                        <p className="text-xs text-gray-400 font-hebrew">
-                          {isExpanded ? "לחץ כדי לכווץ" : "לחץ כדי להרחיב"}
-                        </p>
-                      </div>
+                      {isExpanded && (
+                        <div className="text-center pt-1">
+                          <p className="text-xs text-gray-400 font-hebrew">לחץ כדי לכווץ</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
