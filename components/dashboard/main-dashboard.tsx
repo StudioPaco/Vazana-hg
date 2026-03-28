@@ -287,7 +287,7 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
   const userName = profile?.full_name || profile?.username || ""
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* ── Greeting Banner ──────────────────────────────────────── */}
       <div className="space-y-1" suppressHydrationWarning>
         <h2 className="text-2xl font-medium tracking-tight font-hebrew" suppressHydrationWarning>
@@ -389,10 +389,9 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
         </div>
       )}
 
-      {/* ── Two-column: Upcoming Jobs + Financial ─────────────────── */}
-      <div className="grid items-start gap-4 lg:grid-cols-3">
-        {/* Upcoming Jobs (2/3 width) */}
-        <div className="lg:col-span-2 bg-white rounded-xl border p-5">
+      {/* ── Upcoming Jobs (full width) ─────────────────────────── */}
+      <div>
+        <div className="bg-white rounded-xl border p-5">
           <div className="flex items-center justify-between mb-4" dir="rtl">
             <h3 className="text-sm font-semibold font-hebrew flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-400" />
@@ -458,17 +457,48 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
             </div>
           )}
         </div>
+      </div>
 
-        {/* Financial Summary (1/3 width) */}
+      {/* ── Completed Jobs + Financial Summary (side by side) ────── */}
+      <div className="grid items-start gap-4 lg:grid-cols-3">
+        {/* Recent Completed Jobs (2/3 width — first child = RIGHT in RTL) */}
+        {stats.recentCompletedJobs.length > 0 && (
+          <div className="lg:col-span-2 bg-white rounded-xl border p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold font-hebrew flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                עבודות שהושלמו לאחרונה
+              </h3>
+              <Link href="/jobs" className="text-xs text-gray-400 hover:text-gray-600 font-hebrew">צפה בהכל</Link>
+            </div>
+            <div className="space-y-2">
+              {stats.recentCompletedJobs.map((job: any) => (
+                <div key={job.id} className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    {job.total_amount > 0 && (
+                      <span className="text-xs text-green-700 font-medium">₪{job.total_amount.toLocaleString()}</span>
+                    )}
+                    <span className="text-xs text-gray-500 font-hebrew">{job.date}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium font-hebrew">{job.client_name || "לקוח לא ידוע"}</p>
+                    <p className="text-xs text-gray-500 font-hebrew">{job.work_type} · {job.location}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Financial Summary (1/3 width — second child = LEFT in RTL) */}
         <div className="bg-white rounded-xl border p-5">
-          <div className="flex items-center justify-between mb-4" dir="rtl">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold font-hebrew flex items-center gap-2">
               <Bell className="w-4 h-4 text-gray-400" />
               סקירה כספית
             </h3>
             <Link href="/invoices" className="text-xs text-gray-400 hover:text-gray-600 font-hebrew">צפה בהכל</Link>
           </div>
-
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
               <TrendingUp className="w-5 h-5 text-green-600" />
@@ -477,7 +507,6 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
                 <p className="text-xs text-green-600 font-hebrew">{formatCurrency(stats.totalRevenue)}</p>
               </div>
             </div>
-
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
               <FileText className="w-5 h-5 text-blue-600" />
               <div className="text-right">
@@ -485,7 +514,6 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
                 <p className="text-xs text-blue-600 font-hebrew">{stats.pendingInvoices}</p>
               </div>
             </div>
-
             {stats.overduePayments > 0 && (
               <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -495,7 +523,6 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
                 </div>
               </div>
             )}
-
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <Truck className="w-5 h-5 text-gray-600" />
               <div className="text-right">
@@ -506,35 +533,6 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
           </div>
         </div>
       </div>
-
-      {/* ── Recent Completed Jobs ──────────────────────────────── */}
-      {stats.recentCompletedJobs.length > 0 && (
-        <div className="bg-white rounded-xl border p-5">
-          <div className="flex items-center justify-between mb-4" dir="rtl">
-            <h3 className="text-sm font-semibold font-hebrew flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              עבודות שהושלמו לאחרונה
-            </h3>
-            <Link href="/jobs" className="text-xs text-gray-400 hover:text-gray-600 font-hebrew">צפה בהכל</Link>
-          </div>
-          <div className="space-y-2">
-            {stats.recentCompletedJobs.map((job: any) => (
-              <div key={job.id} className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  {job.total_amount > 0 && (
-                    <span className="text-xs text-green-700 font-medium">₪{job.total_amount.toLocaleString()}</span>
-                  )}
-                  <span className="text-xs text-gray-500 font-hebrew">{job.date}</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium font-hebrew">{job.client_name || "לקוח לא ידוע"}</p>
-                  <p className="text-xs text-gray-500 font-hebrew">{job.work_type} · {job.location}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

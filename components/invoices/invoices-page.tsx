@@ -301,7 +301,7 @@ export default function InvoicesPage({
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" dir="rtl">
         <div className="animate-pulse space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
@@ -312,7 +312,7 @@ export default function InvoicesPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Toolbar -- always visible */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4">
         <Button asChild className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">

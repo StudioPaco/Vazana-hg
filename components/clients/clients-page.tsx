@@ -314,7 +314,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" dir="rtl">
         <div className="animate-pulse space-y-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
@@ -325,7 +325,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Toolbar -- always visible */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
@@ -598,7 +598,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                         setJobPage(prev => ({ ...prev, [client.id]: 0 }))
                       }
                     }}
-                    className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-800 transition-colors py-1"
+                    className="w-full flex items-center justify-center gap-3 text-sm text-gray-600 hover:text-gray-800 transition-colors py-1"
                   >
                     <div className="flex items-center gap-2">
                       {realClientStats[client.id] > 0 && (
