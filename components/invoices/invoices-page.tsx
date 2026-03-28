@@ -99,8 +99,8 @@ export default function InvoicesPage({
         setFilteredInvoices(result.data || [])
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to fetch invoices",
+          title: "שגיאה",
+          description: "שגיאה בטעינת חשבוניות",
           variant: "destructive",
         })
       } finally {
@@ -176,13 +176,13 @@ export default function InvoicesPage({
       document.body.removeChild(a)
 
       toast({
-        title: "Success",
-        description: "Invoice PDF downloaded successfully",
+        title: "הצלחה",
+        description: "חשבונית PDF הורדה בהצלחה",
       })
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to download PDF",
+        title: "שגיאה",
+        description: "שגיאה בהורדת PDF",
         variant: "destructive",
       })
     }
@@ -217,13 +217,13 @@ export default function InvoicesPage({
         return "לא ידוע"
     }
   }
-  
+
   // Calculate statistics - memoized to prevent infinite loops
   const stats = useMemo(() => {
     const totalRevenue = filteredInvoices
       .filter(inv => inv.status === "paid")
       .reduce((sum, inv) => sum + inv.total_amount, 0)
-    
+
     const pendingInvoices = filteredInvoices.filter(inv => inv.status === "sent").length
     const overdueInvoices = filteredInvoices.filter(inv => isOverdue(inv.due_date, inv.status)).length
     const totalInvoicesThisMonth = filteredInvoices.filter(inv => {
@@ -264,10 +264,10 @@ export default function InvoicesPage({
       try {
         const response = await fetch(`/api/invoices/${invoiceId}/line-items`)
         if (!response.ok) throw new Error('Failed to fetch invoice line items')
-        
+
         const result = await response.json()
         const jobs = result.data || []
-        
+
         setInvoiceJobs(prev => ({
           ...prev,
           [invoiceId]: jobs
@@ -283,87 +283,36 @@ export default function InvoicesPage({
     }
   }
 
+  // Total amount of filtered invoices
+  const filteredTotal = useMemo(() => {
+    return filteredInvoices.reduce((sum, inv) => sum + inv.total_amount, 0)
+  }, [filteredInvoices])
+
   if (loading) {
     return (
-      <div className="space-y-6" dir="rtl">
-        {showHeader && (
-          <div className="relative pb-16">
-            <div className="absolute top-0 right-0">
-              <h1 className="text-2xl font-bold text-gray-900">חשבוניות</h1>
-              <p className="text-sm text-gray-600">נהל ועקב אחר חשבוניות וחיובים</p>
-            </div>
-            <div className="absolute top-0 left-0">
-              <FileText className="h-6 w-6 text-gray-400" />
-            </div>
-          </div>
-        )}
-        <div className="animate-pulse space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
+      <div className="space-y-6">
+        <div className="animate-pulse space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+          ))}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      {showHeader && (
-        <div className="relative pb-16">
-          <div className="absolute top-0 right-0 text-right z-10">
-            <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">ארכיון חשבוניות</h1>
-            <p className="text-gray-600 font-hebrew">עקב אחר חשבוניות שהונפקו וסטטוס התשלומים</p>
-          </div>
-          
-          <div className="absolute top-0 left-0 z-10">
-            <FileText className="w-8 h-8 text-vazana-teal" />
-          </div>
-        </div>
-      )}
-        
-      {showHeader && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatsContainer
-            title="הכנסות חודשיות"
-            value={`₪${stats.totalRevenue.toLocaleString()}`}
-            icon={DollarSign}
-            color="green"
-          />
-          
-          <StatsContainer
-            title="חשבוניות ממתינות"
-            value={stats.pendingInvoices}
-            icon={Clock}
-            color="yellow"
-          />
-          
-          <StatsContainer
-            title="חשבוניות באיחור"
-            value={stats.overdueInvoices}
-            icon={Calendar}
-            color="red"
-          />
-          
-          <StatsContainer
-            title="סה״כ חשבוניות חודש"
-            value={stats.totalInvoicesThisMonth}
-            icon={CheckCircle}
-            color="blue"
-          />
-        </div>
-      )}
-        
-      {/* Toolbar — always visible */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
+    <div className="space-y-6">
+      {/* Toolbar -- always visible */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4">
+        <Button asChild className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
+          <Link href="/invoices/new">
+            <Plus className="w-4 h-4 ml-2" />
+            חשבונית חדשה
+          </Link>
+        </Button>
+
         {/* Sorting Toggle */}
-        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           <Button
             variant="ghost"
             size="sm"
@@ -404,7 +353,7 @@ export default function InvoicesPage({
       </div>
 
       {/* Filters Row */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="flex gap-2 w-full sm:w-auto">
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)} dir="rtl">
             <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
@@ -518,14 +467,14 @@ export default function InvoicesPage({
                       <p className="text-xs text-gray-600">סכום כולל</p>
                     </div>
                   </div>
-                  
+
                   {invoice.notes && (
                     <div className="mt-4 p-3 bg-gray-50 rounded text-right">
                       <p className="text-xs text-gray-600">הערות:</p>
                       <p className="text-sm text-gray-700">{invoice.notes}</p>
                     </div>
                   )}
-                  
+
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <button
                       onClick={() => toggleJobHistory(invoice.id)}
@@ -549,7 +498,7 @@ export default function InvoicesPage({
                             >
                               <div className="flex flex-col items-start gap-1">
                                 <div className="flex items-center gap-2">
-                                  <StatusBadge 
+                                  <StatusBadge
                                     status={jobItem.jobs?.job_status || "הושלם"}
                                     type="job"
                                     size="sm"
@@ -572,7 +521,7 @@ export default function InvoicesPage({
                                   {new Date(jobItem.job_date).toLocaleDateString("he-IL")}
                                 </p>
                                 <p className="text-xs text-gray-600 mt-1">
-                                  כמות: {jobItem.quantity} × ₪{jobItem.unit_price.toLocaleString()}
+                                  כמות: {jobItem.quantity} x ₪{jobItem.unit_price.toLocaleString()}
                                 </p>
                               </div>
                             </div>
@@ -587,6 +536,18 @@ export default function InvoicesPage({
               </Card>
             ))}
           </div>
+      )}
+
+      {/* Total amount footer */}
+      {filteredInvoices.length > 0 && (
+        <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <span className="text-sm text-gray-600 font-hebrew">
+            {filteredInvoices.length} חשבוניות
+          </span>
+          <span className="text-lg font-bold text-vazana-dark font-hebrew">
+            סה״כ: ₪{filteredTotal.toLocaleString()}
+          </span>
+        </div>
       )}
     </div>
   )

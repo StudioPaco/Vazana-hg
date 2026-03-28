@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp, Edit, Trash2, Copy, ArrowUpDown, Filter } from "lucide-react"
+import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp, Edit, Trash2, Copy, ArrowUpDown, Filter, Grid3X3, List, Download, Briefcase } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "@/hooks/use-toast"
 import ClientEditModal from "@/components/clients/client-edit-modal"
@@ -56,6 +56,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const [statusFilter, setStatusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("all")
   const [sortBy, setSortBy] = useState<'name' | 'date'>('name')
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientJobs, setClientJobs] = useState<{ [key: string]: Job[] }>({})
@@ -67,10 +68,10 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const activeClientsCount = clients.filter((client) => client.status === "active").length
   const averageSecurityRate =
     clients.length > 0 ? Math.round(clients.reduce((sum, client) => sum + (client.security_rate || 0), 0) / clients.length) : 0
-    
+
   const [realClientStats, setRealClientStats] = useState<{[key: string]: number}>({})
   const [isLoadingStats, setIsLoadingStats] = useState(false)
-  
+
   const getMostActiveClient = () => {
     let mostActiveClient = null
     let maxJobs = 0
@@ -85,10 +86,10 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
 
     return mostActiveClient || { name: "אין נתונים", count: 0 }
   }
-  
+
   const fetchClientStats = async () => {
     if (clients.length === 0 || isLoadingStats) return
-    
+
     setIsLoadingStats(true)
     try {
       const supabase = createClient()
@@ -97,19 +98,19 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
           .from("jobs")
           .select("id")
           .eq("client_id", client.id)
-        
+
         return {
           clientId: client.id,
           count: error ? 0 : (data?.length || 0)
         }
       })
-      
+
       const results = await Promise.all(statsPromises)
       const statsMap = results.reduce((acc, result) => {
         acc[result.clientId] = result.count
         return acc
       }, {} as {[key: string]: number})
-      
+
       setRealClientStats(statsMap)
     } catch (error) {
       console.error("Failed to fetch client stats:", error)
@@ -117,16 +118,14 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
       setIsLoadingStats(false)
     }
   }
-  
+
   const mostActiveClient = getMostActiveClient()
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        console.log("Fetching clients from API...")
-
         const response = await fetch("/api/clients")
-        
+
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`)
         }
@@ -134,7 +133,6 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         const result = await response.json()
         const data = result.data || []
 
-        console.log("Successfully fetched clients:", data)
         setClients(data)
         setFilteredClients(data)
       } catch (error) {
@@ -192,7 +190,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
 
     setFilteredClients(filtered)
   }, [searchTerm, statusFilter, cityFilter, sortBy, clients])
-  
+
   useEffect(() => {
     if (clients.length > 0) {
       fetchClientStats()
@@ -242,8 +240,36 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
     }
   }
 
+  const handleExportCSV = async () => {
+    const headers = ["שם חברה", "איש קשר", "טלפון", "אימייל", "כתובת", "עיר", "תעריף אבטחה", "תעריף התקנה", "אופן תשלום", "סטטוס", "מספר עבודות"]
+    const paymentMethodMap: Record<string, string> = {
+      '1': 'מיידי', '2': 'שוטף +15', '3': 'שוטף +30', '4': 'שוטף +60', '5': 'שוטף +90'
+    }
+    const rows = filteredClients.map(c => [
+      c.company_name,
+      c.contact_person,
+      c.phone,
+      c.email,
+      c.address || '',
+      c.city || '',
+      String(c.security_rate || 0),
+      String(c.installation_rate || 0),
+      paymentMethodMap[String(c.payment_method)] || c.payment_method || '',
+      c.status === 'active' ? 'פעיל' : 'לא פעיל',
+      String(realClientStats[c.id] || 0),
+    ])
+
+    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n')
+    try {
+      await navigator.clipboard.writeText(csvContent)
+      toast({ title: `נתוני ${filteredClients.length} לקוחות הועתקו ללוח כ-CSV`, variant: "success" })
+    } catch (error) {
+      console.error("Failed to copy CSV:", error)
+    }
+  }
+
   // Note: Job statuses are now managed solely through database values
-  
+
   const fetchClientJobs = async (clientId: string) => {
     try {
       const supabase = createClient()
@@ -286,70 +312,21 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
 
   if (loading) {
     return (
-      <div className="space-y-6" dir="rtl">
-        <div className="relative pb-16">
-          <div className="absolute top-0 right-0">
-            <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
-            <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
-          </div>
-          <div className="absolute top-0 left-0">
-            <Users className="h-6 w-6 text-gray-400" />
-          </div>
-        </div>
-        <div className="animate-pulse space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
+      <div className="space-y-6">
+        <div className="animate-pulse space-y-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
+          ))}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      {showHeader && (
-        <div className="relative pb-16">
-          <div className="absolute top-0 right-0">
-            <h1 className="text-2xl font-bold text-gray-900">לקוחות</h1>
-            <p className="text-sm text-gray-600">נהל את קשרי הלקוחות שלך ומידע חשוב</p>
-          </div>
-          <div className="absolute top-0 left-0">
-            <Users className="h-6 w-6 text-gray-400" />
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        {showHeader && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <StatsContainer
-              title="תעריף אבטחה ממוצע"
-              value={`₪${averageSecurityRate}`}
-              icon={Users}
-              color="blue"
-            />
-
-            <StatsContainer
-              title="לקוחות פעילים"
-              value={activeClientsCount}
-              icon={Users}
-              color="green"
-            />
-
-            <StatsContainer
-              title="לקוח מוביל החודש"
-              value={mostActiveClient.name}
-              subtitle={`${mostActiveClient.count} עבודות`}
-              icon={Trophy}
-              color="yellow"
-            />
-          </div>
-        )}
-
-        {/* Toolbar — always visible */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
+    <div className="space-y-6">
+      {/* Toolbar -- always visible */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             onClick={() => setNewClientModalOpen(true)}
             className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
@@ -358,8 +335,18 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
             לקוח חדש
           </Button>
 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            className="font-hebrew text-xs"
+          >
+            <Download className="w-4 h-4 ml-1" />
+            ייצוא CSV
+          </Button>
+
           {/* Sorting Toggle */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
             <Button
               variant="ghost"
               size="sm"
@@ -387,223 +374,259 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
           </div>
         </div>
 
-        {/* Filters Row */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className={`px-2 py-1 transition-colors ${
+              viewMode === 'list'
+                ? 'bg-teal-500 text-white hover:bg-teal-600'
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <List className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setViewMode('grid')}
+            className={`px-2 py-1 transition-colors ${
+              viewMode === 'grid'
+                ? 'bg-teal-500 text-white hover:bg-teal-600'
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <Grid3X3 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters Row */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+              <SelectValue placeholder="כל הסטטוסים" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">כל הסטטוסים</SelectItem>
+              <SelectItem value="active">פעיל</SelectItem>
+              <SelectItem value="inactive">לא פעיל</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {uniqueCities.length > 0 && (
+            <Select value={cityFilter} onValueChange={setCityFilter}>
               <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
-                <SelectValue placeholder="כל הסטטוסים" />
+                <SelectValue placeholder="כל הערים" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">כל הסטטוסים</SelectItem>
-                <SelectItem value="active">פעיל</SelectItem>
-                <SelectItem value="inactive">לא פעיל</SelectItem>
+                <SelectItem value="all">כל הערים</SelectItem>
+                {uniqueCities.map((city) => (
+                  <SelectItem key={city} value={city}>
+                    {city}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-
-            {uniqueCities.length > 0 && (
-              <Select value={cityFilter} onValueChange={setCityFilter}>
-                <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
-                  <SelectValue placeholder="כל הערים" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל הערים</SelectItem>
-                  {uniqueCities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="חפש לקוחות..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10 text-right font-hebrew w-full sm:w-[300px]"
-            />
-          </div>
+          )}
         </div>
 
-        {filteredClients.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <div className="text-gray-500">
-                <Plus className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                <p className="text-lg font-medium mb-2">לא נמצאו לקוחות</p>
-                <p className="text-sm">
-                  {searchTerm || statusFilter !== "all" || cityFilter !== "all"
-                    ? "נסה לשנות את החיפוש או המסננים"
-                    : "הוסף את הלקוח הראשון שלך כדי להתחיל"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {filteredClients.map((client) => (
-              <Card key={client.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="px-4 py-2">
-                  <div className="relative mb-4">
-                    {/* Client name and info - positioned at top-right */}
-                    <div className="absolute top-0 right-0 text-right">
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="חפש לקוחות..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pr-10 text-right font-hebrew w-full sm:w-[300px]"
+          />
+        </div>
+      </div>
+
+      {filteredClients.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <div className="text-gray-500">
+              <Plus className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <p className="text-lg font-medium mb-2">לא נמצאו לקוחות</p>
+              <p className="text-sm">
+                {searchTerm || statusFilter !== "all" || cityFilter !== "all"
+                  ? "נסה לשנות את החיפוש או המסננים"
+                  : "הוסף את הלקוח הראשון שלך כדי להתחיל"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
+          {filteredClients.map((client) => (
+            <Card key={client.id} className="hover:shadow-lg transition-shadow">
+              <CardContent className="px-4 py-2">
+                <div className="relative mb-4">
+                  {/* Client name and info - positioned at top-right */}
+                  <div className="absolute top-0 right-0 text-right">
+                    <div className="flex items-center gap-2">
                       <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
-                      <p className="text-sm text-gray-600">{client.contact_person}</p>
-                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
-                        {client.status === "active" ? "פעיל" : "לא פעיל"}
-                      </Badge>
-                    </div>
-
-                    {/* Action buttons - positioned at top-left */}
-                    <div className="absolute top-0 left-0 flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCopyClient(client)}
-                        className="bg-transparent border-gray-300 h-8 px-3 text-xs"
-                      >
-                        העתק
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="bg-transparent border-gray-300 h-8 px-3 text-xs"
-                      >
-                        <span
-                          onClick={() => {
-                            setEditingClient(client)
-                            setEditModalOpen(true)
-                          }}
-                        >
-                          ערוך
-                        </span>
-                      </Button>
-                    </div>
-
-                    {/* Spacer to ensure content doesn't overlap */}
-                    <div className="h-8"></div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="text-right space-y-1">
-                      <div className="flex items-center justify-end">
-                        <span className="mr-2 text-sm">{client.phone}</span>
-                        <Phone className="h-3 w-3 text-gray-500" />
-                      </div>
-                      <div className="flex items-center justify-end">
-                        <span className="mr-2 text-sm">{client.email}</span>
-                        <Mail className="h-3 w-3 text-gray-500" />
-                      </div>
-                      <div className="flex items-center justify-end">
-                        <span className="mr-2 text-sm">
-                          {[client.address, client.city].filter(Boolean).join(', ') || 'לא הוגדר'}
-                        </span>
-                        <MapPin className="h-3 w-3 text-gray-500" />
-                      </div>
-                    </div>
-
-                    <div className="text-right space-y-1">
-                      <div>
-                        <p className="text-xs text-gray-600">תעריף אבטחה</p>
-                        <p className="font-medium text-sm">₪{client.security_rate || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600">תעריף התקנה</p>
-                        <p className="font-medium text-sm">₪{client.installation_rate || 0}</p>
-                      </div>
-                    </div>
-
-                    <div className="text-right space-y-1">
-                      <div>
-                        <p className="text-xs text-gray-600">אופן תשלום</p>
-                        <p className="font-medium text-sm">{{
-                          '1': 'מיידי', '2': 'שוטף +15', '3': 'שוטף +30', '4': 'שוטף +60', '5': 'שוטף +90'
-                        }[String(client.payment_method)] || client.payment_method || 'לא הוגדר'}</p>
-                      </div>
-                      {client.notes && (
-                        <div>
-                          <p className="text-xs text-gray-600">הערות</p>
-                          <p className="text-xs text-gray-700">{client.notes}</p>
-                        </div>
+                      {realClientStats[client.id] !== undefined && realClientStats[client.id] > 0 && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Briefcase className="w-3 h-3" />
+                          {realClientStats[client.id]}
+                        </Badge>
                       )}
                     </div>
+                    <p className="text-sm text-gray-600">{client.contact_person}</p>
+                    <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
+                      {client.status === "active" ? "פעיל" : "לא פעיל"}
+                    </Badge>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <button
-                      onClick={() => toggleJobHistory(client.id)}
-                      className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors py-2"
+                  {/* Action buttons - positioned at top-left */}
+                  <div className="absolute top-0 left-0 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCopyClient(client)}
+                      className="bg-transparent border-gray-300 h-8 px-3 text-xs"
                     >
-                      <span>הצג 10 עבודות אחרונות</span>
-                      {expandedClient === client.id ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </button>
+                      העתק
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="bg-transparent border-gray-300 h-8 px-3 text-xs"
+                    >
+                      <span
+                        onClick={() => {
+                          setEditingClient(client)
+                          setEditModalOpen(true)
+                        }}
+                      >
+                        ערוך
+                      </span>
+                    </Button>
+                  </div>
 
-                    {expandedClient === client.id && (
-                      <div className="mt-3 space-y-2 bg-gray-50 rounded-lg p-3">
-                        {clientJobs[client.id] && clientJobs[client.id].length > 0 ? (
-                          clientJobs[client.id].map((job) => (
-                            <div
-                              key={job.id}
-                              className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
-                            >
-                              <StatusBadge 
-                                status={job.job_status || "ממתין"}
-                                type="job"
-                                size="sm"
-                              />
-                              <div className="text-right">
-                                <p className="font-medium text-sm">עבודה #{job.job_number}</p>
-                                <p className="text-xs text-gray-600">
-                                  {job.work_type} - {job.site}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {new Date(job.job_date).toLocaleDateString("he-IL")}
-                                </p>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-center text-sm text-gray-500 py-4">אין עבודות קודמות</p>
-                        )}
+                  {/* Spacer to ensure content doesn't overlap */}
+                  <div className="h-8"></div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="text-right space-y-1">
+                    <div className="flex items-center justify-end">
+                      <span className="mr-2 text-sm">{client.phone}</span>
+                      <Phone className="h-3 w-3 text-gray-500" />
+                    </div>
+                    <div className="flex items-center justify-end">
+                      <span className="mr-2 text-sm">{client.email}</span>
+                      <Mail className="h-3 w-3 text-gray-500" />
+                    </div>
+                    <div className="flex items-center justify-end">
+                      <span className="mr-2 text-sm">
+                        {[client.address, client.city].filter(Boolean).join(', ') || 'לא הוגדר'}
+                      </span>
+                      <MapPin className="h-3 w-3 text-gray-500" />
+                    </div>
+                  </div>
+
+                  <div className="text-right space-y-1">
+                    <div>
+                      <p className="text-xs text-gray-600">תעריף אבטחה</p>
+                      <p className="font-medium text-sm">₪{client.security_rate || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">תעריף התקנה</p>
+                      <p className="font-medium text-sm">₪{client.installation_rate || 0}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right space-y-1">
+                    <div>
+                      <p className="text-xs text-gray-600">אופן תשלום</p>
+                      <p className="font-medium text-sm">{{
+                        '1': 'מיידי', '2': 'שוטף +15', '3': 'שוטף +30', '4': 'שוטף +60', '5': 'שוטף +90'
+                      }[String(client.payment_method)] || client.payment_method || 'לא הוגדר'}</p>
+                    </div>
+                    {client.notes && (
+                      <div>
+                        <p className="text-xs text-gray-600">הערות</p>
+                        <p className="text-xs text-gray-700">{client.notes}</p>
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-        
-        <ClientEditModal
-          client={editingClient}
-          open={editModalOpen}
-          onOpenChange={setEditModalOpen}
-          onClientUpdated={(updatedClient) => {
-            setClients(clients.map(client => 
-              client.id === updatedClient.id ? { ...client, ...updatedClient } : client
-            ))
-            setEditingClient(null)
-          }}
-        />
-        
-        <NewClientModal
-          open={newClientModalOpen}
-          onOpenChange={setNewClientModalOpen}
-          onClientCreated={(newClient) => {
-            setClients([newClient, ...clients])
-            setFilteredClients([newClient, ...filteredClients])
-          }}
-        />
-      </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <button
+                    onClick={() => toggleJobHistory(client.id)}
+                    className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors py-2"
+                  >
+                    <span>הצג 10 עבודות אחרונות</span>
+                    {expandedClient === client.id ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {expandedClient === client.id && (
+                    <div className="mt-3 space-y-2 bg-gray-50 rounded-lg p-3">
+                      {clientJobs[client.id] && clientJobs[client.id].length > 0 ? (
+                        clientJobs[client.id].map((job) => (
+                          <div
+                            key={job.id}
+                            className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                          >
+                            <StatusBadge
+                              status={job.job_status || "ממתין"}
+                              type="job"
+                              size="sm"
+                            />
+                            <div className="text-right">
+                              <p className="font-medium text-sm">עבודה #{job.job_number}</p>
+                              <p className="text-xs text-gray-600">
+                                {job.work_type} - {job.site}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(job.job_date).toLocaleDateString("he-IL")}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center text-sm text-gray-500 py-4">אין עבודות קודמות</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <ClientEditModal
+        client={editingClient}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onClientUpdated={(updatedClient) => {
+          setClients(clients.map(client =>
+            client.id === updatedClient.id ? { ...client, ...updatedClient } : client
+          ))
+          setEditingClient(null)
+        }}
+      />
+
+      <NewClientModal
+        open={newClientModalOpen}
+        onOpenChange={setNewClientModalOpen}
+        onClientCreated={(newClient) => {
+          setClients([newClient, ...clients])
+          setFilteredClients([newClient, ...filteredClients])
+        }}
+      />
     </div>
   )
 }
