@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import PageLayout from "@/components/layout/page-layout"
 
 export default function EditClientPage() {
   const router = useRouter()
@@ -109,14 +110,13 @@ export default function EditClientPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto" dir="rtl">
-          {/* Title positioned in top-right corner */}
-          <div className="relative mb-8">
-            <UserIcon className="absolute top-0 left-0 w-6 h-6 text-vazana-teal" />
-            <h1 className="text-2xl font-bold text-gray-900 text-right">עריכת לקוח</h1>
-            <p className="text-gray-600 text-right mt-2">עדכן פרטי לקוח קיים</p>
-          </div>
-
+    <PageLayout
+      title="עריכת לקוח"
+      subtitle="עדכן פרטי לקוח קיים"
+      titleIcon={UserIcon}
+      backHref="/clients"
+      variant="form"
+    >
           <form onSubmit={handleSubmit} className="space-y-6">
             <Card>
               <CardHeader>
@@ -204,6 +204,6 @@ export default function EditClientPage() {
               </Button>
             </div>
           </form>
-    </div>
+    </PageLayout>
   )
 }

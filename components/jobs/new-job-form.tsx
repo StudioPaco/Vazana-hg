@@ -27,7 +27,7 @@ const SHIFT_TYPES = [
   { value: "כפול", label: "כפול" }
 ]
 
-export default function NewJobForm() {
+export default function NewJobForm({ showHeader = true }: { showHeader?: boolean }) {
   const router = useRouter()
   const [jobNumber, setJobNumber] = useState("")
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true)
@@ -379,14 +379,25 @@ export default function NewJobForm() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto" dir="rtl">
-      <div className="flex justify-between items-center mb-6">
-        <div className="text-sm text-gray-500">
-          <span className="text-teal-600 font-semibold">{jobNumber}</span> :מספר עבודה
+    <div className={showHeader ? "p-6 max-w-4xl mx-auto" : ""} dir="rtl">
+      {showHeader && (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <div className="text-sm text-gray-500">
+              <span className="text-teal-600 font-semibold">{jobNumber}</span> :מספר עבודה
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">עבודה חדשה</h1>
+          </div>
+          <p className="text-gray-600 mb-8 text-right">יצירת כרטיס עבודה חדש</p>
+        </>
+      )}
+      {!showHeader && (
+        <div className="flex justify-end items-center mb-6">
+          <div className="text-sm text-gray-500">
+            <span className="text-teal-600 font-semibold">{jobNumber}</span> :מספר עבודה
+          </div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">עבודה חדשה</h1>
-      </div>
-      <p className="text-gray-600 mb-8 text-right">יצירת כרטיס עבודה חדש</p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>

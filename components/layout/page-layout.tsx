@@ -5,55 +5,48 @@ import { BackButton } from '@/components/ui/back-button'
 import { StatsContainer } from '@/components/ui/stats-container'
 import { LucideIcon, BarChart3, ChevronDown, ChevronUp } from 'lucide-react'
 
+export interface StatsItem {
+  title: string
+  value: string | number
+  icon: LucideIcon
+  color?: string
+  onClick?: () => void
+}
+
 interface PageLayoutProps {
   // Page identification
   title: string
   subtitle?: string
   titleIcon?: LucideIcon
-  
+
   // Navigation
   backHref?: string
-  showBackButton?: boolean
-  
-  // Stats section (for pages like jobs, clients, invoices)
+
+  // Stats section
   showStats?: boolean
-  statsData?: Array<{
-    title: string
-    value: string | number
-    icon: LucideIcon
-    color?: string
-    onClick?: () => void
-  }>
-  
-  // Action buttons row and filters
+  statsData?: StatsItem[]
+
+  // Action buttons and filters
   actions?: ReactNode
   filters?: ReactNode
-  
+
   // Main content
   children: ReactNode
-  
-  // Layout customization
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | 'full'
+
+  // Layout variant
+  variant?: 'list' | 'form'
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl' | 'full'
   className?: string
 }
 
-function StatsToggle({ statsData }: { statsData: PageLayoutProps['statsData'] }) {
+function StatsPanel({ statsData }: { statsData: StatsItem[] }) {
   const [expanded, setExpanded] = useState(false)
-  if (!statsData || statsData.length === 0) return null
+  if (statsData.length === 0) return null
 
   return (
-    <div className="mb-6 w-full">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-hebrew mb-3 transition-colors"
-      >
-        <BarChart3 className="w-4 h-4" />
-        <span>{expanded ? "הסתר סטטיסטיקות" : "הצג סטטיסטיקות"}</span>
-        {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-      </button>
-
+    <>
       {expanded && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           {statsData.map((stat, index) => (
             <StatsContainer
               key={index}
@@ -65,7 +58,7 @@ function StatsToggle({ statsData }: { statsData: PageLayoutProps['statsData'] })
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }
 
@@ -74,72 +67,99 @@ export default function PageLayout({
   subtitle,
   titleIcon: TitleIcon,
   backHref,
-  showBackButton = true,
   showStats = false,
   statsData = [],
   actions,
   filters,
   children,
-  maxWidth = '6xl',
+  variant = 'list',
+  maxWidth,
   className = ''
 }: PageLayoutProps) {
+  const [statsExpanded, setStatsExpanded] = useState(false)
+
+  // Default maxWidth based on variant
+  const effectiveMaxWidth = maxWidth ?? (variant === 'form' ? '4xl' : 'full')
   const maxWidthClass = {
     'sm': 'max-w-sm',
-    'md': 'max-w-md', 
+    'md': 'max-w-md',
     'lg': 'max-w-lg',
     'xl': 'max-w-xl',
     '2xl': 'max-w-2xl',
     '4xl': 'max-w-4xl',
     '6xl': 'max-w-6xl',
+    '7xl': 'max-w-7xl',
     'full': 'max-w-full'
-  }[maxWidth]
+  }[effectiveMaxWidth]
+
+  const widthClass = effectiveMaxWidth === 'full' ? 'w-full' : `${maxWidthClass} mx-auto`
 
   return (
-    <div className={`p-6 pr-4 ${maxWidth === 'full' ? 'w-full' : maxWidthClass + ' mx-auto'} ${className}`} dir="rtl">
-      {/* Header Section */}
-      <div className={`mb-6 ${showBackButton && backHref ? 'pt-12' : ''} relative`}>
-        {/* Back Button - Top row, positioned to right side next to sidebar */}
-        {showBackButton && backHref && (
-          <div className="absolute -top-10 right-0 mb-4">
-            <BackButton href={backHref} />
-          </div>
-        )}
-        
-        {/* Page Title Row - Title on right, Icon on left */}
-        <div className="flex items-center justify-between">
-          {/* Icon on left side */}
-          <div className="flex">
-            {TitleIcon && <TitleIcon className="w-8 h-8 text-vazana-teal" />}
-          </div>
-          
-          {/* Title and subtitle on right side */}
+    <div className={`${widthClass} ${className}`} dir="rtl">
+      {/* Back Button */}
+      {backHref && (
+        <div className="mb-3">
+          <BackButton href={backHref} />
+        </div>
+      )}
+
+      {/* Header Row: Title+Icon on right, Stats toggle on left */}
+      <div className="flex items-start justify-between mb-6">
+        {/* Left side: stats toggle */}
+        <div className="flex items-center gap-3">
+          {showStats && statsData.length > 0 && (
+            <button
+              onClick={() => setStatsExpanded(!statsExpanded)}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 font-hebrew transition-colors border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-400"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>{statsExpanded ? "הסתר" : "סטטיסטיקות"}</span>
+              {statsExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
+
+        {/* Right side: icon + title */}
+        <div className="flex items-center gap-3">
           <div className="text-right">
             <h1 className="text-2xl font-bold text-gray-900 font-hebrew">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-gray-600 font-hebrew mt-1">
+              <p className="text-gray-600 font-hebrew text-sm mt-0.5">
                 {subtitle}
               </p>
             )}
           </div>
+          {TitleIcon && (
+            <div className="p-2 bg-vazana-teal/10 rounded-lg">
+              <TitleIcon className="w-6 h-6 text-vazana-teal" />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Stats Section — Collapsible */}
-      {showStats && statsData.length > 0 && (
-        <StatsToggle statsData={statsData} />
+      {showStats && statsExpanded && statsData.length > 0 && (
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          {statsData.map((stat, index) => (
+            <StatsContainer
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color as any}
+            />
+          ))}
+        </div>
       )}
 
       {/* Actions and Filters Row */}
       {(actions || filters) && (
         <div className="mb-6 flex items-center justify-between gap-4">
-          {/* Filters on left side */}
           <div className="flex items-center gap-4">
             {filters}
           </div>
-          
-          {/* Actions on right side */}
           <div className="flex items-center gap-3">
             {actions}
           </div>

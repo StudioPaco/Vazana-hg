@@ -4,8 +4,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Users, Edit, Trash2 } from "lucide-react"
-// Sidebar handled by (app) layout
+import { Plus, Users, Edit, Trash2, Package } from "lucide-react"
+import PageLayout from "@/components/layout/page-layout"
 import { useWorkersResource, useVehiclesResource, useCartsResource, useWorkTypesResource } from "@/hooks/use-resources"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -55,17 +55,13 @@ export default function ResourcesPage() {
   } = useWorkTypesResource()
 
   return (
-    <div dir="rtl">
-      <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Users className="h-6 w-6 text-teal-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">ניהול משאבים</h1>
-          </div>
-          <p className="text-gray-600 text-right mt-2">נהל עובדים, כלי רכב, עגלות וסוגי עבודות</p>
-        </div>
-
+    <PageLayout
+      title="ניהול משאבים"
+      subtitle="נהל עובדים, כלי רכב, עגלות וסוגי עבודות"
+      titleIcon={Package}
+      backHref="/settings"
+      variant="list"
+    >
         {/* Tabs */}
         <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit mr-auto">
           <Button
@@ -577,6 +573,6 @@ export default function ResourcesPage() {
             </Card>
           )}
         </div>
-    </div>
+    </PageLayout>
   )
 }

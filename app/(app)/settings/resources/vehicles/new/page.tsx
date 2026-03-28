@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
+import PageLayout from "@/components/layout/page-layout"
+import { Plus } from "lucide-react"
 
 export default function NewVehiclePage() {
   const router = useRouter()
@@ -47,11 +49,13 @@ export default function NewVehiclePage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto" dir="rtl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">רכב חדש</h1>
-      </div>
-
+    <PageLayout
+      title="רכב חדש"
+      subtitle="הוספת רכב למערכת"
+      titleIcon={Plus}
+      backHref="/settings/resources/vehicles"
+      variant="form"
+    >
       <Card>
         <CardHeader>
           <CardTitle>פרטי הרכב</CardTitle>
@@ -110,6 +114,6 @@ export default function NewVehiclePage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

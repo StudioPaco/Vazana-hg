@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowRight, Save, User } from "lucide-react"
-// Sidebar handled by (app) layout
+import { Save, User } from "lucide-react"
+import PageLayout from "@/components/layout/page-layout"
 
 export default function EditUserPage() {
   const params = useParams()
@@ -44,19 +44,14 @@ export default function EditUserPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={handleBack} className="font-hebrew bg-transparent">
-              <ArrowRight className="ml-2 w-4 h-4" />
-              חזור
-            </Button>
-            <div className="text-right">
-              <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">עריכת משתמש</h1>
-              <p className="text-gray-600 font-hebrew">ערוך פרטי משתמש במערכת</p>
-            </div>
-          </div>
-
+    <PageLayout
+      title="עריכת משתמש"
+      subtitle="ערוך פרטי משתמש במערכת"
+      titleIcon={User}
+      backHref="/settings"
+      variant="form"
+      maxWidth="2xl"
+    >
           {/* Edit Form */}
           <Card>
             <CardHeader>
@@ -123,6 +118,6 @@ export default function EditUserPage() {
               </div>
             </CardContent>
           </Card>
-    </div>
+    </PageLayout>
   )
 }

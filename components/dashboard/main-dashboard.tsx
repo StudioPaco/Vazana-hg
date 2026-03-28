@@ -9,7 +9,7 @@ import Link from "next/link"
 import { StatsContainer } from "@/components/ui/stats-container"
 import { createClient } from "@/lib/supabase/client"
 
-export default function MainDashboard() {
+export default function MainDashboard({ showHeader = true }: { showHeader?: boolean }) {
   const [statsExpanded, setStatsExpanded] = useState(false)
   const [approachingJobsCount, setApproachingJobsCount] = useState(3) // User preference
   const [approachingJobs, setApproachingJobs] = useState<any[]>([])
@@ -237,10 +237,12 @@ export default function MainDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-right space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">לוח בקרה</h1>
-          <p className="text-gray-600 font-hebrew">ברוכים השבים למערכת ניהול הלקוחות של וזאנה סטודיו</p>
-        </div>
+        {showHeader && (
+          <div>
+            <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">לוח בקרה</h1>
+            <p className="text-gray-600 font-hebrew">ברוכים השבים למערכת ניהול הלקוחות של וזאנה סטודיו</p>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -13,7 +13,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import DatabaseDropdown from "@/components/ui/database-dropdown"
-import { BackButton } from "@/components/ui/back-button"
+import PageLayout from "@/components/layout/page-layout"
 import InvoicePreviewModal from "@/components/invoices/invoice-preview-modal"
 import { SimpleAutoSave } from "@/lib/simple-auto-save"
 
@@ -467,19 +467,14 @@ export default function NewInvoicePage() {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto" dir="rtl">
-          {/* Header */}
-          <div className="relative mb-6">
-            <div className="absolute top-0 right-0 text-right z-10">
-              <div className="mb-2">
-                <BackButton href="/invoices" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">הפקת חשבונית</h1>
-              <p className="text-gray-600">צור חשבונית חדשה עבור לקוח ותקופה נבחרת</p>
-            </div>
-            <div className="h-16"></div>
-          </div>
-
+      <PageLayout
+        title="הפקת חשבונית"
+        subtitle="צור חשבונית חדשה עבור לקוח ותקופה נבחרת"
+        titleIcon={FileText}
+        backHref="/invoices"
+        variant="form"
+        maxWidth="6xl"
+      >
           <div className="space-y-6">
             {/* Client and Period Selection */}
             <Card>
@@ -757,7 +752,7 @@ export default function NewInvoicePage() {
               </Card>
             )}
           </div>
-      </div>
+      </PageLayout>
 
       {/* Invoice Preview Modal */}
       <InvoicePreviewModal 

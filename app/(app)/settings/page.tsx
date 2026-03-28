@@ -40,7 +40,7 @@ import {
   Activity,
   RefreshCw,
 } from "lucide-react"
-import AppNavigation from "@/components/layout/app-navigation"
+import PageLayout from "@/components/layout/page-layout"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useTheme } from "@/lib/theme-context"
@@ -425,14 +425,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <>
-      <AppNavigation />
-      <div className="max-w-4xl mx-auto space-y-6">
-          <div className="text-right">
-            <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">הגדרות</h1>
-            <p className="text-gray-600 font-hebrew">נהל העדפות אפליקציה ומידע עסקי</p>
-          </div>
-
+    <PageLayout
+      title="הגדרות"
+      subtitle="נהל העדפות אפליקציה ומידע עסקי"
+      titleIcon={Settings}
+      variant="list"
+      maxWidth="4xl"
+    >
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" dir="rtl">
             <TabsList className="grid w-full grid-cols-6" dir="rtl">
               <TabsTrigger value="general" className="font-hebrew">
@@ -1982,7 +1981,6 @@ export default function SettingsPage() {
               />
             </TabsContent>
           </Tabs>
-      </div>
-    </>
+    </PageLayout>
   )
 }

@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
+import PageLayout from "@/components/layout/page-layout"
+import { Plus } from "lucide-react"
 
 export default function NewJobTypePage() {
   const router = useRouter()
@@ -40,11 +42,13 @@ export default function NewJobTypePage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto" dir="rtl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">סוג עבודה חדש</h1>
-      </div>
-
+    <PageLayout
+      title="סוג עבודה חדש"
+      subtitle="הוספת סוג עבודה למערכת"
+      titleIcon={Plus}
+      backHref="/settings/resources/job-types"
+      variant="form"
+    >
       <Card>
         <CardHeader>
           <CardTitle>פרטי סוג העבודה</CardTitle>
@@ -89,6 +93,6 @@ export default function NewJobTypePage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

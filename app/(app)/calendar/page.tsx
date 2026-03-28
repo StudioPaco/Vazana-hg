@@ -2,15 +2,17 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "lucide-react"
+import PageLayout from "@/components/layout/page-layout"
 
 export default function CalendarPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="text-right">
-        <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">יומן</h1>
-        <p className="text-gray-600 font-hebrew">נהל לוח זמנים ופגישות</p>
-      </div>
-
+    <PageLayout
+      title="יומן"
+      subtitle="נהל לוח זמנים ופגישות"
+      titleIcon={Calendar}
+      variant="form"
+      maxWidth="4xl"
+    >
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-hebrew">
@@ -27,6 +29,6 @@ export default function CalendarPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

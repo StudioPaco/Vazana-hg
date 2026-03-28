@@ -2,7 +2,8 @@
 
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
-import AppNavigation from "@/components/layout/app-navigation"
+import PageLayout from "@/components/layout/page-layout"
+import { Truck } from "lucide-react"
 import { Vehicle } from "@/lib/api-entities"
 
 const vehicleFields = [
@@ -37,13 +38,13 @@ const vehicleFields = [
 
 export default function VehiclesResourcePage() {
   return (
-    <div className="p-6">
-      <AppNavigation />
-      <div className="text-right mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">כלי רכב</h1>
-        <p className="text-gray-600">ניהול צי כלי הרכב שלך</p>
-      </div>
-
+    <PageLayout
+      title="כלי רכב"
+      subtitle="ניהול צי הרכבים"
+      titleIcon={Truck}
+      backHref="/settings/resources"
+      variant="list"
+    >
       <Suspense fallback={<div className="p-6">טוען...</div>}>
         <ManageGenericList
           Entity={Vehicle}
@@ -54,6 +55,6 @@ export default function VehiclesResourcePage() {
           language="he"
         />
       </Suspense>
-    </div>
+    </PageLayout>
   )
 }

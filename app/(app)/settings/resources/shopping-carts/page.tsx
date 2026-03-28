@@ -2,7 +2,8 @@
 
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
-import AppNavigation from "@/components/layout/app-navigation"
+import PageLayout from "@/components/layout/page-layout"
+import { ShoppingCart } from "lucide-react"
 import { Cart } from "@/lib/api-entities"
 
 const cartFields = [
@@ -28,13 +29,13 @@ const cartFields = [
 
 export default function CartsResourcePage() {
   return (
-    <div className="p-6">
-      <AppNavigation />
-      <div className="text-right mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">עגלות/נגררים</h1>
-        <p className="text-gray-600">ניהול ציוד העזר שלך</p>
-      </div>
-
+    <PageLayout
+      title="עגלות"
+      subtitle="ניהול העגלות"
+      titleIcon={ShoppingCart}
+      backHref="/settings/resources"
+      variant="list"
+    >
       <Suspense fallback={<div className="p-6">טוען...</div>}>
         <ManageGenericList
           Entity={Cart}
@@ -45,6 +46,6 @@ export default function CartsResourcePage() {
           language="he"
         />
       </Suspense>
-    </div>
+    </PageLayout>
   )
 }

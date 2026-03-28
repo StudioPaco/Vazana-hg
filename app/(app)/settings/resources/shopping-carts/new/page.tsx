@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
+import PageLayout from "@/components/layout/page-layout"
+import { Plus } from "lucide-react"
 
 export default function NewCartPage() {
   const router = useRouter()
@@ -46,11 +48,13 @@ export default function NewCartPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto" dir="rtl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">עגלה/נגרר חדש</h1>
-      </div>
-
+    <PageLayout
+      title="עגלה/נגרר חדש"
+      subtitle="הוספת עגלה למערכת"
+      titleIcon={Plus}
+      backHref="/settings/resources/shopping-carts"
+      variant="form"
+    >
       <Card>
         <CardHeader>
           <CardTitle>פרטי העגלה/נגרר</CardTitle>
@@ -99,6 +103,6 @@ export default function NewCartPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

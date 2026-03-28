@@ -21,7 +21,11 @@ interface UserProfile {
   created_at: string
 }
 
-export function UsersPage() {
+interface UsersPageProps {
+  showHeader?: boolean
+}
+
+export function UsersPage({ showHeader = true }: UsersPageProps) {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -115,78 +119,81 @@ export function UsersPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-dark-gray">ניהול משתמשים</h1>
-          <p className="text-neutral-600 mt-1">נהל משתמשים והרשאות במערכת</p>
+    <div className={`${showHeader ? 'container mx-auto p-6' : ''} space-y-6`}>
+      {showHeader && (
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-dark-gray">ניהול משתמשים</h1>
+            <p className="text-neutral-600 mt-1">נהל משתמשים והרשאות במערכת</p>
+          </div>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary text-dark-gray hover:bg-primary/90">
-              <UserPlus className="h-4 w-4 mr-2" />
-              הוסף משתמש
+      )}
+
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogTrigger asChild>
+          <Button className="bg-vazana-teal hover:bg-vazana-teal/90 text-white">
+            <UserPlus className="h-4 w-4 mr-2" />
+            הוסף משתמש
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>הוסף משתמש חדש</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateUser} className="space-y-4">
+            <div>
+              <Label htmlFor="email">אימייל</Label>
+              <Input id="email" name="email" type="email" required />
+            </div>
+            <div>
+              <Label htmlFor="full_name">שם מלא</Label>
+              <Input id="full_name" name="full_name" required />
+            </div>
+            <div>
+              <Label htmlFor="role">תפקיד</Label>
+              <Select name="role" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר תפקיד" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="employee">עובד</SelectItem>
+                  <SelectItem value="manager">מנהל צוות</SelectItem>
+                  <SelectItem value="admin">מנהל</SelectItem>
+                  <SelectItem value="root">מנהל ראשי</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>הרשאות</Label>
+              <div className="space-y-2 text-sm">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="manage_clients" />
+                  ניהול לקוחות
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="manage_jobs" />
+                  ניהול עבודות
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="manage_workers" />
+                  ניהול עובדים
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="manage_invoices" />
+                  ניהול חשבוניות
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="view_reports" />
+                  צפייה בדוחות
+                </label>
+              </div>
+            </div>
+            <Button type="submit" className="w-full bg-primary text-dark-gray hover:bg-primary/90">
+              צור משתמש
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>הוסף משתמש חדש</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div>
-                <Label htmlFor="email">אימייל</Label>
-                <Input id="email" name="email" type="email" required />
-              </div>
-              <div>
-                <Label htmlFor="full_name">שם מלא</Label>
-                <Input id="full_name" name="full_name" required />
-              </div>
-              <div>
-                <Label htmlFor="role">תפקיד</Label>
-                <Select name="role" required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="בחר תפקיד" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="employee">עובד</SelectItem>
-                    <SelectItem value="manager">מנהל צוות</SelectItem>
-                    <SelectItem value="admin">מנהל</SelectItem>
-                    <SelectItem value="root">מנהל ראשי</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>הרשאות</Label>
-                <div className="space-y-2 text-sm">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" name="manage_clients" />
-                    ניהול לקוחות
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" name="manage_jobs" />
-                    ניהול עבודות
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" name="manage_workers" />
-                    ניהול עובדים
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" name="manage_invoices" />
-                    ניהול חשבוניות
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" name="view_reports" />
-                    צפייה בדוחות
-                  </label>
-                </div>
-              </div>
-              <Button type="submit" className="w-full bg-primary text-dark-gray hover:bg-primary/90">
-                צור משתמש
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4">
         {loading ? (

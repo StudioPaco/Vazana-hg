@@ -17,7 +17,11 @@ interface Vehicle {
   details: string
 }
 
-export default function VehiclesPage() {
+interface VehiclesPageProps {
+  showHeader?: boolean
+}
+
+export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -95,31 +99,35 @@ export default function VehiclesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6" dir="rtl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-right">
-          <h1 className="text-3xl font-bold text-gray-900">כלי רכב</h1>
-          <p className="text-gray-600">ניהול צי הרכבים שלך</p>
-        </div>
-        <Button asChild>
-          <Link href="/settings/resources/vehicles/new">
-            <Plus className="ml-2 h-4 w-4" />
-            הוסף רכב
-          </Link>
-        </Button>
-      </div>
+    <div className={`${showHeader ? 'p-6' : ''} space-y-6`} dir="rtl">
+      {showHeader && (
+        <>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-right">
+              <h1 className="text-3xl font-bold text-gray-900">כלי רכב</h1>
+              <p className="text-gray-600">ניהול צי הרכבים שלך</p>
+            </div>
+            <Button asChild>
+              <Link href="/settings/resources/vehicles/new">
+                <Plus className="ml-2 h-4 w-4" />
+                הוסף רכב
+              </Link>
+            </Button>
+          </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          placeholder="חפש רכבים..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="חפש רכבים..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </>
+      )}
 
       {/* Vehicles Grid */}
       {filteredVehicles.length === 0 ? (

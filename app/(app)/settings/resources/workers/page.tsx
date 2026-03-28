@@ -2,7 +2,8 @@
 
 import { Suspense } from "react"
 import ManageGenericList from "@/components/manage-generic-list"
-import AppNavigation from "@/components/layout/app-navigation"
+import PageLayout from "@/components/layout/page-layout"
+import { Users } from "lucide-react"
 import { Worker } from "@/lib/api-entities"
 
 const workerFields = [
@@ -65,13 +66,13 @@ const workerFields = [
 
 export default function WorkersResourcePage() {
   return (
-    <div className="p-6">
-      <AppNavigation />
-      <div className="text-right mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">עובדים</h1>
-        <p className="text-gray-600">ניהול כוח האדם שלך</p>
-      </div>
-
+    <PageLayout
+      title="עובדים"
+      subtitle="ניהול כוח האדם שלך"
+      titleIcon={Users}
+      backHref="/settings/resources"
+      variant="list"
+    >
       <Suspense fallback={<div className="p-6">טוען...</div>}>
         <ManageGenericList
           Entity={Worker}
@@ -82,6 +83,6 @@ export default function WorkersResourcePage() {
           language="he"
         />
       </Suspense>
-    </div>
+    </PageLayout>
   )
 }

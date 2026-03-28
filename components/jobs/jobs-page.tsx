@@ -86,7 +86,11 @@ interface Job {
   is_deleted?: boolean
 }
 
-export default function JobsPage() {
+interface JobsPageProps {
+  showHeader?: boolean
+}
+
+export default function JobsPage({ showHeader = true }: JobsPageProps) {
   const { preferences, loading: preferencesLoading, updatePreference } = useUserPreferences()
   const [jobs, setJobs] = useState<Job[]>([])
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
@@ -309,19 +313,18 @@ export default function JobsPage() {
   if (loading || preferencesLoading) {
     return (
       <div className="relative space-y-6">
-        <div className="absolute top-0 right-0 text-right">
-          <div className="h-8 bg-gray-200 rounded w-24 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-32"></div>
-        </div>
-        <div className="absolute top-0 left-0">
-          <div className="w-8 h-8 bg-gray-200 rounded"></div>
-        </div>
-        <div className="pt-16 animate-pulse space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
+        {showHeader && (
+          <>
+            <div className="absolute top-0 right-0 text-right">
+              <div className="h-8 bg-gray-200 rounded w-24 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-32"></div>
+            </div>
+            <div className="absolute top-0 left-0">
+              <div className="w-8 h-8 bg-gray-200 rounded"></div>
+            </div>
+          </>
+        )}
+        <div className={`${showHeader ? 'pt-16' : ''} animate-pulse space-y-6`}>
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
@@ -334,16 +337,20 @@ export default function JobsPage() {
 
   return (
     <div className="relative space-y-6">
-      <div className="absolute top-0 right-0 text-right z-10">
-        <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">עבודות</h1>
-        <p className="text-gray-600 font-hebrew">נהל את כל העבודות והשירותים והפרויקטים שלך</p>
-      </div>
+      {showHeader && (
+        <>
+          <div className="absolute top-0 right-0 text-right z-10">
+            <h1 className="text-2xl font-bold text-vazana-dark font-hebrew">עבודות</h1>
+            <p className="text-gray-600 font-hebrew">נהל את כל העבודות והשירותים והפרויקטים שלך</p>
+          </div>
 
-      <div className="absolute top-0 left-0 z-10">
-        <Briefcase className="w-8 h-8 text-vazana-teal" />
-      </div>
+          <div className="absolute top-0 left-0 z-10">
+            <Briefcase className="w-8 h-8 text-vazana-teal" />
+          </div>
+        </>
+      )}
 
-      <div className="pt-16">
+      <div className={showHeader ? "pt-16" : ""}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
           <Link href="/jobs/new">
             <Button className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
@@ -372,7 +379,7 @@ export default function JobsPage() {
             {preferences?.jobs_view_mode === "list" ? <Grid3X3 className="w-4 h-4 ml-2" /> : <List className="w-4 h-4 ml-2" />}
             תצוגת רשת
           </Button>
-          
+
           {/* Sorting Toggle */}
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <Button
@@ -383,8 +390,8 @@ export default function JobsPage() {
                 updatePreference('jobs_sort_by', 'number')
               }}
               className={`font-hebrew text-xs px-3 py-1 transition-colors ${
-                sortBy === 'number' 
-                  ? 'bg-teal-500 text-white hover:bg-teal-600' 
+                sortBy === 'number'
+                  ? 'bg-teal-500 text-white hover:bg-teal-600'
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -398,8 +405,8 @@ export default function JobsPage() {
                 updatePreference('jobs_sort_by', 'date')
               }}
               className={`font-hebrew text-xs px-3 py-1 transition-colors ${
-                sortBy === 'date' 
-                  ? 'bg-teal-500 text-white hover:bg-teal-600' 
+                sortBy === 'date'
+                  ? 'bg-teal-500 text-white hover:bg-teal-600'
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -408,6 +415,7 @@ export default function JobsPage() {
           </div>
         </div>
 
+        {showHeader && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card className="relative">
             <CardContent className="p-4">
@@ -453,6 +461,7 @@ export default function JobsPage() {
             </CardContent>
           </Card>
         </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex gap-2 w-full sm:w-auto">

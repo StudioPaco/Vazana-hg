@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
+import PageLayout from "@/components/layout/page-layout"
+import { Plus } from "lucide-react"
 
 export default function NewWorkerPage() {
   const router = useRouter()
@@ -65,11 +67,13 @@ export default function NewWorkerPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto" dir="rtl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">עובד חדש</h1>
-      </div>
-
+    <PageLayout
+      title="עובד חדש"
+      subtitle="הוספת עובד למערכת"
+      titleIcon={Plus}
+      backHref="/settings/resources/workers"
+      variant="form"
+    >
       <Card>
         <CardHeader>
           <CardTitle>פרטי העובד</CardTitle>
@@ -181,6 +185,6 @@ export default function NewWorkerPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   )
 }

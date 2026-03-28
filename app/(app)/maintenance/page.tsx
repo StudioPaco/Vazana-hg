@@ -30,7 +30,7 @@ import {
   Lock,
 } from "lucide-react"
 // Sidebar handled by (app) layout
-import { BackButton } from "@/components/ui/back-button"
+import PageLayout from "@/components/layout/page-layout"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth/auth-provider"
 import { useRouter } from "next/navigation"
@@ -665,22 +665,14 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="relative space-y-6">
-            <div className="absolute top-0 right-0 text-right z-10">
-              <div className="mb-2">
-                <BackButton href="/" />
-              </div>
-              <h1 className="text-3xl font-bold text-vazana-dark font-hebrew flex items-center gap-3">
-                <Activity className="w-8 h-8 text-vazana-teal" />
-                מרכז תחזוקה ומעקב
-              </h1>
-              <p className="text-gray-600 font-hebrew">מעקב בזמן אמת על בריאות המערכת ותפקודה</p>
-            </div>
-            <div className="pt-20"></div>
-          </div>
-
+    <PageLayout
+      title="מרכז תחזוקה"
+      subtitle="מעקב בזמן אמת על בריאות המערכת ותפקודה"
+      titleIcon={Activity}
+      backHref="/"
+      variant="list"
+      maxWidth="7xl"
+    >
           {/* System Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
@@ -1096,6 +1088,6 @@ export default function MaintenancePage() {
               </Card>
             </TabsContent>
           </Tabs>
-    </div>
+    </PageLayout>
   )
 }
