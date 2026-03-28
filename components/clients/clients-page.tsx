@@ -60,6 +60,8 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientJobs, setClientJobs] = useState<{ [key: string]: Job[] }>({})
+  const [jobsPerPage, setJobsPerPage] = useState(5)
+  const [jobPage, setJobPage] = useState<{ [key: string]: number }>({})
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [newClientModalOpen, setNewClientModalOpen] = useState(false)
@@ -278,7 +280,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         .select("id, job_number, work_type, job_date, site, payment_status, job_status")
         .eq("client_id", clientId)
         .order("job_date", { ascending: false })
-        .limit(10)
+        .limit(50)
 
       if (error) {
         console.error("Error fetching client jobs:", error)
@@ -505,15 +507,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                 <div className="relative mb-4">
                   {/* Client name and info - positioned at top-right */}
                   <div className="absolute top-0 right-0 text-right">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
-                      {realClientStats[client.id] !== undefined && realClientStats[client.id] > 0 && (
-                        <Badge variant="outline" className="text-xs gap-1">
-                          <Briefcase className="w-3 h-3" />
-                          {realClientStats[client.id]}
-                        </Badge>
-                      )}
-                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
                     <p className="text-sm text-gray-600">{client.contact_person}</p>
                     <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
                       {client.status === "active" ? "פעיל" : "לא פעיל"}
@@ -596,43 +590,107 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="mt-2 pt-2 border-t border-gray-200">
                   <button
-                    onClick={() => toggleJobHistory(client.id)}
-                    className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors py-2"
+                    onClick={() => {
+                      toggleJobHistory(client.id)
+                      if (expandedClient !== client.id) {
+                        setJobPage(prev => ({ ...prev, [client.id]: 0 }))
+                      }
+                    }}
+                    className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-800 transition-colors py-1"
                   >
-                    <span>הצג 10 עבודות אחרונות</span>
-                    {expandedClient === client.id ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
+                    <div className="flex items-center gap-2">
+                      {realClientStats[client.id] > 0 && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Briefcase className="w-3 h-3" />
+                          {realClientStats[client.id]}
+                        </Badge>
+                      )}
+                      {expandedClient === client.id ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-hebrew">הצג עבודות אחרונות</span>
+                      {expandedClient === client.id && (
+                        <select
+                          value={jobsPerPage}
+                          onChange={(e) => {
+                            e.stopPropagation()
+                            setJobsPerPage(Number(e.target.value))
+                            setJobPage(prev => ({ ...prev, [client.id]: 0 }))
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs border rounded px-1 py-0.5 font-hebrew"
+                        >
+                          <option value={5}>5</option>
+                          <option value={10}>10</option>
+                          <option value={25}>25</option>
+                        </select>
+                      )}
+                    </div>
                   </button>
 
                   {expandedClient === client.id && (
-                    <div className="mt-3 space-y-2 bg-gray-50 rounded-lg p-3">
+                    <div className="mt-2 space-y-2 bg-gray-50 rounded-lg p-3">
                       {clientJobs[client.id] && clientJobs[client.id].length > 0 ? (
-                        clientJobs[client.id].map((job) => (
-                          <div
-                            key={job.id}
-                            className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
-                          >
-                            <StatusBadge
-                              status={job.job_status || "ממתין"}
-                              type="job"
-                              size="sm"
-                            />
-                            <div className="text-right">
-                              <p className="font-medium text-sm">עבודה #{job.job_number}</p>
-                              <p className="text-xs text-gray-600">
-                                {job.work_type} - {job.site}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(job.job_date).toLocaleDateString("he-IL")}
-                              </p>
+                        <>
+                          {clientJobs[client.id]
+                            .slice(
+                              (jobPage[client.id] || 0) * jobsPerPage,
+                              ((jobPage[client.id] || 0) + 1) * jobsPerPage
+                            )
+                            .map((job) => (
+                            <div
+                              key={job.id}
+                              className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                            >
+                              <StatusBadge
+                                status={job.job_status || "ממתין"}
+                                type="job"
+                                size="sm"
+                              />
+                              <div className="text-right">
+                                <p className="font-medium text-sm">עבודה #{job.job_number}</p>
+                                <p className="text-xs text-gray-600">
+                                  {job.work_type} - {job.site}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(job.job_date).toLocaleDateString("he-IL")}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          ))}
+                          {/* Pagination */}
+                          {clientJobs[client.id].length > jobsPerPage && (
+                            <div className="flex items-center justify-center gap-2 pt-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={(jobPage[client.id] || 0) === 0}
+                                onClick={() => setJobPage(prev => ({ ...prev, [client.id]: (prev[client.id] || 0) - 1 }))}
+                                className="text-xs font-hebrew"
+                              >
+                                הקודם
+                              </Button>
+                              <span className="text-xs text-gray-500 font-hebrew">
+                                {(jobPage[client.id] || 0) + 1} / {Math.ceil(clientJobs[client.id].length / jobsPerPage)}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={((jobPage[client.id] || 0) + 1) * jobsPerPage >= clientJobs[client.id].length}
+                                onClick={() => setJobPage(prev => ({ ...prev, [client.id]: (prev[client.id] || 0) + 1 }))}
+                                className="text-xs font-hebrew"
+                              >
+                                הבא
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <p className="text-center text-sm text-gray-500 py-4">אין עבודות קודמות</p>
                       )}
