@@ -72,6 +72,7 @@ export default function InvoicesPage({
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([])
   const [searchTerm, setSearchTerm] = useState(externalSearchTerm)
   const [statusFilter, setStatusFilter] = useState(externalStatusFilter)
+  const [clientFilter, setClientFilter] = useState("all")
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'number'>('date')
   const [dateRange, setDateRange] = useState<'all' | 'this_month' | 'last_month'>('all')
   const [loading, setLoading] = useState(true)
@@ -122,6 +123,10 @@ export default function InvoicesPage({
       filtered = filtered.filter((invoice) => invoice.status === statusFilter)
     }
 
+    if (clientFilter !== "all") {
+      filtered = filtered.filter((invoice) => invoice.clients.company_name === clientFilter)
+    }
+
     // Date range filter
     if (dateRange !== "all") {
       const now = new Date()
@@ -158,7 +163,7 @@ export default function InvoicesPage({
     })
 
     setFilteredInvoices(filtered)
-  }, [searchTerm, statusFilter, sortBy, dateRange, invoices])
+  }, [searchTerm, statusFilter, clientFilter, sortBy, dateRange, invoices])
 
   const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
     try {
@@ -283,6 +288,12 @@ export default function InvoicesPage({
     }
   }
 
+  // Unique client names for filter dropdown
+  const uniqueClients = useMemo(() => {
+    const names = invoices.map(inv => inv.clients.company_name)
+    return [...new Set(names)].sort()
+  }, [invoices])
+
   // Total amount of filtered invoices
   const filteredTotal = useMemo(() => {
     return filteredInvoices.reduce((sum, inv) => sum + inv.total_amount, 0)
@@ -354,7 +365,19 @@ export default function InvoicesPage({
 
       {/* Filters Row */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Select value={clientFilter} onValueChange={(value) => setClientFilter(value)} dir="rtl">
+            <SelectTrigger className="w-full sm:w-[180px] font-hebrew">
+              <SelectValue placeholder="כל הלקוחות" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">כל הלקוחות</SelectItem>
+              {uniqueClients.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)} dir="rtl">
             <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
               <SelectValue placeholder="כל הסטטוסים" />
@@ -398,7 +421,7 @@ export default function InvoicesPage({
                 <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                 <p className="text-lg font-medium mb-2">לא נמצאו חשבוניות</p>
                 <p className="text-sm">
-                  {searchTerm || statusFilter !== "all" || dateRange !== "all"
+                  {searchTerm || statusFilter !== "all" || clientFilter !== "all" || dateRange !== "all"
                     ? "נסה לשנות את החיפוש או המסננים"
                     : "צור את החשבונית הראשונה שלך כדי להתחיל"}
                 </p>

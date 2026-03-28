@@ -4,9 +4,7 @@ import { useState } from "react"
 import InvoicesPage from "@/components/invoices/invoices-page"
 import PageLayout from "@/components/layout/page-layout"
 import type { StatsItem } from "@/components/layout/page-layout"
-import { FileText, Plus, DollarSign, Clock, Calendar, CheckCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { FileText, DollarSign, Clock, Calendar, CheckCircle } from "lucide-react"
 
 export default function Invoices() {
   const [stats, setStats] = useState({
@@ -29,17 +27,8 @@ export default function Invoices() {
       subtitle="עקב אחר חשבוניות שהונפקו וסטטוס התשלומים"
       titleIcon={FileText}
       backHref="/"
-      variant="list"
       showStats={true}
       statsData={statsData}
-      actions={
-        <Button className="bg-vazana-teal hover:bg-vazana-teal/90 text-white" asChild>
-          <Link href="/invoices/new">
-            <Plus className="ml-2 h-4 w-4" />
-            חשבונית חדשה
-          </Link>
-        </Button>
-      }
     >
       <InvoicesPage showHeader={false} onStatsCalculated={setStats} />
     </PageLayout>
