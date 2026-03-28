@@ -141,6 +141,7 @@ interface DashboardStats {
   jobsByStatus: { status: string; count: number }[]
   upcomingJobs: any[]
   recentInvoices: any[]
+  recentCompletedJobs: any[]
 }
 
 /* ── Main Dashboard ───────────────────────────────────────────────────────── */
@@ -165,6 +166,7 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
     jobsByStatus: [],
     upcomingJobs: [],
     recentInvoices: [],
+    recentCompletedJobs: [],
   })
 
   // Parallel data fetch (Play pattern)
@@ -182,6 +184,7 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
           vehiclesRes,
           invoicesRes,
           upcomingRes,
+          completedRes,
         ] = await Promise.all([
           supabase.from("jobs").select("id, job_status, payment_status, total_amount, job_date"),
           (supabase.from("clients") as any).select("id", { count: "exact", head: true }),
@@ -196,6 +199,13 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
             .in("job_status", ["ממתין", "בתהליך"])
             .order("job_date", { ascending: true })
             .limit(10),
+          // Recent completed jobs
+          supabase
+            .from("jobs")
+            .select("id, job_date, site, city, client_name, work_type, total_amount")
+            .eq("job_status", "הושלם")
+            .order("job_date", { ascending: false })
+            .limit(5),
         ])
 
         const jobs = jobsRes.data ?? []
@@ -246,6 +256,11 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
           jobsByStatus: [...statusMap.entries()].map(([status, count]) => ({ status, count })),
           upcomingJobs: processedUpcoming,
           recentInvoices: invoices.slice(0, 5),
+          recentCompletedJobs: (completedRes.data ?? []).map((j: any) => ({
+            ...j,
+            location: [j.site, j.city].filter(Boolean).join(", ") || "מיקום לא צוין",
+            date: new Date(j.job_date).toLocaleDateString("he-IL"),
+          })),
         })
       } catch (error) {
         console.error("Dashboard load error:", error)
@@ -491,6 +506,35 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
           </div>
         </div>
       </div>
+
+      {/* ── Recent Completed Jobs ──────────────────────────────── */}
+      {stats.recentCompletedJobs.length > 0 && (
+        <div className="bg-white rounded-xl border p-5">
+          <div className="flex items-center justify-between mb-4" dir="rtl">
+            <h3 className="text-sm font-semibold font-hebrew flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              עבודות שהושלמו לאחרונה
+            </h3>
+            <Link href="/jobs" className="text-xs text-gray-400 hover:text-gray-600 font-hebrew">צפה בהכל</Link>
+          </div>
+          <div className="space-y-2">
+            {stats.recentCompletedJobs.map((job: any) => (
+              <div key={job.id} className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  {job.total_amount > 0 && (
+                    <span className="text-xs text-green-700 font-medium">₪{job.total_amount.toLocaleString()}</span>
+                  )}
+                  <span className="text-xs text-gray-500 font-hebrew">{job.date}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium font-hebrew">{job.client_name || "לקוח לא ידוע"}</p>
+                  <p className="text-xs text-gray-500 font-hebrew">{job.work_type} · {job.location}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
