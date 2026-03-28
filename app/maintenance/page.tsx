@@ -29,7 +29,7 @@ import {
   Trash2,
   Lock,
 } from "lucide-react"
-import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 import { BackButton } from "@/components/ui/back-button"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth/auth-provider"
@@ -62,7 +62,7 @@ interface SystemHealth {
 }
 
 export default function MaintenancePage() {
-  const { isMinimized } = useSidebar()
+  // Layout handled by MainContent wrapper
   const router = useRouter()
   const { profile: authProfile, isLoading: authLoading } = useAuth()
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -665,10 +665,10 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
-      <SidebarNavigation />
-      <div className={`${isMinimized ? "mr-24" : "mr-64"} p-6 transition-all duration-300`}>
-        <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 flex">
+      <MainContent>
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="relative space-y-6">
             <div className="absolute top-0 right-0 text-right z-10">
@@ -1100,7 +1100,9 @@ export default function MaintenancePage() {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
+        </div>
+      </MainContent>
+      <SidebarNavigation />
     </div>
   )
 }

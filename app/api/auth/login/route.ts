@@ -16,10 +16,12 @@ export async function POST(request: NextRequest) {
     // Use admin client to look up username (bypasses RLS — user isn't authenticated yet)
     const admin = createAdminClient()
 
+    // Support login with username OR email
+    const isEmail = username.includes("@")
     const { data: profile, error: profileError } = await admin
       .from("user_profiles")
       .select("email, username, is_active")
-      .eq("username", username)
+      .eq(isEmail ? "email" : "username", username)
       .single()
 
     if (profileError || !profile) {

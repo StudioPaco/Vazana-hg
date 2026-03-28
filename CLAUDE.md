@@ -108,7 +108,7 @@ Other: documents, maintenance_logs, audit_log, client_work_type_rates, client_pa
 - RTL layout: `dir="rtl"` on root `<html>`
 - Use logical CSS: `start/end` not `left/right`
 - Date format: he-IL locale
-- Currency: ILS (₪), VAT 17%
+- Currency: ILS (₪), VAT 18%
 
 ### Payment Statuses (Hebrew)
 - `"ממתין לתשלום"` — pending

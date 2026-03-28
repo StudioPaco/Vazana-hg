@@ -1,16 +1,16 @@
 "use client"
 
-import { useState } from "react"
-import { 
+import { useState, useEffect } from "react"
+import {
   DollarSign, Briefcase, Users, CheckCircle, TrendingUp, Calendar, Bell, Plus, FileText,
-  Clock, AlertCircle, MapPin, Truck, UserCheck, Target, BarChart3, Zap
+  Clock, AlertCircle, MapPin, Truck, UserCheck, Target, BarChart3, Zap, ChevronDown, ChevronUp
 } from "lucide-react"
 import Link from "next/link"
 import { StatsContainer } from "@/components/ui/stats-container"
 import { createClient } from "@/lib/supabase/client"
-import { useEffect } from "react"
 
 export default function MainDashboard() {
+  const [statsExpanded, setStatsExpanded] = useState(false)
   const [approachingJobsCount, setApproachingJobsCount] = useState(3) // User preference
   const [approachingJobs, setApproachingJobs] = useState<any[]>([])
   const [loadingJobs, setLoadingJobs] = useState(true)
@@ -257,109 +257,68 @@ export default function MainDashboard() {
         </div>
       </div>
 
-      {/* Core Job Statistics - Most Important */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsContainer
-          title="עבודות פעילות"
-          value={stats.activeJobs}
-          subtitle="בביצוע כרגע"
-          icon={Briefcase}
-          color="blue"
-        />
-        
-        <StatsContainer
-          title="עבודות מתוכננות"
-          value={stats.scheduledJobs}
-          subtitle="לביצוע בעתיד"
-          icon={Calendar}
-          color="teal"
-        />
-        
-        <StatsContainer
-          title="עבודות שהושלמו"
-          value={stats.completedJobsThisMonth}
-          subtitle="בחודש הנוכחי"
-          icon={CheckCircle}
-          color="green"
-        />
-        
-        <StatsContainer
-          title="אחוז השלמה"
-          value={`${Math.round((stats.completedJobsThisMonth / stats.totalJobsThisMonth) * 100)}%`}
-          subtitle={`${stats.completedJobsThisMonth} מתוך ${stats.totalJobsThisMonth}`}
-          icon={Target}
-          color="purple"
-        />
-      </div>
-      
-      {/* Financial & Client Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsContainer
-          title="הכנסות החודש"
-          value={`₪${stats.totalRevenue.toLocaleString()}`}
-          subtitle="סך הכנסות חודשיות"
-          icon={DollarSign}
-          color="green"
-        />
-        
-        <StatsContainer
-          title="לקוחות פעילים"
-          value={stats.activeClients || stats.totalClients}
-          subtitle={`מתוך ${stats.totalClients || 5} סה"כ`}
-          icon={Users}
-          color="blue"
-        />
-        
-        <StatsContainer
-          title="תשלומים ממתינים"
-          value={stats.pendingInvoicePayments}
-          subtitle="חשבוניות לאישור"
-          icon={FileText}
-          color="yellow"
-        />
-        
-        <StatsContainer
-          title="עבודות לאישור לקוח"
-          value={stats.pendingApprovalJobs}
-          subtitle="ממתינות לאישור"
-          icon={Clock}
-          color="yellow"
-        />
-      </div>
-      
-      {/* Operational & Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsContainer
-          title="כלי רכב פעילים"
-          value={stats.activeVehicles}
-          subtitle="זמינים לשימוש"
-          icon={Truck}
-          color="blue"
-        />
-        
-        <StatsContainer
-          title="עובדים במשמרת"
-          value={stats.workersOnDuty}
-          subtitle="פעילים כרגע"
-          icon={UserCheck}
-          color="purple"
-        />
-        
-        <StatsContainer
-          title="אתרי עבודה פעילים"
-          value={stats.totalProjects}
-          subtitle="פרויקטים בתהליך"
-          icon={MapPin}
-          color="teal"
-        />
-        
-        <StatsContainer
-          title="זמן ממוצע לפריסה"
-          value={stats.avgDeploymentDelay}
-          subtitle="מיצירה לביצוע"
-          icon={Clock}
-          color="yellow"
-        />
+      {/* Statistics Section — Collapsible */}
+      <div>
+        {/* Toggle button */}
+        <button
+          onClick={() => setStatsExpanded(!statsExpanded)}
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-hebrew mb-3 transition-colors"
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span>{statsExpanded ? "הסתר סטטיסטיקות" : "הצג סטטיסטיקות"}</span>
+          {statsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {/* Collapsed: summary row */}
+        {!statsExpanded && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white border rounded-lg p-3 text-right">
+              <p className="text-xs text-gray-500 font-hebrew">עבודות פעילות</p>
+              <p className="text-lg font-bold">{stats.activeJobs}</p>
+            </div>
+            <div className="bg-white border rounded-lg p-3 text-right">
+              <p className="text-xs text-gray-500 font-hebrew">לקוחות</p>
+              <p className="text-lg font-bold">{stats.activeClients || stats.totalClients}</p>
+            </div>
+            <div className="bg-white border rounded-lg p-3 text-right">
+              <p className="text-xs text-gray-500 font-hebrew">הכנסות החודש</p>
+              <p className="text-lg font-bold">₪{stats.totalRevenue.toLocaleString()}</p>
+            </div>
+            <div className="bg-white border rounded-lg p-3 text-right">
+              <p className="text-xs text-gray-500 font-hebrew">אחוז השלמה</p>
+              <p className="text-lg font-bold">{Math.round((stats.completedJobsThisMonth / stats.totalJobsThisMonth) * 100)}%</p>
+            </div>
+          </div>
+        )}
+
+        {/* Expanded: full stats */}
+        {statsExpanded && (
+          <div className="space-y-4">
+            {/* Core Job Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatsContainer title="עבודות פעילות" value={stats.activeJobs} subtitle="בביצוע כרגע" icon={Briefcase} color="blue" />
+              <StatsContainer title="עבודות מתוכננות" value={stats.scheduledJobs} subtitle="לביצוע בעתיד" icon={Calendar} color="teal" />
+              <StatsContainer title="עבודות שהושלמו" value={stats.completedJobsThisMonth} subtitle="בחודש הנוכחי" icon={CheckCircle} color="green" />
+              <StatsContainer title="אחוז השלמה" value={`${Math.round((stats.completedJobsThisMonth / stats.totalJobsThisMonth) * 100)}%`} subtitle={`${stats.completedJobsThisMonth} מתוך ${stats.totalJobsThisMonth}`} icon={Target} color="purple" />
+            </div>
+
+            {/* Financial & Client Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatsContainer title="הכנסות החודש" value={`₪${stats.totalRevenue.toLocaleString()}`} subtitle="סך הכנסות חודשיות" icon={DollarSign} color="green" />
+              <StatsContainer title="לקוחות פעילים" value={stats.activeClients || stats.totalClients} subtitle={`מתוך ${stats.totalClients || 5} סה"כ`} icon={Users} color="blue" />
+              <StatsContainer title="תשלומים ממתינים" value={stats.pendingInvoicePayments} subtitle="חשבוניות לאישור" icon={FileText} color="yellow" />
+              <StatsContainer title="עבודות לאישור לקוח" value={stats.pendingApprovalJobs} subtitle="ממתינות לאישור" icon={Clock} color="yellow" />
+            </div>
+
+            {/* Operational & Performance Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatsContainer title="כלי רכב פעילים" value={stats.activeVehicles} subtitle="זמינים לשימוש" icon={Truck} color="blue" />
+              <StatsContainer title="עובדים במשמרת" value={stats.workersOnDuty} subtitle="פעילים כרגע" icon={UserCheck} color="purple" />
+              <StatsContainer title="אתרי עבודה פעילים" value={stats.totalProjects} subtitle="פרויקטים בתהליך" icon={MapPin} color="teal" />
+              <StatsContainer title="זמן ממוצע לפריסה" value={stats.avgDeploymentDelay} subtitle="מיצירה לביצוע" icon={Clock} color="yellow" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content Grid */}

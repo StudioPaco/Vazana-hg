@@ -40,7 +40,7 @@ import {
   Activity,
   RefreshCw,
 } from "lucide-react"
-import SidebarNavigation, { useSidebar } from "@/components/layout/sidebar-navigation"
+import SidebarNavigation, { MainContent } from "@/components/layout/sidebar-navigation"
 import AppNavigation from "@/components/layout/app-navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -131,7 +131,7 @@ export default function SettingsPage() {
 
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { isMinimized } = useSidebar()
+  // Layout handled by MainContent wrapper
   const { pendingSettings, setPendingSettings, applySettings, colorThemes, isDark, sidebarMinimizedByDefault, roundedContainers, colorTheme } = useTheme()
   const supabase = createClient()
   const [activeTab, setActiveTab] = useState("general")
@@ -426,11 +426,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
-      <SidebarNavigation />
-      <div className={`${isMinimized ? "mr-24" : "mr-64"} p-6 transition-all duration-300`}>
-        <AppNavigation />
-        <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 flex">
+      <MainContent>
+        <div className="p-6">
+          <AppNavigation />
+          <div className="max-w-4xl mx-auto space-y-6">
           <div className="text-right">
             <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">הגדרות</h1>
             <p className="text-gray-600 font-hebrew">נהל העדפות אפליקציה ומידע עסקי</p>
@@ -1986,7 +1986,9 @@ export default function SettingsPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
+        </div>
+      </MainContent>
+      <SidebarNavigation />
     </div>
   )
 }

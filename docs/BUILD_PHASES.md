@@ -48,10 +48,10 @@
 ## Phase 6: V1 Beta ← CURRENT
 - [x] V1 Beta test plan written (26 tests)
 - [x] Protocol docs created (CLAUDE.md, GUIDELINES, HANDOFF, PROGRESS, etc.)
-- [ ] Build health verified
-- [ ] Carts page Hebrew translation
-- [ ] Pre-testing verification
-- [ ] Execute V1 Beta test plan (26 tests)
+- [x] Build health verified (2026-03-28: pnpm build clean, DB accessible)
+- [x] Carts page Hebrew translation (commit 8ff73f2)
+- [x] Pre-testing verification (2026-03-28: all 4 pre-checks pass)
+- [ ] Execute V1 Beta test plan (26 tests) ← NOW
 - [ ] David handoff
 
 ## Phase 7: V1 Launch (planned)

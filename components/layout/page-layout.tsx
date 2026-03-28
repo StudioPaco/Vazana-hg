@@ -1,9 +1,9 @@
 "use client"
 
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import { BackButton } from '@/components/ui/back-button'
 import { StatsContainer } from '@/components/ui/stats-container'
-import { LucideIcon } from 'lucide-react'
+import { LucideIcon, BarChart3, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface PageLayoutProps {
   // Page identification
@@ -35,6 +35,38 @@ interface PageLayoutProps {
   // Layout customization
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | 'full'
   className?: string
+}
+
+function StatsToggle({ statsData }: { statsData: PageLayoutProps['statsData'] }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!statsData || statsData.length === 0) return null
+
+  return (
+    <div className="mb-6 w-full">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-hebrew mb-3 transition-colors"
+      >
+        <BarChart3 className="w-4 h-4" />
+        <span>{expanded ? "הסתר סטטיסטיקות" : "הצג סטטיסטיקות"}</span>
+        {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      </button>
+
+      {expanded && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          {statsData.map((stat, index) => (
+            <StatsContainer
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color as any}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function PageLayout({
@@ -94,21 +126,9 @@ export default function PageLayout({
         </div>
       </div>
 
-      {/* Stats Section */}
+      {/* Stats Section — Collapsible */}
       {showStats && statsData.length > 0 && (
-        <div className="mb-6 w-full">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-            {statsData.map((stat, index) => (
-              <StatsContainer
-                key={index}
-                title={stat.title}
-                value={stat.value}
-                icon={stat.icon}
-                color={stat.color as any}
-              />
-            ))}
-          </div>
-        </div>
+        <StatsToggle statsData={statsData} />
       )}
 
       {/* Actions and Filters Row */}
