@@ -96,32 +96,17 @@ export default function PageLayout({
 
   return (
     <div className={`${widthClass} ${className}`} dir="rtl">
-      {/* Back Button */}
-      {backHref && (
-        <div className="mb-3">
-          <BackButton href={backHref} />
-        </div>
-      )}
-
-      {/* Header Row: Title+Icon on right, Stats toggle on left */}
-      <div className="flex items-start justify-between mb-6">
-        {/* Left side: stats toggle */}
+      {/* Header: back, icon+title, stats toggle — all one row */}
+      <div className="flex items-center justify-between mb-6">
+        {/* Right side (RTL start): back + icon + title */}
         <div className="flex items-center gap-3">
-          {showStats && statsData.length > 0 && (
-            <button
-              onClick={() => setStatsExpanded(!statsExpanded)}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 font-hebrew transition-colors border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-400"
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span>{statsExpanded ? "הסתר" : "סטטיסטיקות"}</span>
-              {statsExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
+          {backHref && <BackButton href={backHref} />}
+          {TitleIcon && (
+            <div className="p-2 bg-vazana-teal/10 rounded-lg shrink-0">
+              <TitleIcon className="w-6 h-6 text-vazana-teal" />
+            </div>
           )}
-        </div>
-
-        {/* Right side: icon + title */}
-        <div className="flex items-center gap-3">
-          <div className="text-right">
+          <div>
             <h1 className="text-2xl font-bold text-gray-900 font-hebrew">
               {title}
             </h1>
@@ -131,12 +116,19 @@ export default function PageLayout({
               </p>
             )}
           </div>
-          {TitleIcon && (
-            <div className="p-2 bg-vazana-teal/10 rounded-lg">
-              <TitleIcon className="w-6 h-6 text-vazana-teal" />
-            </div>
-          )}
         </div>
+
+        {/* Left side (RTL end): stats toggle */}
+        {showStats && statsData.length > 0 && (
+          <button
+            onClick={() => setStatsExpanded(!statsExpanded)}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 font-hebrew transition-colors border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-400"
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>{statsExpanded ? "הסתר" : "סטטיסטיקות"}</span>
+            {statsExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        )}
       </div>
 
       {/* Stats Section — Collapsible */}
@@ -157,11 +149,11 @@ export default function PageLayout({
       {/* Actions and Filters Row */}
       {(actions || filters) && (
         <div className="mb-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {filters}
-          </div>
           <div className="flex items-center gap-3">
             {actions}
+          </div>
+          <div className="flex items-center gap-4">
+            {filters}
           </div>
         </div>
       )}

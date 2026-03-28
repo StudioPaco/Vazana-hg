@@ -33,7 +33,7 @@ const SidebarContext = createContext<{
 export const useSidebar = () => useContext(SidebarContext)
 
 const navigationItems = [
-  { name: "ניווט", href: "/", icon: Home },
+  { name: "ראשי", href: "/", icon: Home },
   { name: "עבודות", href: "/jobs", icon: Briefcase },
   { name: "עבודה חדשה", href: "/jobs/new", icon: Plus },
   { name: "לקוחות", href: "/clients", icon: Users },
@@ -129,8 +129,8 @@ export default function SidebarNavigation() {
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className={`${isMinimized ? "p-3" : "p-4"} space-y-2`}>
+      {/* Navigation — scrollable between header and user footer */}
+      <nav className={`${isMinimized ? "p-3" : "p-4"} space-y-2 overflow-y-auto`} style={{ maxHeight: 'calc(100vh - 280px)' }}>
         {navigationItems.map((item) => {
           const isActive = pathname === item.href
           return (
@@ -138,14 +138,14 @@ export default function SidebarNavigation() {
               key={item.href}
               onClick={() => handleNavigation(item.href)}
               className={`group relative flex items-center w-full ${
-                isMinimized ? "justify-center p-4" : "justify-end gap-3 px-4 py-3"
+                isMinimized ? "justify-center p-4" : "justify-between px-4 py-3"
               } rounded-lg transition-colors font-hebrew ${
                 isActive ? "bg-vazana-yellow text-vazana-dark font-semibold" : "text-gray-700 hover:bg-gray-100"
               }`}
               title={isMinimized ? item.name : undefined}
             >
-              {!isMinimized && <span>{item.name}</span>}
-              <item.icon className="w-6 h-6 flex-shrink-0" />
+              {!isMinimized && <span className="text-right flex-1">{item.name}</span>}
+              <item.icon className="w-6 h-6 flex-shrink-0 mx-3" />
 
               {isMinimized && (
                 <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">

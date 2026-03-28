@@ -1,14 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import JobsPage from "@/components/jobs/jobs-page"
 import PageLayout from "@/components/layout/page-layout"
 import type { StatsItem } from "@/components/layout/page-layout"
-import { Briefcase, DollarSign, Clock, AlertTriangle, CheckCircle, Upload, Grid3X3, List, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Briefcase, DollarSign, Clock, AlertTriangle, CheckCircle } from "lucide-react"
 
 export default function Jobs() {
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    pendingJobs: 0,
+    urgentJobs: 0,
+    completedJobs: 0,
+  })
+
+  const statsData: StatsItem[] = [
+    { title: "הכנסות חודשי", value: `₪${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, color: "green" },
+    { title: "עבודות ממתינות", value: stats.pendingJobs, icon: Clock, color: "yellow" },
+    { title: "עבודות דחופות", value: stats.urgentJobs, icon: AlertTriangle, color: "red" },
+    { title: "עבודות שהושלמו", value: stats.completedJobs, icon: CheckCircle, color: "blue" },
+  ]
+
   return (
     <PageLayout
       title="עבודות"
@@ -16,9 +28,10 @@ export default function Jobs() {
       titleIcon={Briefcase}
       backHref="/"
       variant="list"
-      showStats={false}
+      showStats={true}
+      statsData={statsData}
     >
-      <JobsPage showHeader={false} />
+      <JobsPage showHeader={false} onStatsCalculated={setStats} />
     </PageLayout>
   )
 }

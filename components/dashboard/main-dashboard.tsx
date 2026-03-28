@@ -228,9 +228,9 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
   }, [])
 
   const quickActions = [
-    { name: "יצירת עבודה חדשה", href: "/jobs/new", icon: Plus, color: "bg-vazana-teal" },
-    { name: "הפקת חשבונית", href: "/invoices/new", icon: FileText, color: "bg-vazana-yellow" },
-    { name: "ניהול לקוחות", href: "/clients", icon: Users, color: "bg-blue-500" },
+    { name: "עבודה חדשה", href: "/jobs/new", icon: Plus, color: "bg-vazana-teal" },
+    { name: "הפקת חשבונית", href: "/invoices/new", icon: FileText, color: "bg-vazana-yellow text-vazana-dark" },
+    { name: "לקוח חדש", href: "/clients", icon: Users, color: "bg-blue-500" },
   ]
 
   return (
@@ -244,12 +244,12 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
           </div>
         )}
 
-        {/* Quick Actions */}
+        {/* Quick Actions — creation shortcuts */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {quickActions.map((action) => (
             <Link key={action.name} href={action.href}>
               <button
-                className={`${action.color} text-white p-4 rounded-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity font-hebrew w-full`}
+                className={`${action.color} ${action.color.includes('text-') ? '' : 'text-white'} p-4 rounded-lg flex items-center justify-center gap-3 hover:opacity-90 transition-opacity font-hebrew w-full`}
               >
                 <span>{action.name}</span>
                 <action.icon className="w-5 h-5" />

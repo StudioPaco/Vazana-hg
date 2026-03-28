@@ -262,11 +262,7 @@
   text-align: right;
 }
 
-/* RTL Support for Button content alignment */
-.rtl .flex.items-center.justify-between,
-[dir="rtl"] .flex.items-center.justify-between {
-  flex-direction: row-reverse;
-}
+/* RTL flex is handled by direction:rtl — no row-reverse needed */
 
 /* RTL Support for Labels */
 .rtl label,

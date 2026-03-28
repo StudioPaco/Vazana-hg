@@ -88,9 +88,15 @@ interface Job {
 
 interface JobsPageProps {
   showHeader?: boolean
+  onStatsCalculated?: (stats: {
+    totalRevenue: number
+    pendingJobs: number
+    urgentJobs: number
+    completedJobs: number
+  }) => void
 }
 
-export default function JobsPage({ showHeader = true }: JobsPageProps) {
+export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsPageProps) {
   const { preferences, loading: preferencesLoading, updatePreference } = useUserPreferences()
   const [jobs, setJobs] = useState<Job[]>([])
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
@@ -290,6 +296,13 @@ export default function JobsPage({ showHeader = true }: JobsPageProps) {
   const pendingJobs = jobs.filter((job) => job.job_status === "ממתין" || job.job_status === "בתהליך").length
   const urgentJobs = jobs.filter((job) => job.job_status === "דחוף").length
   const completedJobs = jobs.filter((job) => job.job_status === "הושלם").length
+
+  // Report stats to parent PageLayout
+  useEffect(() => {
+    if (onStatsCalculated && !loading) {
+      onStatsCalculated({ totalRevenue, pendingJobs, urgentJobs, completedJobs })
+    }
+  }, [totalRevenue, pendingJobs, urgentJobs, completedJobs, loading, onStatsCalculated])
 
   const toggleJobExpansion = (jobId: string) => {
     const newExpanded = new Set(expandedJobs)

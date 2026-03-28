@@ -1,12 +1,28 @@
 "use client"
 
+import { useState } from "react"
 import InvoicesPage from "@/components/invoices/invoices-page"
 import PageLayout from "@/components/layout/page-layout"
-import { FileText, Plus } from "lucide-react"
+import type { StatsItem } from "@/components/layout/page-layout"
+import { FileText, Plus, DollarSign, Clock, Calendar, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default function Invoices() {
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    pendingInvoices: 0,
+    overdueInvoices: 0,
+    totalInvoicesThisMonth: 0,
+  })
+
+  const statsData: StatsItem[] = [
+    { title: "הכנסות שולמו", value: `₪${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "green" },
+    { title: "ממתינות לתשלום", value: stats.pendingInvoices, icon: Clock, color: "yellow" },
+    { title: "באיחור", value: stats.overdueInvoices, icon: Calendar, color: "red" },
+    { title: "חשבוניות החודש", value: stats.totalInvoicesThisMonth, icon: CheckCircle, color: "blue" },
+  ]
+
   return (
     <PageLayout
       title="ארכיון חשבוניות"
@@ -14,7 +30,8 @@ export default function Invoices() {
       titleIcon={FileText}
       backHref="/"
       variant="list"
-      showStats={false}
+      showStats={true}
+      statsData={statsData}
       actions={
         <Button className="bg-vazana-teal hover:bg-vazana-teal/90 text-white" asChild>
           <Link href="/invoices/new">
@@ -24,7 +41,7 @@ export default function Invoices() {
         </Button>
       }
     >
-      <InvoicesPage showHeader={false} />
+      <InvoicesPage showHeader={false} onStatsCalculated={setStats} />
     </PageLayout>
   )
 }
