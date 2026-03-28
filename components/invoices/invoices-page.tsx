@@ -60,18 +60,20 @@ interface InvoicesPageProps {
   }) => void
 }
 
-export default function InvoicesPage({ 
-  showHeader = true, 
-  showFilters = true, 
-  searchTerm: externalSearchTerm = "", 
-  statusFilter: externalStatusFilter = "all", 
-  onStatsCalculated 
+export default function InvoicesPage({
+  showHeader = true,
+  showFilters = true,
+  searchTerm: externalSearchTerm = "",
+  statusFilter: externalStatusFilter = "all",
+  onStatsCalculated
 }: InvoicesPageProps) {
   const router = useRouter()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([])
   const [searchTerm, setSearchTerm] = useState(externalSearchTerm)
   const [statusFilter, setStatusFilter] = useState(externalStatusFilter)
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'number'>('date')
+  const [dateRange, setDateRange] = useState<'all' | 'this_month' | 'last_month'>('all')
   const [loading, setLoading] = useState(true)
   const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null)
   const [invoiceJobs, setInvoiceJobs] = useState<Record<string, JobLineItem[]>>({})
@@ -120,8 +122,43 @@ export default function InvoicesPage({
       filtered = filtered.filter((invoice) => invoice.status === statusFilter)
     }
 
+    // Date range filter
+    if (dateRange !== "all") {
+      const now = new Date()
+      let startDate: Date
+      let endDate: Date
+
+      if (dateRange === "this_month") {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+      } else {
+        // last_month
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
+      }
+
+      filtered = filtered.filter((invoice) => {
+        const invDate = new Date(invoice.invoice_date)
+        return invDate >= startDate && invDate <= endDate
+      })
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      if (sortBy === 'date') {
+        return new Date(b.invoice_date).getTime() - new Date(a.invoice_date).getTime()
+      } else if (sortBy === 'amount') {
+        return b.total_amount - a.total_amount
+      } else {
+        // by number
+        const aNum = parseInt(a.invoice_number) || 0
+        const bNum = parseInt(b.invoice_number) || 0
+        return bNum - aNum
+      }
+    })
+
     setFilteredInvoices(filtered)
-  }, [searchTerm, statusFilter, invoices])
+  }, [searchTerm, statusFilter, sortBy, dateRange, invoices])
 
   const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
     try {
@@ -323,23 +360,55 @@ export default function InvoicesPage({
         </div>
       )}
         
-      {showFilters && (
-        <div className="flex items-center gap-4 mb-6">
-          {/* Search and Filter - adjacent to each other */}
-          <div className="relative flex-1 max-w-sm">
-            <Input
-              placeholder="חפש חשבוניות (מספר, לקוח)..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10 text-right"
-              dir="rtl"
-            />
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          </div>
-          
+      {/* Toolbar — always visible */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
+        {/* Sorting Toggle */}
+        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSortBy('date')}
+            className={`font-hebrew text-xs px-3 py-1 transition-colors ${
+              sortBy === 'date'
+                ? 'bg-teal-500 text-white hover:bg-teal-600'
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            תאריך
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSortBy('amount')}
+            className={`font-hebrew text-xs px-3 py-1 transition-colors ${
+              sortBy === 'amount'
+                ? 'bg-teal-500 text-white hover:bg-teal-600'
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            סכום
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSortBy('number')}
+            className={`font-hebrew text-xs px-3 py-1 transition-colors ${
+              sortBy === 'number'
+                ? 'bg-teal-500 text-white hover:bg-teal-600'
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            מספר חשבונית
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters Row */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)} dir="rtl">
-            <SelectTrigger className="w-48 text-right">
-              <SelectValue placeholder="סנן לפי סטטוס" />
+            <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+              <SelectValue placeholder="כל הסטטוסים" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">כל הסטטוסים</SelectItem>
@@ -349,8 +418,29 @@ export default function InvoicesPage({
               <SelectItem value="overdue">באיחור</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={dateRange} onValueChange={(value: 'all' | 'this_month' | 'last_month') => setDateRange(value)} dir="rtl">
+            <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+              <SelectValue placeholder="כל התקופות" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">כל התקופות</SelectItem>
+              <SelectItem value="this_month">החודש הנוכחי</SelectItem>
+              <SelectItem value="last_month">חודש קודם</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      )}
+
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="חפש חשבוניות..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pr-10 text-right font-hebrew w-full sm:w-[300px]"
+          />
+        </div>
+      </div>
 
       {filteredInvoices.length === 0 ? (
           <Card>
@@ -359,8 +449,8 @@ export default function InvoicesPage({
                 <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                 <p className="text-lg font-medium mb-2">לא נמצאו חשבוניות</p>
                 <p className="text-sm">
-                  {searchTerm || statusFilter !== "all"
-                    ? "נסה לשנות את מונחי החיפוש או המסננים"
+                  {searchTerm || statusFilter !== "all" || dateRange !== "all"
+                    ? "נסה לשנות את החיפוש או המסננים"
                     : "צור את החשבונית הראשונה שלך כדי להתחיל"}
                 </p>
               </div>

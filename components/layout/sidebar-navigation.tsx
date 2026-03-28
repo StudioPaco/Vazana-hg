@@ -138,14 +138,15 @@ export default function SidebarNavigation() {
               key={item.href}
               onClick={() => handleNavigation(item.href)}
               className={`group relative flex items-center w-full ${
-                isMinimized ? "justify-center p-4" : "justify-between px-4 py-3"
+                isMinimized ? "justify-center p-4" : "px-4 py-3"
               } rounded-lg transition-colors font-hebrew ${
                 isActive ? "bg-vazana-yellow text-vazana-dark font-semibold" : "text-gray-700 hover:bg-gray-100"
               }`}
+              dir="rtl"
               title={isMinimized ? item.name : undefined}
             >
-              {!isMinimized && <span className="text-right flex-1">{item.name}</span>}
               <item.icon className="w-6 h-6 flex-shrink-0 mx-3" />
+              {!isMinimized && <span className="flex-1">{item.name}</span>}
 
               {isMinimized && (
                 <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">

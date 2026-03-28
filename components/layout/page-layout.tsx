@@ -3,7 +3,7 @@
 import { ReactNode, useState } from 'react'
 import { BackButton } from '@/components/ui/back-button'
 import { StatsContainer } from '@/components/ui/stats-container'
-import { LucideIcon, BarChart3, ChevronDown, ChevronUp } from 'lucide-react'
+import { LucideIcon, BarChart3 } from 'lucide-react'
 
 export interface StatsItem {
   title: string
@@ -96,37 +96,48 @@ export default function PageLayout({
 
   return (
     <div className={`${widthClass} ${className}`} dir="rtl">
-      {/* Header: back, icon+title, stats toggle — all one row */}
-      <div className="flex items-center justify-between mb-6">
-        {/* Right side (RTL start): back + icon + title */}
-        <div className="flex items-center gap-3">
-          {backHref && <BackButton href={backHref} />}
-          {TitleIcon && (
-            <div className="p-2 bg-vazana-teal/10 rounded-lg shrink-0">
-              <TitleIcon className="w-6 h-6 text-vazana-teal" />
-            </div>
+      {/* Back button row */}
+      {backHref && (
+        <div className="flex items-center justify-between mb-2">
+          <BackButton href={backHref} />
+          {/* Stats toggle — icon-only square button */}
+          {showStats && statsData.length > 0 && (
+            <button
+              onClick={() => setStatsExpanded(!statsExpanded)}
+              className="p-2 text-gray-400 hover:text-gray-900 transition-colors border border-gray-200 rounded-lg hover:border-gray-400"
+              title={statsExpanded ? "הסתר סטטיסטיקות" : "הצג סטטיסטיקות"}
+            >
+              <BarChart3 className="w-4 h-4" />
+            </button>
           )}
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-hebrew">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="text-gray-600 font-hebrew text-sm mt-0.5">
-                {subtitle}
-              </p>
-            )}
-          </div>
         </div>
+      )}
 
-        {/* Left side (RTL end): stats toggle */}
-        {showStats && statsData.length > 0 && (
+      {/* Title row (under back button) */}
+      <div className="flex items-center gap-3 mb-6">
+        {TitleIcon && (
+          <div className="p-2 bg-vazana-teal/10 rounded-lg shrink-0">
+            <TitleIcon className="w-6 h-6 text-vazana-teal" />
+          </div>
+        )}
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 font-hebrew">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="text-gray-600 font-hebrew text-sm mt-0.5">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {/* Stats toggle when no back button */}
+        {!backHref && showStats && statsData.length > 0 && (
           <button
             onClick={() => setStatsExpanded(!statsExpanded)}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 font-hebrew transition-colors border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-400"
+            className="p-2 text-gray-400 hover:text-gray-900 transition-colors border border-gray-200 rounded-lg hover:border-gray-400"
+            title={statsExpanded ? "הסתר סטטיסטיקות" : "הצג סטטיסטיקות"}
           >
             <BarChart3 className="w-4 h-4" />
-            <span>{statsExpanded ? "הסתר" : "סטטיסטיקות"}</span>
-            {statsExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>

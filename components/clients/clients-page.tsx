@@ -53,6 +53,9 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const [clients, setClients] = useState<Client[]>([])
   const [filteredClients, setFilteredClients] = useState<Client[]>([])
   const [searchTerm, setSearchTerm] = useState(externalSearchTerm)
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [cityFilter, setCityFilter] = useState("all")
+  const [sortBy, setSortBy] = useState<'name' | 'date'>('name')
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientJobs, setClientJobs] = useState<{ [key: string]: Job[] }>({})
@@ -151,15 +154,44 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
     setSearchTerm(externalSearchTerm)
   }, [externalSearchTerm])
 
+  // Derive unique cities for the city filter dropdown
+  const uniqueCities = useMemo(() => {
+    const cities = clients
+      .map(c => c.city)
+      .filter((city): city is string => !!city && city.trim() !== '')
+    return Array.from(new Set(cities)).sort()
+  }, [clients])
+
   useEffect(() => {
-    const filtered = clients.filter(
+    let filtered = clients.filter(
       (client) =>
         client.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (client.city || '').toLowerCase().includes(searchTerm.toLowerCase()),
     )
+
+    // Status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((client) => client.status === statusFilter)
+    }
+
+    // City filter
+    if (cityFilter !== "all") {
+      filtered = filtered.filter((client) => client.city === cityFilter)
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.company_name.localeCompare(b.company_name, 'he')
+      } else {
+        // Sort by id as proxy for date added (newest first)
+        return b.id.localeCompare(a.id)
+      }
+    })
+
     setFilteredClients(filtered)
-  }, [searchTerm, clients])
+  }, [searchTerm, statusFilter, cityFilter, sortBy, clients])
   
   useEffect(() => {
     if (clients.length > 0) {
@@ -298,14 +330,14 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
               icon={Users}
               color="blue"
             />
-            
+
             <StatsContainer
               title="לקוחות פעילים"
               value={activeClientsCount}
               icon={Users}
               color="green"
             />
-            
+
             <StatsContainer
               title="לקוח מוביל החודש"
               value={mostActiveClient.name}
@@ -315,29 +347,87 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
             />
           </div>
         )}
-        
-        {showHeader && (
-          <div className="flex justify-between items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Input
-                placeholder="חפש לקוחות (שם, איש קשר, עיר)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10 text-right"
-                dir="rtl"
-              />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            </div>
-            
-            <Button 
-              onClick={() => setNewClientModalOpen(true)}
-              className="bg-teal-500 hover:bg-teal-600 text-white"
+
+        {/* Toolbar — always visible */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
+          <Button
+            onClick={() => setNewClientModalOpen(true)}
+            className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
+          >
+            <Plus className="w-4 h-4 ml-2" />
+            לקוח חדש
+          </Button>
+
+          {/* Sorting Toggle */}
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSortBy('name')}
+              className={`font-hebrew text-xs px-3 py-1 transition-colors ${
+                sortBy === 'name'
+                  ? 'bg-teal-500 text-white hover:bg-teal-600'
+                  : 'text-gray-700 hover:bg-gray-200'
+              }`}
             >
-              <Plus className="ml-2 h-4 w-4" />
-              הוסף לקוח
+              שם
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSortBy('date')}
+              className={`font-hebrew text-xs px-3 py-1 transition-colors ${
+                sortBy === 'date'
+                  ? 'bg-teal-500 text-white hover:bg-teal-600'
+                  : 'text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              תאריך הוספה
             </Button>
           </div>
-        )}
+        </div>
+
+        {/* Filters Row */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+                <SelectValue placeholder="כל הסטטוסים" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">כל הסטטוסים</SelectItem>
+                <SelectItem value="active">פעיל</SelectItem>
+                <SelectItem value="inactive">לא פעיל</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {uniqueCities.length > 0 && (
+              <Select value={cityFilter} onValueChange={setCityFilter}>
+                <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+                  <SelectValue placeholder="כל הערים" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל הערים</SelectItem>
+                  {uniqueCities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          <div className="relative w-full sm:w-auto">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="חפש לקוחות..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10 text-right font-hebrew w-full sm:w-[300px]"
+            />
+          </div>
+        </div>
 
         {filteredClients.length === 0 ? (
           <Card>
@@ -346,7 +436,9 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                 <Plus className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                 <p className="text-lg font-medium mb-2">לא נמצאו לקוחות</p>
                 <p className="text-sm">
-                  {searchTerm ? "נסה לשנות את מונחי החיפוש" : "הוסף את הלקוח הראשון שלך כדי להתחיל"}
+                  {searchTerm || statusFilter !== "all" || cityFilter !== "all"
+                    ? "נסה לשנות את החיפוש או המסננים"
+                    : "הוסף את הלקוח הראשון שלך כדי להתחיל"}
                 </p>
               </div>
             </CardContent>
