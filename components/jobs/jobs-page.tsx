@@ -365,19 +365,6 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
 
       <div className={showHeader ? "pt-16" : ""}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                const newViewMode = preferences?.jobs_view_mode === "list" ? "grid" : "list"
-                updatePreference('jobs_view_mode', newViewMode)
-              }}
-              className="h-9 w-9"
-            >
-              {preferences?.jobs_view_mode === "list" ? <Grid3X3 className="w-4 h-4" /> : <List className="w-4 h-4" />}
-            </Button>
-          </div>
           <div className="flex items-center gap-3">
             <Link href="/jobs/new">
               <Button className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew">
@@ -429,6 +416,17 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
             </Button>
           </div>
           </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              const newViewMode = preferences?.jobs_view_mode === "list" ? "grid" : "list"
+              updatePreference('jobs_view_mode', newViewMode)
+            }}
+            className="h-9 w-9"
+          >
+            {preferences?.jobs_view_mode === "list" ? <Grid3X3 className="w-4 h-4" /> : <List className="w-4 h-4" />}
+          </Button>
         </div>
 
         {showHeader && (
