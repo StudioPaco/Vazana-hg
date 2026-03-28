@@ -35,11 +35,9 @@ export const useSidebar = () => useContext(SidebarContext)
 const navigationItems = [
   { name: "ראשי", href: "/", icon: Home },
   { name: "עבודות", href: "/jobs", icon: Briefcase },
-  { name: "עבודה חדשה", href: "/jobs/new", icon: Plus },
   { name: "לקוחות", href: "/clients", icon: Users },
-  { name: "הפקת חשבוניות", href: "/invoices/new", icon: Calculator },
-  { name: "ארכיון חשבוניות", href: "/invoices/archive", icon: Archive },
-  { name: "ארכיון מסמכים", href: "/documents", icon: FileText },
+  { name: "חשבוניות", href: "/invoices", icon: FileText },
+  { name: "מסמכים", href: "/documents", icon: Archive },
   { name: "מרכז תחזוקה", href: "/maintenance", icon: Activity },
   { name: "הגדרות", href: "/settings", icon: Settings },
 ]
@@ -198,14 +196,17 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`transition-all duration-300 w-full`}
+      className={`transition-all duration-300 w-full overflow-y-auto`}
       style={{
         marginRight: isMinimized ? "96px" : "256px",
         minHeight: "100vh",
         width: `calc(100vw - ${isMinimized ? "96px" : "256px"})`,
+        direction: 'ltr',
       }}
     >
-      {children}
+      <div dir="rtl">
+        {children}
+      </div>
     </div>
   )
 }

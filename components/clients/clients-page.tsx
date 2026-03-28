@@ -56,7 +56,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const [statusFilter, setStatusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("all")
   const [sortBy, setSortBy] = useState<'name' | 'date'>('name')
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'table'>('list')
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientJobs, setClientJobs] = useState<{ [key: string]: Job[] }>({})
@@ -391,9 +391,9 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setViewMode('grid')}
+            onClick={() => setViewMode('table')}
             className={`px-2 py-1 transition-colors ${
-              viewMode === 'grid'
+              viewMode === 'table'
                 ? 'bg-teal-500 text-white hover:bg-teal-600'
                 : 'text-gray-700 hover:bg-gray-200'
             }`}
@@ -459,8 +459,46 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
             </div>
           </CardContent>
         </Card>
-      ) : (
-        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
+      ) : viewMode === 'table' ? (
+          <div className="bg-white border rounded-lg overflow-hidden">
+            <table className="w-full text-sm" dir="rtl">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">שם חברה</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">איש קשר</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">טלפון</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">עיר</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">סטטוס</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">עבודות</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">פעולות</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filteredClients.map((client) => (
+                  <tr key={client.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium">{client.company_name}</td>
+                    <td className="px-4 py-3 text-gray-600">{client.contact_person}</td>
+                    <td className="px-4 py-3 text-gray-600" dir="ltr">{client.phone}</td>
+                    <td className="px-4 py-3 text-gray-600">{client.city || '—'}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={client.status === "active" ? "default" : "secondary"} className="text-xs">
+                        {client.status === "active" ? "פעיל" : "לא פעיל"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{realClientStats[client.id] || 0}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => { setEditingClient(client); setEditModalOpen(true) }}>ערוך</Button>
+                        <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyClient(client)}>העתק</Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+        <div className="space-y-4">
           {filteredClients.map((client) => (
             <Card key={client.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="px-4 py-2">

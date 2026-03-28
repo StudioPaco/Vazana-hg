@@ -364,37 +364,39 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
       )}
 
       <div className={showHeader ? "pt-16" : ""}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4 mb-6">
-          <Link href="/jobs/new">
-            <Button className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
-              <Plus className="w-4 h-4 ml-2" />
-              עבודה חדשה
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                const newViewMode = preferences?.jobs_view_mode === "list" ? "grid" : "list"
+                updatePreference('jobs_view_mode', newViewMode)
+              }}
+              className="h-9 w-9"
+            >
+              {preferences?.jobs_view_mode === "list" ? <Grid3X3 className="w-4 h-4" /> : <List className="w-4 h-4" />}
             </Button>
-          </Link>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setImportModalOpen(true)}
-            className="font-hebrew"
-          >
-            <Upload className="w-4 h-4 ml-2" />
-            ייבוא מקובץ
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const newViewMode = preferences?.jobs_view_mode === "list" ? "grid" : "list"
-              updatePreference('jobs_view_mode', newViewMode)
-            }}
-            className="font-hebrew"
-          >
-            {preferences?.jobs_view_mode === "list" ? <Grid3X3 className="w-4 h-4 ml-2" /> : <List className="w-4 h-4 ml-2" />}
-            תצוגת רשת
-          </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/jobs/new">
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew">
+                <Plus className="w-4 h-4 ml-2" />
+                עבודה חדשה
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportModalOpen(true)}
+              className="font-hebrew"
+            >
+              <Upload className="w-4 h-4 ml-2" />
+              ייבוא מקובץ
+            </Button>
 
-          {/* Sorting Toggle */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            {/* Sorting Toggle */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <Button
               variant="ghost"
               size="sm"
@@ -425,6 +427,7 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
             >
               תאריך
             </Button>
+          </div>
           </div>
         </div>
 
