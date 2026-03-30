@@ -362,10 +362,10 @@ export default function InvoicesPage({
 
         <div className="flex flex-wrap gap-2">
           <Select value={clientFilter} onValueChange={(value) => setClientFilter(value)} dir="rtl">
-            <SelectTrigger className="w-full sm:w-[180px] font-hebrew">
+            <SelectTrigger className="w-full sm:w-[180px] font-hebrew text-right">
               <SelectValue placeholder="כל הלקוחות" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent dir="rtl">
               <SelectItem value="all">כל הלקוחות</SelectItem>
               {uniqueClients.map((name) => (
                 <SelectItem key={name} value={name}>{name}</SelectItem>
@@ -374,10 +374,10 @@ export default function InvoicesPage({
           </Select>
 
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)} dir="rtl">
-            <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+            <SelectTrigger className="w-full sm:w-[160px] font-hebrew text-right">
               <SelectValue placeholder="כל הסטטוסים" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent dir="rtl">
               <SelectItem value="all">כל הסטטוסים</SelectItem>
               <SelectItem value="draft">טיוטה</SelectItem>
               <SelectItem value="sent">נשלח</SelectItem>
@@ -388,10 +388,10 @@ export default function InvoicesPage({
           </Select>
 
           <Select value={dateRange} onValueChange={(value: 'all' | 'this_month' | 'last_month') => setDateRange(value)} dir="rtl">
-            <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+            <SelectTrigger className="w-full sm:w-[160px] font-hebrew text-right">
               <SelectValue placeholder="כל התקופות" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent dir="rtl">
               <SelectItem value="all">כל התקופות</SelectItem>
               <SelectItem value="this_month">החודש הנוכחי</SelectItem>
               <SelectItem value="last_month">חודש קודם</SelectItem>
