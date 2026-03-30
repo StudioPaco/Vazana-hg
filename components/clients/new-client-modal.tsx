@@ -369,10 +369,10 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
             </TabsContent>
           </Tabs>
 
-          <div className="flex gap-4 justify-start">
-            <Button 
-              type="submit" 
-              className="bg-vazana-teal hover:bg-vazana-teal/90 text-white px-8"
+          <div className="flex gap-4 justify-start sticky bottom-0 bg-background pt-3 pb-1 border-t">
+            <Button
+              type="submit"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-8 font-hebrew"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

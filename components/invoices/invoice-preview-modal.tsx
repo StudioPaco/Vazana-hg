@@ -15,8 +15,10 @@ interface Job {
 
 interface ManualItem {
   description: string
-  quantity: number
+  job_date?: string
   unit_price: number
+  work_type?: string
+  site?: string
 }
 
 interface InvoicePreviewModalProps {
@@ -130,11 +132,13 @@ export function InvoicePreviewModal({
                 {manualItems.filter(i => i.description && i.unit_price > 0).map((item, i) => (
                   <tr key={`manual-${i}`} className="bg-amber-50/50">
                     <td className="border border-gray-200 p-3 text-right font-medium">
-                      ₪{(item.quantity * item.unit_price).toLocaleString()}
+                      ₪{item.unit_price.toLocaleString()}
                     </td>
-                    <td className="border border-gray-200 p-3 text-right text-gray-500">—</td>
-                    <td className="border border-gray-200 p-3 text-right">ידני</td>
-                    <td className="border border-gray-200 p-3 text-right text-gray-500">—</td>
+                    <td className="border border-gray-200 p-3 text-right text-gray-500">{item.site || '—'}</td>
+                    <td className="border border-gray-200 p-3 text-right">{item.work_type || 'ידני'}</td>
+                    <td className="border border-gray-200 p-3 text-right text-gray-500">
+                      {item.job_date ? new Date(item.job_date).toLocaleDateString('he-IL') : '—'}
+                    </td>
                     <td className="border border-gray-200 p-3 text-right">{item.description}</td>
                   </tr>
                 ))}

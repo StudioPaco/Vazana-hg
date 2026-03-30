@@ -131,12 +131,13 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
     }
   }, [clientType, formData.existingClientId])
 
-  // Auto-fill jobSpecificShiftRate when client + work type are both selected
+  // When client has a matching rate, clear the manual input (rate will use client rate as fallback)
   useEffect(() => {
     if (clientRates.length > 0 && formData.jobType) {
       const match = clientRates.find(r => r.work_type_id === formData.jobType)
       if (match) {
-        setFormData(prev => ({ ...prev, jobSpecificShiftRate: match.rate }))
+        // Don't fill — leave empty so placeholder shows the client rate
+        setFormData(prev => ({ ...prev, jobSpecificShiftRate: null }))
       }
     }
   }, [clientRates, formData.jobType])
@@ -325,7 +326,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
         // Let database handle created_date/updated_date with DEFAULT NOW()
         // created_by_id defaults to auth.uid() via column default
         total_amount: formData.totalAmount,
-        job_specific_shift_rate: formData.jobSpecificShiftRate,
+        job_specific_shift_rate: formData.jobSpecificShiftRate || (clientRates.find(r => r.work_type_id === formData.jobType)?.rate) || formData.jobSpecificShiftRate,
         notes: formData.notes,
         receipt_id: formData.receiptId,
         is_sample: false,
@@ -538,6 +539,22 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 {validationErrors.existingClientId && (
                   <p className="text-red-500 text-sm text-right">{validationErrors.existingClientId}</p>
                 )}
+                {/* Rate input — shows client rate as placeholder, manual override */}
+                <div className="mt-3 flex items-center gap-3" dir="rtl">
+                  <Label className="font-hebrew text-sm whitespace-nowrap">תעריף (₪):</Label>
+                  <Input
+                    type="number"
+                    value={formData.jobSpecificShiftRate ?? ""}
+                    onChange={(e) => setFormData({ ...formData, jobSpecificShiftRate: e.target.value ? Number(e.target.value) : null })}
+                    placeholder={clientRates.length > 0 ? String(clientRates[0]?.rate || 800) : "800"}
+                    className={`text-right w-32 h-9 ${formData.jobSpecificShiftRate ? '' : 'text-gray-400'}`}
+                  />
+                  {clientRates.length > 0 ? (
+                    <span className="text-xs text-green-600 font-hebrew">מוגדר</span>
+                  ) : !formData.jobSpecificShiftRate ? (
+                    <span className="text-xs text-amber-600 font-hebrew">חובה</span>
+                  ) : null}
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -795,38 +812,6 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 className="w-full"
               />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Rate Input */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
-              <DollarSignIcon className="h-5 w-5 text-teal-600" />
-              <span>תעריף עבודה</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4" dir="rtl">
-              <div className="space-y-1 flex-1 max-w-xs">
-                <Label className="text-right block font-hebrew text-sm">
-                  תעריף (₪) {!formData.jobSpecificShiftRate && clientType === "existing" ? <span className="text-red-500">*</span> : ""}
-                </Label>
-                <Input
-                  type="number"
-                  value={formData.jobSpecificShiftRate ?? ""}
-                  onChange={(e) => setFormData({ ...formData, jobSpecificShiftRate: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="800"
-                  className="text-right"
-                />
-              </div>
-              {formData.jobSpecificShiftRate && (
-                <p className="text-sm text-gray-500 font-hebrew mt-5">₪{formData.jobSpecificShiftRate.toLocaleString()}</p>
-              )}
-            </div>
-            {!formData.jobSpecificShiftRate && clientType === "existing" && (
-              <p className="text-xs text-amber-600 font-hebrew text-right mt-2">אם ללקוח אין תעריף מוגדר לסוג עבודה זה, חובה להזין תעריף ידנית</p>
-            )}
           </CardContent>
         </Card>
 

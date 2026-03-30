@@ -45,6 +45,7 @@ import {
   Lock,
   Activity,
   RefreshCw,
+  RotateCcw,
 } from "lucide-react"
 import PageLayout from "@/components/layout/page-layout"
 import Link from "next/link"
@@ -126,7 +127,7 @@ export default function SettingsPage() {
     bankBranch: "",
     bankAccountNumber: "",
   })
-  const [users, setUsers] = useState<Array<{ id: string; username: string; role: string; dbRole: string; description: string; full_name?: string }>>([])
+  const [users, setUsers] = useState<Array<{ id: string; username: string; email?: string; role: string; dbRole: string; description: string; full_name?: string; last_login?: string }>>([])
   const [financialSettings, setFinancialSettings] = useState({
     vatPercentage: 18,
     autoInvoiceSync: false,
@@ -217,10 +218,12 @@ export default function SettingsPage() {
         const formattedUsers = data.map((user: any) => ({
           id: user.id,
           username: user.username,
+          email: user.email,
           role: roleDisplayMap[user.role] || "משתמש",
           dbRole: user.role,
           description: descriptionMap[user.role] || "משתמש רגיל",
           full_name: user.full_name,
+          last_login: user.last_login,
         }))
         setUsers(formattedUsers)
       }
@@ -1252,47 +1255,61 @@ export default function SettingsPage() {
                     </div>
                   )}
                   
-                  <div className="space-y-3">
-                    {users.map((user) => {
+                  <div className="space-y-3" dir="rtl">
+                    {[...users].sort((a, b) => {
+                      // Admin/owner on top
+                      const order: Record<string, number> = { owner: 0, admin: 1, staff: 2 }
+                      return (order[a.dbRole] ?? 3) - (order[b.dbRole] ?? 3)
+                    }).map((user) => {
                       const isAdmin = authProfile?.role === "owner" || authProfile?.role === "admin"
                       const isSelf = authProfile?.id === user.id
                       const canEdit = isAdmin || isSelf
                       const canDelete = isAdmin && user.dbRole !== "owner" && !isSelf
+                      const roleLabel = user.dbRole === "owner" ? "מנהל מערכת" : user.dbRole === "admin" ? "מנהל" : "צוות"
                       return (
-                        <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex gap-2">
+                        <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg" dir="rtl">
+                          <div className="text-right flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium font-hebrew">{user.dbRole === "owner" ? "מנהל מערכת" : user.full_name || user.username}</h3>
+                              <Badge variant={user.dbRole === "owner" || user.dbRole === "admin" ? "default" : "secondary"} className="text-xs font-hebrew">
+                                {roleLabel}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 font-hebrew">{user.username}</p>
+                            {user.email && <p className="text-xs text-gray-400">{user.email}</p>}
+                            {user.last_login && <p className="text-[10px] text-gray-300 font-hebrew">כניסה אחרונה: {new Date(user.last_login).toLocaleDateString('he-IL')}</p>}
+                          </div>
+                          <div className="flex flex-col gap-0.5 shrink-0 border-s border-gray-200 ps-2 bg-gray-50/50">
                             {canEdit && (
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleEditUser(user.id)} title="ערוך">
+                                <Edit className="w-3.5 h-3.5 text-gray-500" />
+                              </Button>
+                            )}
+                            {isAdmin && user.email && (
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
-                                onClick={() => handleEditUser(user.id)}
+                                className="h-7 w-7 p-0"
+                                title="איפוס סיסמה"
+                                onClick={async () => {
+                                  try {
+                                    const supabase = createClient()
+                                    const { error } = await supabase.auth.resetPasswordForEmail(user.email!)
+                                    if (error) throw error
+                                    toast({ title: `קישור איפוס סיסמה נשלח ל-${user.email}` })
+                                  } catch {
+                                    toast({ title: "שגיאה בשליחת איפוס סיסמה", variant: "destructive" })
+                                  }
+                                }}
                               >
-                                <Edit className="w-4 h-4" />
+                                <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
                               </Button>
                             )}
                             {canDelete && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="w-4 h-4" />
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleDeleteUser(user.id)} title="מחק">
+                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
                               </Button>
                             )}
-                            {user.dbRole === "owner" && (
-                              <Badge variant="secondary" className="text-xs font-hebrew">
-                                בעלים
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <div className="text-right">
-                            <h3 className="font-medium">{user.full_name || user.username}</h3>
-                            <p className="text-sm text-gray-600">{user.username}</p>
-                            <Badge variant={user.dbRole === "owner" || user.dbRole === "admin" ? "default" : "secondary"} className="text-xs font-hebrew">
-                              {user.role}
-                            </Badge>
                           </div>
                         </div>
                       )

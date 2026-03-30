@@ -80,6 +80,7 @@ export default function NewInvoicePage() {
   // Data state
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
+  const [workTypes, setWorkTypes] = useState<string[]>([])
   const [summary, setSummary] = useState<InvoiceSummary>({ subtotal: 0, tax_amount: 0, total_amount: 0 })
   
   // Loading states
@@ -87,7 +88,7 @@ export default function NewInvoicePage() {
   const [jobsLoading, setJobsLoading] = useState(false)
   const [creating, setCreating] = useState(false)
   const [searchPerformed, setSearchPerformed] = useState(false)
-  const [manualItems, setManualItems] = useState<{ description: string; quantity: number; unit_price: number }[]>(() => {
+  const [manualItems, setManualItems] = useState<{ description: string; job_date: string; unit_price: number; quantity: number; work_type: string; site: string }[]>(() => {
     // Load from localStorage with 15 min timeout
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('vazana-manual-invoice-items')
@@ -103,7 +104,7 @@ export default function NewInvoicePage() {
   })
 
   const addManualItem = () => {
-    setManualItems(prev => [...prev, { description: "", quantity: 1, unit_price: 0 }])
+    setManualItems(prev => [...prev, { description: "", job_date: new Date().toISOString().split('T')[0], unit_price: 0, quantity: 1, work_type: "", site: "" }])
   }
 
   const updateManualItem = (index: number, field: string, value: string | number) => {
@@ -114,7 +115,7 @@ export default function NewInvoicePage() {
     setManualItems(prev => prev.filter((_, i) => i !== index))
   }
 
-  const manualTotal = manualItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+  const manualTotal = manualItems.reduce((sum, item) => sum + (item.unit_price || 0), 0)
 
   // Recalculate summary and persist when manual items change
   useEffect(() => {
@@ -235,6 +236,11 @@ export default function NewInvoicePage() {
     
     fetchClients()
 
+    // Fetch work types for manual item dropdown
+    supabase.from('work_types').select('name_he').order('name_he').then(({ data }) => {
+      setWorkTypes((data || []).map((wt: any) => wt.name_he))
+    })
+
     // Generate next invoice number
     const fetchInvoiceNumber = async () => {
       const { data } = await supabase
@@ -242,9 +248,12 @@ export default function NewInvoicePage() {
         .select('invoice_number')
         .order('created_at', { ascending: false })
         .limit(1)
+      const year = new Date().getFullYear()
       const lastNum = data?.[0]?.invoice_number
-      const num = lastNum ? parseInt(lastNum.replace(/\D/g, '')) + 1 : 1
-      setInvoiceNumber(String(num).padStart(4, '0'))
+      // Extract sequential part after prefix
+      const lastSeq = lastNum ? parseInt(lastNum.replace(/\D/g, '').slice(-4)) || 0 : 0
+      const seq = lastSeq + 1
+      setInvoiceNumber(`INV-${year}-${String(seq).padStart(4, '0')}`)
     }
     fetchInvoiceNumber()
   }, [])
@@ -306,7 +315,7 @@ export default function NewInvoicePage() {
     const selectedJobs = jobsList.filter(job => job.selected)
     const jobsSubtotal = selectedJobs.reduce((sum, job) => sum + (job.total_amount || 0), 0)
     const items = manualItemsList ?? manualItems
-    const manualSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+    const manualSubtotal = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
     const subtotal = jobsSubtotal + manualSubtotal
     const tax_amount = subtotal * 0.18 // 18% VAT
     const total_amount = subtotal + tax_amount
@@ -497,12 +506,12 @@ export default function NewInvoicePage() {
       const manualLineItems = manualItems.filter(i => i.description && i.unit_price > 0).map(item => ({
         invoice_id: invoice.id,
         description: item.description,
-        quantity: item.quantity,
+        quantity: 1,
         unit_price: item.unit_price,
-        line_total: item.quantity * item.unit_price,
-        work_type: 'ידני',
-        job_date: new Date().toISOString().split('T')[0],
-        site_location: '',
+        line_total: item.unit_price,
+        work_type: item.work_type || 'ידני',
+        job_date: item.job_date || new Date().toISOString().split('T')[0],
+        site_location: item.site || '',
       }))
       const allLineItems = [...jobLineItems, ...manualLineItems]
 
@@ -717,51 +726,28 @@ export default function NewInvoicePage() {
               </CardHeader>
               {manualItems.length > 0 && (
                 <CardContent>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 border-b pb-1">
-                      <div className="col-span-6 text-right font-hebrew">תיאור</div>
-                      <div className="col-span-2 text-right font-hebrew">כמות</div>
-                      <div className="col-span-2 text-right font-hebrew">מחיר יחידה</div>
-                      <div className="col-span-1 text-right font-hebrew">סה״כ</div>
-                      <div className="col-span-1"></div>
+                  <div className="space-y-2" dir="rtl">
+                    <div className="grid gap-1.5 text-xs font-medium text-gray-500 border-b pb-1 font-hebrew" style={{ gridTemplateColumns: '3fr 2fr 2fr 2fr 1.5fr 1fr 0.5fr' }}>
+                      <div>תיאור</div>
+                      <div>סוג עבודה</div>
+                      <div>אתר</div>
+                      <div>תאריך</div>
+                      <div>סכום (₪)</div>
+                      <div>כמות</div>
+                      <div></div>
                     </div>
                     {manualItems.map((item, i) => (
-                      <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-6">
-                          <input
-                            value={item.description}
-                            onChange={(e) => updateManualItem(i, 'description', e.target.value)}
-                            placeholder="תיאור פריט..."
-                            className="w-full border rounded px-2 py-1 text-sm text-right font-hebrew"
-                            dir="rtl"
-                          />
+                      <div key={i} className="grid gap-1.5 items-center" style={{ gridTemplateColumns: '3fr 2fr 2fr 2fr 1.5fr 1fr 0.5fr' }}>
+                        <input value={item.description} onChange={(e) => updateManualItem(i, 'description', e.target.value)} placeholder="תיאור..." className="border rounded px-2 py-1 text-sm text-right font-hebrew" dir="rtl" />
+                        <div className="relative">
+                          <input value={item.work_type} onChange={(e) => updateManualItem(i, 'work_type', e.target.value)} placeholder="סוג עבודה" list={`wt-list-${i}`} className="border rounded px-2 py-1 text-sm text-right font-hebrew w-full" dir="rtl" />
+                          <datalist id={`wt-list-${i}`}>{workTypes.map(wt => <option key={wt} value={wt} />)}</datalist>
                         </div>
-                        <div className="col-span-2">
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => updateManualItem(i, 'quantity', Number(e.target.value))}
-                            className="w-full border rounded px-2 py-1 text-sm text-left"
-                            min={1}
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <input
-                            type="number"
-                            value={item.unit_price}
-                            onChange={(e) => updateManualItem(i, 'unit_price', Number(e.target.value))}
-                            className="w-full border rounded px-2 py-1 text-sm text-left"
-                            min={0}
-                          />
-                        </div>
-                        <div className="col-span-1 text-sm font-medium text-right">
-                          ₪{(item.quantity * item.unit_price).toLocaleString()}
-                        </div>
-                        <div className="col-span-1">
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500" onClick={() => removeManualItem(i)}>
-                            ✕
-                          </Button>
-                        </div>
+                        <input value={item.site} onChange={(e) => updateManualItem(i, 'site', e.target.value)} placeholder="אתר" className="border rounded px-2 py-1 text-sm text-right font-hebrew" dir="rtl" />
+                        <input type="date" value={item.job_date} onChange={(e) => updateManualItem(i, 'job_date', e.target.value)} className="border rounded px-2 py-1 text-sm text-left" />
+                        <input type="number" value={item.unit_price} onChange={(e) => updateManualItem(i, 'unit_price', Number(e.target.value))} className="border rounded px-2 py-1 text-sm text-left" min={0} />
+                        <input type="number" value={item.quantity} onChange={(e) => updateManualItem(i, 'quantity', Number(e.target.value))} className="border rounded px-2 py-1 text-sm text-center w-16" min={1} />
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500" onClick={() => removeManualItem(i)}>✕</Button>
                       </div>
                     ))}
                     {manualTotal > 0 && (
