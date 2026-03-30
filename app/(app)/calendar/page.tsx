@@ -54,7 +54,7 @@ interface Availability {
 }
 
 type ResourceType = "workers" | "vehicles" | "carts" | "cross"
-type ViewScope = "week" | "2weeks" | "month"
+type ViewScope = "week" | "month"
 
 export default function CalendarPage() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -101,7 +101,7 @@ export default function CalendarPage() {
     const today = new Date()
     const startOfWeek = new Date(today)
     startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7))
-    const numDays = viewScope === "week" ? 7 : viewScope === "2weeks" ? 14 : 30
+    const numDays = 7
     return Array.from({ length: numDays }, (_, i) => {
       const d = new Date(startOfWeek)
       d.setDate(startOfWeek.getDate() + i)
@@ -109,9 +109,43 @@ export default function CalendarPage() {
     })
   }, [weekOffset, viewScope])
 
+  // Month calendar grid: 6 weeks x 7 days
+  const monthGrid = useMemo(() => {
+    const today = new Date()
+    const targetMonth = new Date(today.getFullYear(), today.getMonth() + weekOffset, 1)
+    const firstDay = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1)
+    const startDate = new Date(firstDay)
+    startDate.setDate(startDate.getDate() - startDate.getDay()) // back to Sunday
+
+    const weeks: Date[][] = []
+    const current = new Date(startDate)
+    for (let w = 0; w < 6; w++) {
+      const week: Date[] = []
+      for (let d = 0; d < 7; d++) {
+        week.push(new Date(current))
+        current.setDate(current.getDate() + 1)
+      }
+      weeks.push(week)
+    }
+    return { weeks, month: targetMonth.getMonth(), year: targetMonth.getFullYear() }
+  }, [weekOffset])
+
   const dayNames = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]
+  const dayNamesFull = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
 
   // Build lookup: dateStr -> resourceName -> jobs[] for a given resource type
+  // Jobs by date for month calendar view
+  const jobsByDate = useMemo(() => {
+    const map: Record<string, Job[]> = {}
+    for (const job of jobs) {
+      const dateStr = job.job_date?.split("T")[0]
+      if (!dateStr) continue
+      if (!map[dateStr]) map[dateStr] = []
+      map[dateStr].push(job)
+    }
+    return map
+  }, [jobs])
+
   const buildJobMap = useCallback((type: "workers" | "vehicles" | "carts") => {
     const map: Record<string, Record<string, Job[]>> = {}
     for (const job of jobs) {
@@ -271,23 +305,23 @@ export default function CalendarPage() {
 
   return (
     <PageLayout title="לוח זמנים" subtitle="זמינות משאבים ועבודות" titleIcon={CalendarIcon} variant="list" maxWidth="7xl">
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" dir="rtl">
-        <Card><CardContent className="p-3 text-center">
-          <p className="text-2xl font-bold text-vazana-dark">{resources.length}</p>
-          <p className="text-xs text-gray-500 font-hebrew">משאבים</p>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3" dir="rtl">
+        <Card><CardContent className="px-3 py-2 flex items-center justify-between">
+          <span className="text-lg font-bold text-vazana-dark">{resources.length}</span>
+          <span className="text-xs text-gray-500 font-hebrew">משאבים</span>
         </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
-          <p className="text-2xl font-bold text-teal-600">{busySlots}</p>
-          <p className="text-xs text-gray-500 font-hebrew">משבצות תפוסות</p>
+        <Card><CardContent className="px-3 py-2 flex items-center justify-between">
+          <span className="text-lg font-bold text-teal-600">{busySlots}</span>
+          <span className="text-xs text-gray-500 font-hebrew">תפוסות</span>
         </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
-          <p className={`text-2xl font-bold ${capacityPct > 80 ? 'text-red-500' : capacityPct > 50 ? 'text-amber-500' : 'text-green-500'}`}>{capacityPct}%</p>
-          <p className="text-xs text-gray-500 font-hebrew">תפוסה</p>
+        <Card><CardContent className="px-3 py-2 flex items-center justify-between">
+          <span className={`text-lg font-bold ${capacityPct > 80 ? 'text-red-500' : capacityPct > 50 ? 'text-amber-500' : 'text-green-500'}`}>{capacityPct}%</span>
+          <span className="text-xs text-gray-500 font-hebrew">תפוסה</span>
         </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
-          <p className={`text-2xl font-bold ${clashCount > 0 ? 'text-red-500' : 'text-green-500'}`}>{clashCount}</p>
-          <p className="text-xs text-gray-500 font-hebrew">התנגשויות</p>
+        <Card><CardContent className="px-3 py-2 flex items-center justify-between">
+          <span className={`text-lg font-bold ${clashCount > 0 ? 'text-red-500' : 'text-green-500'}`}>{clashCount}</span>
+          <span className="text-xs text-gray-500 font-hebrew">התנגשויות</span>
         </CardContent></Card>
       </div>
 
@@ -307,7 +341,7 @@ export default function CalendarPage() {
           </Select>
 
           <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
-            {([["week", "שבוע"], ["2weeks", "שבועיים"], ["month", "חודש"]] as const).map(([val, label]) => (
+            {([["week", "שבוע"], ["month", "חודש"]] as const).map(([val, label]) => (
               <Button key={val} variant="ghost" size="sm"
                 onClick={() => setViewScope(val)}
                 className={`font-hebrew text-xs px-2 py-1 h-7 ${viewScope === val ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
@@ -318,7 +352,22 @@ export default function CalendarPage() {
           {clashCount > 0 && (
             <Button
               variant={showClashesOnly ? "default" : "outline"} size="sm"
-              onClick={() => setShowClashesOnly(!showClashesOnly)}
+              onClick={() => {
+                const newVal = !showClashesOnly
+                setShowClashesOnly(newVal)
+                if (newVal && clashes.size > 0) {
+                  // Navigate to week containing first clash
+                  const firstClash = Array.from(clashes)[0]
+                  const clashDate = firstClash.split('_').pop()
+                  if (clashDate) {
+                    const d = new Date(clashDate)
+                    const today = new Date()
+                    const diffDays = Math.floor((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                    const targetWeek = Math.floor((diffDays + today.getDay()) / 7)
+                    setWeekOffset(targetWeek)
+                  }
+                }
+              }}
               className={`h-8 text-xs font-hebrew gap-1 ${showClashesOnly ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-red-600 border-red-300'}`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
@@ -333,31 +382,97 @@ export default function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w - 1)}>
+          <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w - (viewScope === 'month' ? 4 : 1))}>
             <ChevronRight className="w-4 h-4" />
           </Button>
           <Button variant="outline" size="sm" className="h-8 font-hebrew text-xs" onClick={() => setWeekOffset(0)}>היום</Button>
-          <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w + 1)}>
+          <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w + (viewScope === 'month' ? 4 : 1))}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm font-hebrew text-gray-600">{formatDate(dates[0])} — {formatDate(dates[dates.length - 1])}</span>
+          <span className="text-sm font-hebrew text-gray-600">
+            {viewScope === 'month'
+              ? new Date(monthGrid.year, monthGrid.month).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
+              : `${formatDate(dates[0])} — ${formatDate(dates[dates.length - 1])}`
+            }
+          </span>
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="border rounded-lg overflow-x-auto bg-white">
-        <table className="w-full text-sm" dir="rtl">
+      {/* Month Calendar View */}
+      {viewScope === 'month' && (
+        <div className="border rounded-lg bg-white min-h-[calc(100vh-320px)]">
+          <div className="text-center py-2 border-b bg-gray-50 font-hebrew font-semibold text-gray-700">
+            {new Date(monthGrid.year, monthGrid.month).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}
+          </div>
+          <div className="grid grid-cols-7" dir="rtl">
+            {/* Day headers */}
+            {dayNamesFull.map(day => (
+              <div key={day} className="text-center py-2 text-xs font-medium text-gray-500 font-hebrew border-b bg-gray-50">
+                {day}
+              </div>
+            ))}
+            {/* Calendar cells */}
+            {monthGrid.weeks.flatMap((week, wi) =>
+              week.map((date, di) => {
+                const dateStr = date.toISOString().split("T")[0]
+                const dayJobs = jobsByDate[dateStr] || []
+                const isCurrentMonth = date.getMonth() === monthGrid.month
+                const isTodayDate = date.toDateString() === new Date().toDateString()
+                const isSabbath = date.getDay() === 6
+
+                return (
+                  <div
+                    key={`${wi}-${di}`}
+                    className={`border-b border-l min-h-[90px] p-1 ${
+                      !isCurrentMonth ? 'bg-gray-50/50 text-gray-300' :
+                      isTodayDate ? 'bg-teal-50' :
+                      isSabbath ? 'bg-gray-50' : 'bg-white'
+                    }`}
+                  >
+                    <div className={`text-xs font-medium mb-0.5 ${isTodayDate ? 'text-teal-700 font-bold' : isCurrentMonth ? 'text-gray-700' : 'text-gray-300'}`}>
+                      {date.getDate()}
+                    </div>
+                    {isCurrentMonth && dayJobs.length > 0 && (
+                      <div className="space-y-0.5">
+                        {dayJobs.slice(0, 3).map(job => (
+                          <div
+                            key={job.id}
+                            className={`rounded px-1 py-0.5 text-[9px] border cursor-pointer hover:ring-1 hover:ring-teal-400 ${getShiftColor(job.shift_type)}`}
+                            onClick={() => setSelectedJob(job)}
+                            title={`#${job.job_number} — ${job.client_name}\n${job.worker_name || ''} · ${job.site}`}
+                          >
+                            <div className="font-medium truncate">{job.client_name}</div>
+                            <div className="opacity-75 truncate">{job.worker_name || job.site}</div>
+                          </div>
+                        ))}
+                        {dayJobs.length > 3 && (
+                          <div className="text-[9px] text-gray-400 text-center">+{dayJobs.length - 3} עוד</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Resource Matrix (today/week view) */}
+      {viewScope !== 'month' && (
+      <div className="border rounded-lg overflow-x-auto bg-white min-h-[calc(100vh-280px)]">
+        <table className="w-full text-sm h-full" dir="rtl" style={{ minHeight: 'calc(100vh - 300px)' }}>
           <thead>
             <tr className="bg-gray-50 border-b">
               <th className="px-3 py-2 text-right font-medium text-gray-600 font-hebrew sticky right-0 bg-gray-50 min-w-[100px] border-l z-10">
                 משאב
               </th>
               {dates.map((date, i) => (
-                <th key={i} className={`px-1 py-2 text-center font-medium font-hebrew ${viewScope === "month" ? "min-w-[44px]" : "min-w-[100px]"} ${
+                <th key={i} className={`px-1 py-2 text-center font-medium font-hebrew min-w-[100px] ${
                   isToday(date) ? "bg-teal-50 text-teal-700" : date.getDay() === 6 ? "bg-gray-100 text-gray-500" : "text-gray-600"
                 }`}>
                   <div className="text-[10px]">{dayNames[date.getDay()]}</div>
-                  <div className={`${viewScope === "month" ? "text-[10px]" : "text-xs"} ${isToday(date) ? "font-bold" : ""}`}>
+                  <div className={`text-xs ${isToday(date) ? "font-bold" : ""}`}>
                     {date.getDate()}/{date.getMonth()+1}
                   </div>
                 </th>
@@ -417,8 +532,8 @@ export default function CalendarPage() {
                                   className={`rounded px-1 py-0.5 text-[10px] border cursor-pointer hover:ring-2 hover:ring-teal-400 ${getShiftColor(job.shift_type)} ${hasClash ? 'ring-1 ring-red-400' : ''}`}
                                   onClick={() => setSelectedJob(job)}
                                 >
-                                  <div className="font-medium truncate">{viewScope === "month" ? job.client_name.slice(0, 5) : job.client_name}</div>
-                                  {viewScope !== "month" && <div className="opacity-75 truncate">{job.site}</div>}
+                                  <div className="font-medium truncate">{job.client_name}</div>
+                                  <div className="opacity-75 truncate">{job.site}</div>
                                 </div>
                               ))}
                             </div>
@@ -438,6 +553,7 @@ export default function CalendarPage() {
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 mt-3 justify-center text-[10px]" dir="rtl">

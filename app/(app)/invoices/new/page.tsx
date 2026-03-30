@@ -84,7 +84,20 @@ export default function NewInvoicePage() {
   const [jobsLoading, setJobsLoading] = useState(false)
   const [creating, setCreating] = useState(false)
   const [searchPerformed, setSearchPerformed] = useState(false)
-  const [manualItems, setManualItems] = useState<{ description: string; quantity: number; unit_price: number }[]>([])
+  const [manualItems, setManualItems] = useState<{ description: string; quantity: number; unit_price: number }[]>(() => {
+    // Load from localStorage with 15 min timeout
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vazana-manual-invoice-items')
+      if (saved) {
+        try {
+          const { items, timestamp } = JSON.parse(saved)
+          if (Date.now() - timestamp < 15 * 60 * 1000) return items
+          localStorage.removeItem('vazana-manual-invoice-items')
+        } catch {}
+      }
+    }
+    return []
+  })
 
   const addManualItem = () => {
     setManualItems(prev => [...prev, { description: "", quantity: 1, unit_price: 0 }])
@@ -99,6 +112,16 @@ export default function NewInvoicePage() {
   }
 
   const manualTotal = manualItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+
+  // Recalculate summary and persist when manual items change
+  useEffect(() => {
+    calculateSummary(jobs, manualItems)
+    if (manualItems.length > 0) {
+      localStorage.setItem('vazana-manual-invoice-items', JSON.stringify({ items: manualItems, timestamp: Date.now() }))
+    } else {
+      localStorage.removeItem('vazana-manual-invoice-items')
+    }
+  }, [manualItems])
   const [lastSearchedClient, setLastSearchedClient] = useState("")
   const [lastSearchedMonth, setLastSearchedMonth] = useState("")
   
@@ -263,12 +286,15 @@ export default function NewInvoicePage() {
   }
   
   // Calculate invoice summary
-  const calculateSummary = (jobsList: Job[]) => {
+  const calculateSummary = (jobsList: Job[], manualItemsList?: typeof manualItems) => {
     const selectedJobs = jobsList.filter(job => job.selected)
-    const subtotal = selectedJobs.reduce((sum, job) => sum + (job.total_amount || 0), 0)
+    const jobsSubtotal = selectedJobs.reduce((sum, job) => sum + (job.total_amount || 0), 0)
+    const items = manualItemsList ?? manualItems
+    const manualSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+    const subtotal = jobsSubtotal + manualSubtotal
     const tax_amount = subtotal * 0.18 // 18% VAT
     const total_amount = subtotal + tax_amount
-    
+
     setSummary({ subtotal, tax_amount, total_amount })
   }
   
@@ -391,20 +417,21 @@ export default function NewInvoicePage() {
   
   // Toggle job selection
   const toggleJobSelection = (jobId: string) => {
-    const updatedJobs = jobs.map(job => 
+    const updatedJobs = jobs.map(job =>
       job.id === jobId ? { ...job, selected: !job.selected } : job
     )
     setJobs(updatedJobs)
-    calculateSummary(updatedJobs)
+    calculateSummary(updatedJobs, manualItems)
   }
   
   // Create invoice
   const createInvoice = async () => {
     const selectedJobs = jobs.filter(job => job.selected)
-    if (selectedJobs.length === 0) {
+    const validManual = manualItems.filter(i => i.description && i.unit_price > 0)
+    if (selectedJobs.length === 0 && validManual.length === 0) {
       toast({
         title: "שגיאה",
-        description: "יש לבחור לפחות עבודה אחת",
+        description: "יש לבחור עבודה או להוסיף שורה ידנית",
         variant: "destructive",
       })
       return
@@ -438,8 +465,8 @@ export default function NewInvoicePage() {
       
       if (invoiceError) throw invoiceError
       
-      // Create line items
-      const lineItems = selectedJobs.map(job => ({
+      // Create line items from jobs + manual items
+      const jobLineItems = selectedJobs.map(job => ({
         invoice_id: invoice.id,
         job_id: job.id,
         description: `${job.work_type} - עבודה #${job.job_number}`,
@@ -450,12 +477,24 @@ export default function NewInvoicePage() {
         job_date: job.job_date,
         site_location: `${job.site}, ${job.city}`
       }))
-      
-      const { error: lineItemsError } = await supabase
-        .from('invoice_line_items')
-        .insert(lineItems)
-      
-      if (lineItemsError) throw lineItemsError
+      const manualLineItems = manualItems.filter(i => i.description && i.unit_price > 0).map(item => ({
+        invoice_id: invoice.id,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        line_total: item.quantity * item.unit_price,
+        work_type: 'ידני',
+        job_date: new Date().toISOString().split('T')[0],
+        site_location: '',
+      }))
+      const allLineItems = [...jobLineItems, ...manualLineItems]
+
+      if (allLineItems.length > 0) {
+        const { error: lineItemsError } = await supabase
+          .from('invoice_line_items')
+          .insert(allLineItems)
+        if (lineItemsError) throw lineItemsError
+      }
       
       toast({
         title: "הצלחה",
@@ -776,21 +815,23 @@ export default function NewInvoicePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <div>₪{summary.subtotal.toLocaleString()}</div>
-                      <div>סכום חלקי:</div>
+                  <div className="flex justify-end">
+                  <div className="space-y-3 w-72" dir="rtl">
+                    <div className="flex justify-between text-sm font-hebrew">
+                      <span>סכום חלקי:</span>
+                      <span>₪{summary.subtotal.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <div>₪{summary.tax_amount.toLocaleString()}</div>
-                      <div>מע"מ (18%):</div>
+                    <div className="flex justify-between text-sm font-hebrew">
+                      <span>מע״מ (18%):</span>
+                      <span>₪{summary.tax_amount.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-xl font-bold border-t pt-2">
-                      <div>₪{summary.total_amount.toLocaleString()}</div>
-                      <div>סכום כולל:</div>
+                    <div className="flex justify-between text-xl font-bold border-t pt-2 font-hebrew">
+                      <span>סכום כולל:</span>
+                      <span>₪{summary.total_amount.toLocaleString()}</span>
                     </div>
                   </div>
-                  
+                  </div>
+
                   <div className="mt-6 flex gap-4 justify-start">
                     <Button
                       onClick={createInvoice}

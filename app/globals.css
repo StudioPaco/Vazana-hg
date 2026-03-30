@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Prevent horizontal overflow */
+html {
+  overflow-x: hidden;
+}
+
 /* Custom Font Declarations */
 @font-face {
   font-family: "Alef";

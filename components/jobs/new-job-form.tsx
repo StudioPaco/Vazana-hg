@@ -66,7 +66,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
     description: "",
     calendarSync: preferences?.add_to_calendar_default ?? false,
     totalAmount: null as number | null,
-    jobSpecificShiftRate: null as number | null,
+    jobSpecificShiftRate: 800 as number | null, // default rate
     notes: null,
     receiptId: null,
     isSample: false,

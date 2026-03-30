@@ -1,7 +1,7 @@
 import React from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { X, Download, Printer } from "lucide-react"
+import { Download, Printer } from "lucide-react"
 
 interface Job {
   id: string
@@ -57,16 +57,8 @@ export function InvoicePreviewModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[62vw] !max-w-none max-h-[90vh] overflow-hidden bg-white border-0 shadow-2xl" dir="rtl">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={onClose}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-          <DialogTitle className="text-xl font-bold">תצוגה מקדימה - חשבונית</DialogTitle>
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold font-hebrew text-right">תצוגה מקדימה — חשבונית</DialogTitle>
         </DialogHeader>
         
         <div className="overflow-y-auto px-1 max-h-[calc(90vh-180px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
@@ -133,18 +125,18 @@ export function InvoicePreviewModal({
           
           {/* Summary */}
           <div className="flex justify-end mb-8">
-            <div className="w-64">
-              <div className="flex justify-between py-2 border-b">
-                <span>₪{summary.subtotal.toLocaleString()}</span>
+            <div className="w-72" dir="rtl">
+              <div className="flex justify-between py-2 border-b text-sm">
                 <span>סכום חלקי:</span>
+                <span>₪{summary.subtotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between py-2 border-b">
+              <div className="flex justify-between py-2 border-b text-sm">
+                <span>מע״מ (18%):</span>
                 <span>₪{summary.tax_amount.toLocaleString()}</span>
-                <span>מע"מ (18%):</span>
               </div>
               <div className="flex justify-between py-3 text-lg font-bold bg-gray-50 px-3 rounded">
-                <span>₪{summary.total_amount.toLocaleString()}</span>
                 <span>סכום כולל:</span>
+                <span>₪{summary.total_amount.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -186,10 +178,6 @@ export function InvoicePreviewModal({
             </div>
           )}
           
-          {/* Footer */}
-          <div className="text-center text-xs text-gray-500 border-t pt-4">
-            <p>תודה על העסק!</p>
-          </div>
         </div>
         </div>
         

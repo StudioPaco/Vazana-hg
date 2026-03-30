@@ -1480,44 +1480,61 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Google Integration */}
-                    <div className="space-y-4 p-4 border rounded-lg border-blue-200 bg-blue-50/30">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew bg-blue-100 text-blue-800">Google</Badge>
-                        <h3 className="font-semibold text-right font-hebrew">חיבור Google</h3>
-                      </div>
-                      <p className="text-sm text-gray-600 text-right font-hebrew">
-                        יומן Google Calendar + גיבוי ל-Google Drive
-                      </p>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2" dir="rtl">
-                          <Label className="font-hebrew text-xs text-gray-500 w-24">תיקיית Drive:</Label>
-                          <Input
-                            placeholder="Vazana/Backups"
-                            className="h-8 text-sm text-right font-hebrew flex-1"
-                            dir="rtl"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2" dir="rtl">
-                          <Label className="font-hebrew text-xs text-gray-500 w-24">שם יומן:</Label>
-                          <Input
-                            placeholder="וזאנה — עבודות"
-                            className="h-8 text-sm text-right font-hebrew flex-1"
-                            dir="rtl"
-                          />
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        className="w-full font-hebrew bg-white border-blue-300 text-blue-700 hover:bg-blue-50"
-                        onClick={() => {
-                          toast({ title: "חיבור Google דורש הגדרת OAuth — פנה למנהל המערכת" })
-                        }}
-                      >
-                        התחבר לחשבון Google
-                      </Button>
+                  {/* Google Connection */}
+                  <div className="space-y-4 p-4 border rounded-lg border-blue-200 bg-blue-50/30 mb-6">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary" className="font-hebrew bg-blue-100 text-blue-800">Google</Badge>
+                      <h3 className="font-semibold text-right font-hebrew">חיבור חשבון Google</h3>
                     </div>
+                    <p className="text-sm text-gray-600 text-right font-hebrew">
+                      חבר את חשבון Google שלך לסנכרון יומן, גיבוי Drive ודואר Gmail.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full font-hebrew bg-white border-blue-300 text-blue-700 hover:bg-blue-50"
+                      onClick={() => {
+                        toast({ title: "חיבור Google דורש הגדרת OAuth — פנה למנהל המערכת" })
+                      }}
+                    >
+                      התחבר לחשבון Google
+                    </Button>
+                  </div>
+
+                  {/* Google Paths & Settings */}
+                  <div className="space-y-4 p-4 border rounded-lg mb-6">
+                    <h3 className="font-semibold text-right font-hebrew">הגדרות Google</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2" dir="rtl">
+                        <Label className="font-hebrew text-xs text-gray-500">תיקיית גיבוי ב-Drive</Label>
+                        <div className="flex gap-2">
+                          <Input placeholder="Vazana/Backups" className="h-8 text-sm text-right font-hebrew flex-1" dir="rtl" />
+                          <Button variant="outline" size="sm" className="h-8 font-hebrew text-xs shrink-0" onClick={() => toast({ title: "נדרש חיבור Google פעיל" })}>
+                            עיון
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2" dir="rtl">
+                        <Label className="font-hebrew text-xs text-gray-500">שם יומן Google Calendar</Label>
+                        <div className="flex gap-2">
+                          <Input placeholder="וזאנה — עבודות" className="h-8 text-sm text-right font-hebrew flex-1" dir="rtl" />
+                          <Button variant="outline" size="sm" className="h-8 font-hebrew text-xs shrink-0" onClick={() => toast({ title: "נדרש חיבור Google פעיל" })}>
+                            עיון
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2" dir="rtl">
+                        <Label className="font-hebrew text-xs text-gray-500">תיקיית דואר Gmail</Label>
+                        <div className="flex gap-2">
+                          <Input placeholder="Vazana/Invoices" className="h-8 text-sm text-right font-hebrew flex-1" dir="rtl" />
+                          <Button variant="outline" size="sm" className="h-8 font-hebrew text-xs shrink-0" onClick={() => toast({ title: "נדרש חיבור Google פעיל" })}>
+                            עיון
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* Email Integration */}
                     <div className="space-y-4 p-4 border rounded-lg">

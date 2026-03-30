@@ -133,11 +133,17 @@ interface DashboardStats {
   pendingJobs: number
   overduePayments: number
   totalRevenue: number
+  revenueThisMonth: number
+  revenuePrevMonth: number
+  revenue2MonthsAgo: number
   totalClients: number
   activeClients: number
   totalWorkers: number
+  availableWorkersThisWeek: number
   totalVehicles: number
+  totalCarts: number
   pendingInvoices: number
+  uninvoicedClients: number
   jobsByStatus: { status: string; count: number }[]
   upcomingJobs: any[]
   recentInvoices: any[]
@@ -152,17 +158,25 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
   const [approachingJobsCount, setApproachingJobsCount] = useState(5)
   const supabase = createClient()
 
+  const isAdminOrOwner = profile?.role === 'owner' || profile?.role === 'admin'
+
   const [stats, setStats] = useState<DashboardStats>({
     activeJobs: 0,
     completedJobs: 0,
     pendingJobs: 0,
     overduePayments: 0,
     totalRevenue: 0,
+    revenueThisMonth: 0,
+    revenuePrevMonth: 0,
+    revenue2MonthsAgo: 0,
     totalClients: 0,
     activeClients: 0,
     totalWorkers: 0,
+    availableWorkersThisWeek: 0,
     totalVehicles: 0,
+    totalCarts: 0,
     pendingInvoices: 0,
+    uninvoicedClients: 0,
     jobsByStatus: [],
     upcomingJobs: [],
     recentInvoices: [],
@@ -176,20 +190,25 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
         const today = new Date()
         const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+        const prevMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+        const twoMonthsAgoStart = new Date(today.getFullYear(), today.getMonth() - 2, 1)
+        const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, 1)
 
         const [
           jobsRes,
           clientsRes,
           workersRes,
           vehiclesRes,
+          cartsRes,
           invoicesRes,
           upcomingRes,
           completedRes,
         ] = await Promise.all([
-          supabase.from("jobs").select("id, job_status, payment_status, total_amount, job_date"),
+          supabase.from("jobs").select("id, job_status, payment_status, total_amount, job_date, client_id, worker_name"),
           (supabase.from("clients") as any).select("id", { count: "exact", head: true }),
-          (supabase.from("workers") as any).select("id", { count: "exact", head: true }),
+          supabase.from("workers").select("id, name"),
           (supabase.from("vehicles") as any).select("id", { count: "exact", head: true }),
+          (supabase.from("carts") as any).select("id", { count: "exact", head: true }),
           supabase.from("invoices").select("id, status, total_amount, invoice_date, invoice_number, clients(company_name)"),
           supabase
             .from("jobs")
@@ -210,10 +229,15 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
 
         const jobs = jobsRes.data ?? []
         const invoices = invoicesRes.data ?? []
+        const allWorkers = workersRes.data ?? []
 
         // Aggregate job statuses
         const statusMap = new Map<string, number>()
         let activeJobs = 0, completedJobs = 0, pendingJobs = 0, totalRevenue = 0, overduePayments = 0
+        let revenueThisMonth = 0, revenuePrevMonth = 0, revenue2MonthsAgo = 0
+        const activeClientIds = new Set<string>()
+        const invoicedJobIds = new Set<string>()
+        const clientsWithJobs = new Set<string>() // clients with uninvoiced jobs
 
         for (const j of jobs) {
           const status = j.job_status || "ממתין"
@@ -223,7 +247,33 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
           if (status === "ממתין") pendingJobs++
           totalRevenue += j.total_amount || 0
           if (j.payment_status === "מאוחר") overduePayments++
+
+          // Monthly revenue breakdown
+          const jobDate = new Date(j.job_date)
+          if (jobDate >= monthStart) revenueThisMonth += j.total_amount || 0
+          else if (jobDate >= prevMonthStart) revenuePrevMonth += j.total_amount || 0
+          else if (jobDate >= twoMonthsAgoStart) revenue2MonthsAgo += j.total_amount || 0
+
+          // Active clients (had jobs in last 3 months)
+          if (jobDate >= threeMonthsAgo && j.client_id) activeClientIds.add(j.client_id)
+
+          // Track clients with uninvoiced old jobs
+          if (jobDate < monthStart && j.client_id) clientsWithJobs.add(j.client_id)
         }
+
+        // Workers available this week: workers not assigned to any job this week
+        const weekWorkerNames = new Set<string>()
+        for (const j of jobs) {
+          const jd = new Date(j.job_date)
+          if (jd >= today && jd <= nextWeek && j.worker_name) weekWorkerNames.add(j.worker_name)
+        }
+        const availableWorkersThisWeek = allWorkers.filter(w => !weekWorkerNames.has(w.name)).length
+
+        // Invoiced job IDs (from line items)
+        // For uninvoiced clients: clients with old jobs that were never invoiced
+        // Simple heuristic: clients with jobs before this month that haven't been invoiced
+        const invoicedClientIds = new Set(invoices.map((i: any) => i.client_id).filter(Boolean))
+        const uninvoicedClients = Array.from(clientsWithJobs).filter(cid => !invoicedClientIds.has(cid)).length
 
         const pendingInvoices = invoices.filter((i: any) => i.status === "sent" || i.status === "draft").length
 
@@ -248,11 +298,17 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
           pendingJobs,
           overduePayments,
           totalRevenue,
+          revenueThisMonth,
+          revenuePrevMonth,
+          revenue2MonthsAgo,
           totalClients: clientsRes.count ?? 0,
-          activeClients: clientsRes.count ?? 0,
-          totalWorkers: workersRes.count ?? 0,
+          activeClients: activeClientIds.size,
+          totalWorkers: allWorkers.length,
+          availableWorkersThisWeek,
           totalVehicles: vehiclesRes.count ?? 0,
+          totalCarts: cartsRes.count ?? 0,
           pendingInvoices,
+          uninvoicedClients,
           jobsByStatus: [...statusMap.entries()].map(([status, count]) => ({ status, count })),
           upcomingJobs: processedUpcoming,
           recentInvoices: invoices.slice(0, 5),
@@ -312,13 +368,15 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
 
       {/* ── Quick Actions + Stats Toggle ─────────────────────── */}
       <div className="flex items-center justify-between">
-        <button
-          onClick={() => setStatsExpanded(!statsExpanded)}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 font-hebrew transition-colors border border-gray-200 rounded-lg px-3 py-2 hover:border-gray-400"
-        >
-          <BarChart3 className="w-4 h-4" />
-          <span>{statsExpanded ? "הסתר" : "סטטיסטיקות"}</span>
-        </button>
+        {isAdminOrOwner ? (
+          <button
+            onClick={() => setStatsExpanded(!statsExpanded)}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 font-hebrew transition-colors border border-gray-200 rounded-lg px-3 py-2 hover:border-gray-400"
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>{statsExpanded ? "הסתר" : "סטטיסטיקות"}</span>
+          </button>
+        ) : <div />}
         <div className="flex flex-wrap gap-3">
           {quickActions.map((action) => (
             <Link key={action.name} href={action.href}>
@@ -333,48 +391,74 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
         </div>
       </div>
 
-      {/* ── Stat Cards (summary row, always visible) ────────────── */}
+      {/* ── Top Row: always visible to everyone ────────────── */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<Briefcase className="h-5 w-5 text-blue-600" />}
           label="עבודות פעילות"
           value={stats.activeJobs}
-          subtitle={`${stats.completedJobs} הושלמו החודש`}
+          subtitle={`${stats.completedJobs} הושלמו · ${stats.pendingJobs} ממתינות`}
           color="bg-blue-500"
           href="/jobs"
         />
         <StatCard
-          icon={<DollarSign className="h-5 w-5 text-green-600" />}
-          label="הכנסות"
-          value={formatCurrency(stats.totalRevenue)}
-          subtitle={stats.overduePayments > 0 ? `${stats.overduePayments} תשלומים באיחור` : "כל התשלומים בזמן"}
-          color="bg-green-500"
-          href="/invoices"
-        />
-        <StatCard
           icon={<Users className="h-5 w-5 text-amber-600" />}
-          label="לקוחות"
-          value={stats.totalClients}
-          subtitle={`${stats.totalWorkers} עובדים · ${stats.totalVehicles} רכבים`}
+          label="לקוחות פעילים"
+          value={stats.activeClients}
+          subtitle={`מתוך ${stats.totalClients} לקוחות`}
           color="bg-amber-500"
           href="/clients"
         />
         <StatCard
-          icon={<FileText className="h-5 w-5 text-violet-600" />}
-          label="חשבוניות ממתינות"
-          value={stats.pendingInvoices}
-          color="bg-violet-500"
-          href="/invoices"
+          icon={<UserCheck className="h-5 w-5 text-purple-600" />}
+          label="עובדים"
+          value={`${stats.availableWorkersThisWeek} פנויים`}
+          subtitle={`מתוך ${stats.totalWorkers} עובדים`}
+          color="bg-purple-500"
+        />
+        <StatCard
+          icon={<Truck className="h-5 w-5 text-gray-600" />}
+          label="רכבים ועגלות"
+          value={`${stats.totalVehicles} / ${stats.totalCarts}`}
+          subtitle={`${stats.totalVehicles} רכבים · ${stats.totalCarts} עגלות`}
+          color="bg-gray-500"
         />
       </div>
 
-      {/* ── Expanded Stats ──────────────────────────────────────── */}
-      {statsExpanded && (
+      {/* ── Bottom Row: admin/owner only ────────────────────── */}
+      {isAdminOrOwner && statsExpanded && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard icon={<CheckCircle className="h-5 w-5 text-green-600" />} label="עבודות שהושלמו" value={stats.completedJobs} color="bg-green-500" />
-          <StatCard icon={<Clock className="h-5 w-5 text-yellow-600" />} label="עבודות ממתינות" value={stats.pendingJobs} color="bg-yellow-500" />
-          <StatCard icon={<Truck className="h-5 w-5 text-gray-600" />} label="רכבים" value={stats.totalVehicles} color="bg-gray-500" />
-          <StatCard icon={<UserCheck className="h-5 w-5 text-purple-600" />} label="עובדים" value={stats.totalWorkers} color="bg-purple-500" />
+          <StatCard
+            icon={<DollarSign className="h-5 w-5 text-green-600" />}
+            label="הכנסות החודש"
+            value={formatCurrency(stats.revenueThisMonth)}
+            subtitle={`חודש קודם: ${formatCurrency(stats.revenuePrevMonth)} · לפניו: ${formatCurrency(stats.revenue2MonthsAgo)}`}
+            color="bg-green-500"
+            href="/invoices"
+          />
+          <StatCard
+            icon={<FileText className="h-5 w-5 text-violet-600" />}
+            label="ממתינות לתשלום"
+            value={stats.pendingInvoices}
+            subtitle={stats.overduePayments > 0 ? `${stats.overduePayments} באיחור` : "בזמן"}
+            color="bg-violet-500"
+            href="/invoices"
+          />
+          <StatCard
+            icon={<Target className="h-5 w-5 text-red-500" />}
+            label="ממתינות לסיכום"
+            value={stats.uninvoicedClients}
+            subtitle="לקוחות עם עבודות שלא חויבו"
+            color="bg-red-500"
+            href="/invoices/new"
+          />
+          <StatCard
+            icon={<TrendingUp className="h-5 w-5 text-teal-600" />}
+            label="סה״כ הכנסות"
+            value={formatCurrency(stats.totalRevenue)}
+            subtitle="מתחילת הפעילות"
+            color="bg-teal-500"
+          />
         </div>
       )}
 

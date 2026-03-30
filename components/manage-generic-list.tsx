@@ -159,8 +159,14 @@ export default function ManageGenericList({
   }
 
   const handleEdit = (item: any) => {
-    setEditingItem(item)
-    setShowForm(true)
+    if (editingItem?.id === item.id) {
+      // Already editing — close
+      setEditingItem(null)
+      setShowForm(false)
+    } else {
+      setEditingItem(item)
+      setShowForm(false) // Don't show top form
+    }
   }
 
   const handleDelete = async (itemId: string) => {
@@ -285,10 +291,12 @@ export default function ManageGenericList({
 
       {items.length > 0 && (
         <div className="space-y-3 mt-4">
-          {items.map((item) => (
+          {items.map((item) => {
+            const isEditing = editingItem?.id === item.id && !showForm
+            return (
             <Card
               key={item.id}
-              className={`shadow-sm hover:shadow-md transition-shadow border-gray-200 ${rtl ? 'text-right' : 'text-left'}`}
+              className={`shadow-sm hover:shadow-md transition-shadow border-gray-200 ${isEditing ? 'border-teal-300 ring-1 ring-teal-200' : ''} ${rtl ? 'text-right' : 'text-left'}`}
               dir={rtl ? 'rtl' : 'ltr'}
             >
               <div className="flex items-stretch">
@@ -359,8 +367,51 @@ export default function ManageGenericList({
                   </Button>
                 </div>
               </div>
+              {/* Inline edit form */}
+              {isEditing && (
+                <div className="border-t border-teal-200 bg-teal-50/30 px-4 py-3">
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {fields.map((field) => (
+                        <div key={field.name}>
+                          <label className={`block text-xs font-medium text-gray-600 mb-0.5 ${rtl ? 'text-right font-hebrew' : ''}`}>
+                            {isHebrew ? field.labelHe : field.labelEn}
+                          </label>
+                          {field.type === "textarea" ? (
+                            <Textarea
+                              name={field.name}
+                              value={formData[field.name] || ""}
+                              onChange={handleInputChange}
+                              className={`text-sm h-16 ${rtl ? 'text-right font-hebrew' : ''}`}
+                              dir={rtl ? 'rtl' : 'ltr'}
+                            />
+                          ) : (
+                            <Input
+                              type={field.type || "text"}
+                              name={field.name}
+                              value={formData[field.name] || ""}
+                              onChange={handleInputChange}
+                              className={`text-sm h-8 ${rtl ? 'text-right font-hebrew' : ''}`}
+                              dir={rtl ? 'rtl' : 'ltr'}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setEditingItem(null)} className="font-hebrew text-xs h-7">
+                        {t.cancel}
+                      </Button>
+                      <Button type="submit" size="sm" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew text-xs h-7">
+                        {isSubmitting ? "..." : t.save}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </Card>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
