@@ -2,6 +2,12 @@
 
 import { toast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
+
+const MaintenanceContentLazy = dynamic(
+  () => import("@/app/(app)/maintenance/page").then(mod => ({ default: mod.MaintenanceContent })),
+  { loading: () => <div className="text-center py-8 font-hebrew text-gray-500">טוען...</div> }
+)
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -135,10 +141,11 @@ export default function SettingsPage() {
   const supabase = createClient()
   const [activeTab, setActiveTab] = useState("general")
   const { profile: authProfile } = useAuth()
+  const isAdminOrOwner = authProfile?.role === 'owner' || authProfile?.role === 'admin'
 
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab")
-    if (tabFromUrl && ["general", "business", "resources", "users", "integrations", "data"].includes(tabFromUrl)) {
+    if (tabFromUrl && ["general", "business", "resources", "users", "integrations", "data", "maintenance"].includes(tabFromUrl)) {
       setActiveTab(tabFromUrl)
     } else {
       setActiveTab("general")
@@ -433,13 +440,15 @@ export default function SettingsPage() {
       maxWidth="4xl"
     >
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" dir="rtl">
-            <TabsList className="grid w-full grid-cols-6" dir="rtl">
+            <TabsList className={`grid w-full ${isAdminOrOwner ? 'grid-cols-7' : 'grid-cols-5'}`} dir="rtl">
               <TabsTrigger value="general" className="font-hebrew">
                 כללי
               </TabsTrigger>
-              <TabsTrigger value="business" className="font-hebrew">
-                פרטי עסק
-              </TabsTrigger>
+              {isAdminOrOwner && (
+                <TabsTrigger value="business" className="font-hebrew">
+                  פרטי עסק
+                </TabsTrigger>
+              )}
               <TabsTrigger value="resources" className="font-hebrew">
                 ניהול משאבים
               </TabsTrigger>
@@ -452,12 +461,17 @@ export default function SettingsPage() {
               <TabsTrigger value="data" className="font-hebrew">
                 נתונים
               </TabsTrigger>
+              {isAdminOrOwner && (
+                <TabsTrigger value="maintenance" className="font-hebrew">
+                  תחזוקה
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="general" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Bell className="w-5 h-5 text-vazana-teal" />
                     <span>התראות</span>
                   </CardTitle>
@@ -479,7 +493,7 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Palette className="w-5 h-5 text-vazana-teal" />
                     <span>מראה ותצוגה</span>
                   </CardTitle>
@@ -603,7 +617,7 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Globe className="w-5 h-5 text-vazana-teal" />
                     <span>שפה ותצוגה</span>
                   </CardTitle>
@@ -645,7 +659,7 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Lock className="w-5 h-5 text-vazana-teal" />
                     <span>אבטחה והרשאות</span>
                   </CardTitle>
@@ -717,7 +731,7 @@ export default function SettingsPage() {
               {/* Restore Defaults */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <RefreshCw className="w-5 h-5 text-orange-600" />
                     <span>איפוס הגדרות</span>
                   </CardTitle>
@@ -899,7 +913,7 @@ export default function SettingsPage() {
                     </div>
                     
                     {/* Shift Times Section */}
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-4 mb-6 max-w-lg">
                       <h4 className="font-semibold text-right font-hebrew">זמני משמרות</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -1151,7 +1165,7 @@ export default function SettingsPage() {
             <TabsContent value="resources" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Briefcase className="w-5 h-5 text-vazana-teal" />
                     <span>ניהול משאבים</span>
                   </CardTitle>
@@ -1198,73 +1212,14 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
               
-              {/* Resource Availability Calendar */}
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
-                    <Calendar className="w-5 h-5 text-vazana-teal" />
-                    <span>לוח זמינות משאבים</span>
-                  </CardTitle>
-                  <CardDescription className="text-right font-hebrew">
-                    נהל זמינות עובדים, רכבים וציוד
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-right font-hebrew">סוג משאב</Label>
-                      <Select dir="rtl">
-                        <SelectTrigger className="text-right font-hebrew">
-                          <SelectValue placeholder="בחר סוג..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="worker" className="font-hebrew">עובדים</SelectItem>
-                          <SelectItem value="vehicle" className="font-hebrew">רכבים</SelectItem>
-                          <SelectItem value="cart" className="font-hebrew">עגלות</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="text-right font-hebrew">בחר משאב</Label>
-                      <Select dir="rtl">
-                        <SelectTrigger className="text-right font-hebrew">
-                          <SelectValue placeholder="בחר..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all" className="font-hebrew">כל המשאבים</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="text-right font-hebrew">תאריך</Label>
-                      <Input type="date" className="text-left" />
-                    </div>
-                  </div>
-                  
-                  <div className="border rounded-lg p-4">
-                    <div className="text-center text-gray-500 py-8">
-                      <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                      <p className="font-hebrew">בחר סוג משאב ותאריך כדי לראות את הזמינות</p>
-                      <p className="text-sm text-gray-400 font-hebrew mt-2">
-                        כאן יוצג לוח של המשאבים הזמינים בחודש הנבחר
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="font-hebrew" size="sm">
-                      <Plus className="w-4 h-4 ml-2" />
-                      סמן לא זמין
-                    </Button>
-                    <Button variant="outline" className="font-hebrew" size="sm">
-                      <Edit className="w-4 h-4 ml-2" />
-                      ערוך זמינות
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Link to calendar page for availability management */}
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500 font-hebrew mb-2">לניהול זמינות משאבים עבור ללוח הזמנים</p>
+                <Button variant="outline" className="font-hebrew" onClick={() => router.push('/calendar')}>
+                  <Calendar className="w-4 h-4 ml-2" />
+                  לוח זמנים
+                </Button>
+              </div>
               
               {/* Resource Modal */}
               {resourceModalType && (
@@ -1279,7 +1234,7 @@ export default function SettingsPage() {
             <TabsContent value="users" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Users className="w-5 h-5 text-vazana-teal" />
                     <span>ניהול משתמשים</span>
                   </CardTitle>
@@ -1451,7 +1406,7 @@ export default function SettingsPage() {
               {(authProfile?.role === 'owner' || authProfile?.role === 'admin') && (
                 <Card className="mt-6">
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between font-hebrew">
+                    <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                       <Activity className="w-5 h-5 text-vazana-teal" />
                       <span>יומן פעילות משתמשים</span>
                     </CardTitle>
@@ -1516,7 +1471,7 @@ export default function SettingsPage() {
             <TabsContent value="integrations" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Globe className="w-5 h-5 text-vazana-teal" />
                     <span>אינטגרציות</span>
                   </CardTitle>
@@ -1526,60 +1481,134 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Google Integration */}
+                    <div className="space-y-4 p-4 border rounded-lg border-blue-200 bg-blue-50/30">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary" className="font-hebrew bg-blue-100 text-blue-800">Google</Badge>
+                        <h3 className="font-semibold text-right font-hebrew">חיבור Google</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        יומן Google Calendar + גיבוי ל-Google Drive
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2" dir="rtl">
+                          <Label className="font-hebrew text-xs text-gray-500 w-24">תיקיית Drive:</Label>
+                          <Input
+                            placeholder="Vazana/Backups"
+                            className="h-8 text-sm text-right font-hebrew flex-1"
+                            dir="rtl"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2" dir="rtl">
+                          <Label className="font-hebrew text-xs text-gray-500 w-24">שם יומן:</Label>
+                          <Input
+                            placeholder="וזאנה — עבודות"
+                            className="h-8 text-sm text-right font-hebrew flex-1"
+                            dir="rtl"
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full font-hebrew bg-white border-blue-300 text-blue-700 hover:bg-blue-50"
+                        onClick={() => {
+                          toast({ title: "חיבור Google דורש הגדרת OAuth — פנה למנהל המערכת" })
+                        }}
+                      >
+                        התחבר לחשבון Google
+                      </Button>
+                    </div>
+
+                    {/* Email Integration */}
                     <div className="space-y-4 p-4 border rounded-lg">
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew dark:bg-red-900 dark:text-red-100 bg-red-100 text-red-800">לא מחובר</Badge>
-                        <h3 className="font-semibold text-right font-hebrew">דואר</h3>
+                        <Badge variant="secondary" className="font-hebrew bg-gray-100 text-gray-700">דואר</Badge>
+                        <h3 className="font-semibold text-right font-hebrew">דואר אלקטרוני</h3>
                       </div>
                       <p className="text-sm text-gray-600 text-right font-hebrew">
                         שליחת חשבוניות והתראות באימייל
                       </p>
-                      <Button variant="outline" disabled className="w-full font-hebrew">
-                        התחבר (בקרוב)
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew dark:bg-red-900 dark:text-red-100 bg-red-100 text-red-800">לא מחובר</Badge>
-                        <h3 className="font-semibold text-right font-hebrew">הנהחשבונות</h3>
+                      <div className="space-y-2" dir="rtl">
+                        <Label className="font-hebrew text-xs text-gray-500">ספק דואר</Label>
+                        <Select dir="rtl" defaultValue="none">
+                          <SelectTrigger className="h-8 text-sm font-hebrew text-right">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent dir="rtl">
+                            <SelectItem value="none">לא מחובר</SelectItem>
+                            <SelectItem value="gmail">Gmail (דרך חשבון Google)</SelectItem>
+                            <SelectItem value="imap">IMAP/SMTP</SelectItem>
+                            <SelectItem value="resend">Resend API</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <p className="text-sm text-gray-600 text-right font-hebrew">
-                        סינכרון עם תוכנת הנהחשבונות
-                      </p>
-                      <Button variant="outline" disabled className="w-full font-hebrew">
-                        התחבר (בקרוב)
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4 p-4 border rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew">זמין להתחברות</Badge>
-                        <h3 className="font-semibold text-right font-hebrew">וואטסאפ</h3>
-                      </div>
-                      <p className="text-sm text-gray-600 text-right font-hebrew">
-                        שליחת התראות ועדכונים בוואטסאפ Business
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        className="w-full font-hebrew bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                        onClick={() => setIsWhatsAppSetupOpen(true)}
+                      <Button
+                        variant="outline"
+                        className="w-full font-hebrew"
+                        onClick={() => {
+                          toast({ title: "הגדרת דואר תהיה זמינה לאחר חיבור Google" })
+                        }}
                       >
-                        התחבר עכשיו
+                        הגדר חיבור דואר
                       </Button>
                     </div>
-                    
+
+                    {/* Accounting */}
                     <div className="space-y-4 p-4 border rounded-lg">
                       <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="font-hebrew dark:bg-red-900 dark:text-red-100 bg-red-100 text-red-800">לא מחובר</Badge>
-                        <h3 className="font-semibold text-right font-hebrew">יום ערך</h3>
+                        <Badge variant="secondary" className="font-hebrew bg-red-100 text-red-800">לא מחובר</Badge>
+                        <h3 className="font-semibold text-right font-hebrew">הנהלת חשבונות</h3>
                       </div>
                       <p className="text-sm text-gray-600 text-right font-hebrew">
-                        סינכרון עם שירותי יום ערך
+                        סינכרון עם תוכנת הנהלת חשבונות
                       </p>
                       <Button variant="outline" disabled className="w-full font-hebrew">
                         התחבר (בקרוב)
                       </Button>
+                    </div>
+                    
+                  </div>
+
+                  {/* Google Drive Backup Section */}
+                  <div className="border-t pt-6">
+                    <h3 className="font-semibold mb-4 text-right font-hebrew">גיבוי ל-Google Drive</h3>
+                    <div className="space-y-4 max-w-lg">
+                      <p className="text-sm text-gray-600 text-right font-hebrew">
+                        גבה את כל הנתונים (לקוחות, עבודות, חשבוניות, עובדים) כקובץ JSON ל-Google Drive.
+                      </p>
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          className="font-hebrew"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch('/api/backup', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'download' }),
+                              })
+                              if (res.ok) {
+                                const blob = await res.blob()
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.json`
+                                a.click()
+                                URL.revokeObjectURL(url)
+                                toast({ title: "הגיבוי הורד בהצלחה" })
+                              }
+                            } catch {
+                              toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
+                            }
+                          }}
+                        >
+                          <Download className="w-4 h-4 ml-1" />
+                          הורד גיבוי ידני
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-400 text-right font-hebrew">
+                        לגיבוי אוטומטי ל-Google Drive, צור קשר עם מנהל המערכת להגדרת חיבור OAuth.
+                      </p>
                     </div>
                   </div>
                   
@@ -1697,7 +1726,7 @@ export default function SettingsPage() {
             <TabsContent value="data" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between font-hebrew">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Download className="w-5 h-5 text-vazana-teal" />
                     <span>ניהול נתונים</span>
                   </CardTitle>
@@ -1979,6 +2008,10 @@ export default function SettingsPage() {
                 open={dataExportImportOpen}
                 onOpenChange={setDataExportImportOpen}
               />
+            </TabsContent>
+
+            <TabsContent value="maintenance" className="space-y-6">
+              <MaintenanceContentLazy embedded />
             </TabsContent>
           </Tabs>
     </PageLayout>

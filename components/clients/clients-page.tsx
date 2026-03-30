@@ -406,13 +406,13 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
       </div>
 
       {/* Filters Row */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between" dir="rtl">
         <div className="flex gap-2 w-full sm:w-auto">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+          <Select value={statusFilter} onValueChange={setStatusFilter} dir="rtl">
+            <SelectTrigger className="w-full sm:w-[160px] font-hebrew text-right">
               <SelectValue placeholder="כל הסטטוסים" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent dir="rtl">
               <SelectItem value="all">כל הסטטוסים</SelectItem>
               <SelectItem value="active">פעיל</SelectItem>
               <SelectItem value="inactive">לא פעיל</SelectItem>
@@ -420,11 +420,11 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
           </Select>
 
           {uniqueCities.length > 0 && (
-            <Select value={cityFilter} onValueChange={setCityFilter}>
-              <SelectTrigger className="w-full sm:w-[160px] font-hebrew">
+            <Select value={cityFilter} onValueChange={setCityFilter} dir="rtl">
+              <SelectTrigger className="w-full sm:w-[160px] font-hebrew text-right">
                 <SelectValue placeholder="כל הערים" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir="rtl">
                 <SelectItem value="all">כל הערים</SelectItem>
                 {uniqueCities.map((city) => (
                   <SelectItem key={city} value={city}>
@@ -602,7 +602,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                   >
                     <div className="flex items-center gap-2">
                       {realClientStats[client.id] > 0 && (
-                        <Badge variant="outline" className="text-xs gap-1">
+                        <Badge className="text-xs gap-1 bg-gray-100 text-gray-700 border-0">
                           <Briefcase className="w-3 h-3" />
                           {realClientStats[client.id]}
                         </Badge>
@@ -646,21 +646,18 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                             .map((job) => (
                             <div
                               key={job.id}
-                              className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                              dir="rtl"
+                              className="flex items-center gap-3 py-1.5 border-b border-gray-200 last:border-b-0 text-sm"
                             >
-                              <StatusBadge
-                                status={job.job_status || "ממתין"}
-                                type="job"
-                                size="sm"
-                              />
-                              <div className="text-right">
-                                <p className="font-medium text-sm">עבודה #{job.job_number}</p>
-                                <p className="text-xs text-gray-600">
-                                  {job.work_type} - {job.site}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {new Date(job.job_date).toLocaleDateString("he-IL")}
-                                </p>
+                              <span className="font-medium font-hebrew whitespace-nowrap">#{job.job_number}</span>
+                              <span className="text-gray-500 font-hebrew">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
+                              <span className="text-gray-600 font-hebrew truncate">{job.work_type} - {job.site}</span>
+                              <div className="mr-auto">
+                                <StatusBadge
+                                  status={job.job_status || "ממתין"}
+                                  type="job"
+                                  size="sm"
+                                />
                               </div>
                             </div>
                           ))}

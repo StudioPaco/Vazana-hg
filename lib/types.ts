@@ -16,6 +16,16 @@ export interface Client {
   security_rate?: number
   installation_rate?: number
   current_job_rate?: number
+  custom_rate_1?: number
+  custom_rate_1_label?: string
+  custom_rate_2?: number
+  custom_rate_2_label?: string
+  custom_rate_3?: number
+  custom_rate_3_label?: string
+  custom_rate_4?: number
+  custom_rate_4_label?: string
+  custom_rate_5?: number
+  custom_rate_5_label?: string
   notes?: string
   status?: string
   created_date?: string
@@ -32,7 +42,7 @@ export interface Job {
   client_name?: string
   job_date?: string
   work_type?: string
-  shift_type?: "day" | "night"
+  shift_type?: "יום" | "לילה" | "כפול"
   site?: string
   city?: string
   service_description?: string
@@ -44,7 +54,8 @@ export interface Job {
   vehicle_name?: string
   job_specific_shift_rate?: number
   total_amount?: number
-  payment_status?: "ממתין לתשלום" | "שולם" | "מאוחר"
+  payment_status?: "ממתין לתשלום" | "שולם" | "מאוחר" | "לא רלוונטי"
+  job_status?: "ממתין" | "בתהליך" | "הושלם"
   receipt_id?: string
   notes?: string
   add_to_calendar?: boolean

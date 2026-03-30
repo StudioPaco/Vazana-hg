@@ -4,7 +4,7 @@ interface UserPreferences {
   show_deleted_jobs: boolean;
   show_finished_jobs: boolean;
   add_to_calendar_default: boolean;
-  jobs_view_mode: 'list' | 'grid';
+  jobs_view_mode: 'list' | 'grid' | 'table';
   jobs_sort_by: 'number' | 'date';
   default_status_filter: string;
   default_client_filter: string;

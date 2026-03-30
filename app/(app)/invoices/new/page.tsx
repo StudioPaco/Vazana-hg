@@ -84,6 +84,21 @@ export default function NewInvoicePage() {
   const [jobsLoading, setJobsLoading] = useState(false)
   const [creating, setCreating] = useState(false)
   const [searchPerformed, setSearchPerformed] = useState(false)
+  const [manualItems, setManualItems] = useState<{ description: string; quantity: number; unit_price: number }[]>([])
+
+  const addManualItem = () => {
+    setManualItems(prev => [...prev, { description: "", quantity: 1, unit_price: 0 }])
+  }
+
+  const updateManualItem = (index: number, field: string, value: string | number) => {
+    setManualItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item))
+  }
+
+  const removeManualItem = (index: number) => {
+    setManualItems(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const manualTotal = manualItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
   const [lastSearchedClient, setLastSearchedClient] = useState("")
   const [lastSearchedMonth, setLastSearchedMonth] = useState("")
   
@@ -362,15 +377,15 @@ export default function NewInvoicePage() {
   // Preview invoice
   const previewInvoice = () => {
     const selectedJobs = jobs.filter(job => job.selected)
-    if (selectedJobs.length === 0) {
+    if (selectedJobs.length === 0 && manualItems.length === 0) {
       toast({
         title: "שגיאה",
-        description: "יש לבחור לפחות עבודה אחת",
+        description: "יש לבחור עבודה או להוסיף שורה ידנית",
         variant: "destructive",
       })
       return
     }
-    
+
     setShowPreview(true)
   }
   
@@ -475,11 +490,11 @@ export default function NewInvoicePage() {
         variant="form"
         maxWidth="6xl"
       >
-          <div className="space-y-6">
+          <div className="space-y-6" dir="rtl">
             {/* Client and Period Selection */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                   <User className="h-5 w-5 text-teal-600" />
                   <span>בחירת לקוח ותקופה</span>
                 </CardTitle>
@@ -501,8 +516,8 @@ export default function NewInvoicePage() {
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-right block">חודש *</label>
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="text-right">
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth} dir="rtl">
+                    <SelectTrigger className="text-right font-hebrew">
                       <SelectValue placeholder="בחר חודש" />
                     </SelectTrigger>
                     <SelectContent>
@@ -522,7 +537,7 @@ export default function NewInvoicePage() {
                     disabled={!selectedClient || !selectedMonth || jobsLoading}
                     className="bg-teal-600 hover:bg-teal-700 text-white w-full"
                   >
-                    {jobsLoading ? "טוען..." : "הביא עבודות"}
+                    {jobsLoading ? "טוען..." : "אסוף עבודות"}
                   </Button>
                 </div>
               </CardContent>
@@ -532,7 +547,7 @@ export default function NewInvoicePage() {
             {jobs.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Calendar className="h-5 w-5 text-teal-600" />
                     <span>עבודות לחיוב ({jobs.filter(j => j.selected).length} נבחרו)</span>
                   </CardTitle>
@@ -607,7 +622,7 @@ export default function NewInvoicePage() {
             {searchPerformed && !jobsLoading && jobs.length === 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Calendar className="h-5 w-5 text-gray-400" />
                     <span>תוצאות חיפוש</span>
                   </CardTitle>
@@ -627,11 +642,81 @@ export default function NewInvoicePage() {
               </Card>
             )}
 
+            {/* Manual Line Items */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
+                  <Calculator className="h-5 w-5 text-teal-600" />
+                  <span>שורות ידניות</span>
+                  <Button variant="outline" size="sm" onClick={addManualItem} className="mr-auto font-hebrew text-xs h-7">
+                    + הוסף שורה
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              {manualItems.length > 0 && (
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 border-b pb-1">
+                      <div className="col-span-6 text-right font-hebrew">תיאור</div>
+                      <div className="col-span-2 text-right font-hebrew">כמות</div>
+                      <div className="col-span-2 text-right font-hebrew">מחיר יחידה</div>
+                      <div className="col-span-1 text-right font-hebrew">סה״כ</div>
+                      <div className="col-span-1"></div>
+                    </div>
+                    {manualItems.map((item, i) => (
+                      <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-6">
+                          <input
+                            value={item.description}
+                            onChange={(e) => updateManualItem(i, 'description', e.target.value)}
+                            placeholder="תיאור פריט..."
+                            className="w-full border rounded px-2 py-1 text-sm text-right font-hebrew"
+                            dir="rtl"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updateManualItem(i, 'quantity', Number(e.target.value))}
+                            className="w-full border rounded px-2 py-1 text-sm text-left"
+                            min={1}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <input
+                            type="number"
+                            value={item.unit_price}
+                            onChange={(e) => updateManualItem(i, 'unit_price', Number(e.target.value))}
+                            className="w-full border rounded px-2 py-1 text-sm text-left"
+                            min={0}
+                          />
+                        </div>
+                        <div className="col-span-1 text-sm font-medium text-right">
+                          ₪{(item.quantity * item.unit_price).toLocaleString()}
+                        </div>
+                        <div className="col-span-1">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500" onClick={() => removeManualItem(i)}>
+                            ✕
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {manualTotal > 0 && (
+                      <div className="text-left text-sm font-bold pt-2 border-t">
+                        סה״כ שורות ידניות: ₪{manualTotal.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
             {/* Invoice Details */}
-            {jobs.length > 0 && (
+            {(jobs.length > 0 || manualItems.length > 0) && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <FileText className="h-5 w-5 text-teal-600" />
                     <span>פרטי החשבונית</span>
                   </CardTitle>
@@ -640,8 +725,8 @@ export default function NewInvoicePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-right block">תנאי תשלום</label>
-                      <Select value={paymentTerms} onValueChange={setPaymentTerms}>
-                        <SelectTrigger className="text-right">
+                      <Select value={paymentTerms} onValueChange={setPaymentTerms} dir="rtl">
+                        <SelectTrigger className="text-right font-hebrew">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -682,10 +767,10 @@ export default function NewInvoicePage() {
             )}
 
             {/* Summary */}
-            {jobs.length > 0 && (
+            {(jobs.length > 0 || manualItems.length > 0) && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
                     <Calculator className="h-5 w-5 text-teal-600" />
                     <span>סיכום חשבונית</span>
                   </CardTitle>
@@ -741,7 +826,7 @@ export default function NewInvoicePage() {
                     </Button>
                     <Button
                       onClick={previewInvoice}
-                      disabled={jobs.filter(j => j.selected).length === 0}
+                      disabled={jobs.filter(j => j.selected).length === 0 && manualItems.length === 0}
                       variant="outline"
                       className="px-8"
                     >

@@ -74,10 +74,12 @@ export default function InvoicesPage({
   const [statusFilter, setStatusFilter] = useState(externalStatusFilter)
   const [clientFilter, setClientFilter] = useState("all")
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'number'>('date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [dateRange, setDateRange] = useState<'all' | 'this_month' | 'last_month'>('all')
   const [loading, setLoading] = useState(true)
   const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null)
   const [invoiceJobs, setInvoiceJobs] = useState<Record<string, JobLineItem[]>>({})
+  const [allClients, setAllClients] = useState<string[]>([])
   const { toast } = useToast()
 
   // Sync external props with internal state
@@ -88,6 +90,14 @@ export default function InvoicesPage({
   useEffect(() => {
     setStatusFilter(externalStatusFilter)
   }, [externalStatusFilter])
+
+  // Fetch all clients for the filter dropdown
+  useEffect(() => {
+    fetch("/api/clients").then(r => r.json()).then(result => {
+      const names = (result.data || []).map((c: any) => c.company_name).sort()
+      setAllClients(names)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -149,21 +159,21 @@ export default function InvoicesPage({
     }
 
     // Sorting
+    const dir = sortDir === 'desc' ? -1 : 1
     filtered.sort((a, b) => {
       if (sortBy === 'date') {
-        return new Date(b.invoice_date).getTime() - new Date(a.invoice_date).getTime()
+        return (new Date(a.invoice_date).getTime() - new Date(b.invoice_date).getTime()) * dir
       } else if (sortBy === 'amount') {
-        return b.total_amount - a.total_amount
+        return (a.total_amount - b.total_amount) * dir
       } else {
-        // by number
         const aNum = parseInt(a.invoice_number) || 0
         const bNum = parseInt(b.invoice_number) || 0
-        return bNum - aNum
+        return (aNum - bNum) * dir
       }
     })
 
     setFilteredInvoices(filtered)
-  }, [searchTerm, statusFilter, clientFilter, sortBy, dateRange, invoices])
+  }, [searchTerm, statusFilter, clientFilter, sortBy, sortDir, dateRange, invoices])
 
   const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
     try {
@@ -218,6 +228,8 @@ export default function InvoicesPage({
         return "באיחור"
       case "draft":
         return "טיוטה"
+      case "cancelled":
+        return "בוטל"
       default:
         return "לא ידוע"
     }
@@ -289,10 +301,8 @@ export default function InvoicesPage({
   }
 
   // Unique client names for filter dropdown
-  const uniqueClients = useMemo(() => {
-    const names = invoices.map(inv => inv.clients.company_name)
-    return [...new Set(names)].sort()
-  }, [invoices])
+  // Use allClients from separate DB fetch (not dependent on invoices existing)
+  const uniqueClients = allClients
 
   // Total amount of filtered invoices
   const filteredTotal = useMemo(() => {
@@ -313,59 +323,32 @@ export default function InvoicesPage({
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* Toolbar -- always visible */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4">
-        <Button asChild className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew">
+      {/* Toolbar: Button + Sort + Filters + Search — single row */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Button asChild className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew h-9 text-sm">
           <Link href="/invoices/new">
-            <Plus className="w-4 h-4 ml-2" />
+            <Plus className="w-4 h-4 ml-1" />
             חשבונית חדשה
           </Link>
         </Button>
 
-        {/* Sorting Toggle */}
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSortBy('date')}
-            className={`font-hebrew text-xs px-3 py-1 transition-colors ${
-              sortBy === 'date'
-                ? 'bg-teal-500 text-white hover:bg-teal-600'
-                : 'text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            תאריך
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSortBy('amount')}
-            className={`font-hebrew text-xs px-3 py-1 transition-colors ${
-              sortBy === 'amount'
-                ? 'bg-teal-500 text-white hover:bg-teal-600'
-                : 'text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            סכום
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSortBy('number')}
-            className={`font-hebrew text-xs px-3 py-1 transition-colors ${
-              sortBy === 'number'
-                ? 'bg-teal-500 text-white hover:bg-teal-600'
-                : 'text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            מספר חשבונית
-          </Button>
+        <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+          {([["date", "תאריך"], ["amount", "סכום"], ["number", "מספר"]] as const).map(([key, label]) => (
+            <Button
+              key={key}
+              variant="ghost"
+              size="sm"
+              onClick={() => { if (sortBy === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc'); else { setSortBy(key); setSortDir('desc') } }}
+              className={`font-hebrew text-xs px-2 py-1 h-7 ${
+                sortBy === key ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {label} {sortBy === key ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+            </Button>
+          ))}
         </div>
-      </div>
 
-      {/* Filters Row */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2">
           <Select value={clientFilter} onValueChange={(value) => setClientFilter(value)} dir="rtl">
             <SelectTrigger className="w-full sm:w-[180px] font-hebrew">
               <SelectValue placeholder="כל הלקוחות" />
@@ -388,6 +371,7 @@ export default function InvoicesPage({
               <SelectItem value="sent">נשלח</SelectItem>
               <SelectItem value="paid">שולם</SelectItem>
               <SelectItem value="overdue">באיחור</SelectItem>
+              <SelectItem value="cancelled">בוטל</SelectItem>
             </SelectContent>
           </Select>
 
@@ -403,13 +387,13 @@ export default function InvoicesPage({
           </Select>
         </div>
 
-        <div className="relative w-full sm:w-auto">
+        <div className="relative mr-auto">
           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="חפש חשבוניות..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pr-10 text-right font-hebrew w-full sm:w-[300px]"
+            className="pr-10 text-right font-hebrew w-[220px] h-9 text-sm"
           />
         </div>
       </div>

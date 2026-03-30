@@ -9,12 +9,10 @@ import {
   FileText,
   Settings,
   Archive,
-  Calculator,
-  Plus,
+  Calendar,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Activity,
 } from "lucide-react"
 import Image from "next/image"
 import { useState, createContext, useContext, useEffect } from "react"
@@ -38,15 +36,13 @@ const navigationItems = [
   { name: "לקוחות", href: "/clients", icon: Users },
   { name: "חשבוניות", href: "/invoices", icon: FileText },
   { name: "מסמכים", href: "/documents", icon: Archive },
-  { name: "מרכז תחזוקה", href: "/maintenance", icon: Activity },
-  { name: "הגדרות", href: "/settings", icon: Settings },
+  { name: "לוח זמנים", href: "/calendar", icon: Calendar },
 ]
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isMinimized, setIsMinimized] = useState(false)
 
   useEffect(() => {
-    // Load sidebar minimized setting from theme preferences
     const savedSettings = localStorage.getItem("vazana_theme_settings")
     if (savedSettings) {
       try {
@@ -77,20 +73,20 @@ export default function SidebarNavigation() {
   }
 
   const handleNavigation = (href: string) => {
-    // Temporarily disabled loading overlay for better performance
-    // setLoading(true)
     router.prefetch(href)
     router.push(href)
   }
 
+  const isSettingsActive = pathname?.startsWith("/settings") || pathname === "/maintenance"
+
   return (
     <div
       className={`${
-        isMinimized ? "w-24" : "w-64"
-      } bg-white border-l border-gray-200 h-screen fixed right-0 top-0 z-40 shadow-lg transition-all duration-300`}
+        isMinimized ? "w-20" : "w-64"
+      } bg-white border-l border-gray-200 h-screen fixed right-0 top-0 z-40 shadow-lg transition-all duration-300 overflow-x-hidden`}
     >
       {/* Header with Logo */}
-      <div className={`${isMinimized ? "p-3" : "p-6"} border-b border-gray-200 relative`}>
+      <div className={`${isMinimized ? "p-2" : "p-6"} border-b border-gray-200 relative`}>
         <button
           onClick={() => setIsMinimized(!isMinimized)}
           className="absolute left-2 top-2 p-1 rounded-md hover:bg-gray-100 transition-colors z-10"
@@ -115,20 +111,12 @@ export default function SidebarNavigation() {
         )}
 
         {isMinimized && (
-          <div className="flex justify-center mt-8">
-            <Image
-              src="/VazanaLogo-02.png"
-              alt="V"
-              width={32}
-              height={32}
-              className="object-contain rounded-md"
-            />
-          </div>
+          <div className="h-6 mt-6" />
         )}
       </div>
 
-      {/* Navigation — scrollable between header and user footer */}
-      <nav className={`${isMinimized ? "p-3" : "p-4"} space-y-2 overflow-y-auto`} style={{ maxHeight: 'calc(100vh - 280px)' }}>
+      {/* Navigation */}
+      <nav className={`${isMinimized ? "p-2" : "p-4"} space-y-1 overflow-y-auto overflow-x-hidden`} style={{ maxHeight: 'calc(100vh - 280px)' }}>
         {navigationItems.map((item) => {
           const isActive = pathname === item.href
           return (
@@ -136,7 +124,7 @@ export default function SidebarNavigation() {
               key={item.href}
               onClick={() => handleNavigation(item.href)}
               className={`group relative flex items-center w-full ${
-                isMinimized ? "justify-center p-4" : "px-4 py-3"
+                isMinimized ? "justify-center p-3" : "px-4 py-2.5"
               } rounded-lg transition-colors font-hebrew ${
                 isActive ? "bg-vazana-yellow text-vazana-dark font-semibold" : "text-gray-700 hover:bg-gray-100"
               }`}
@@ -157,10 +145,46 @@ export default function SidebarNavigation() {
         })}
       </nav>
 
-      {/* User Info & Logout */}
-      <div className={`absolute bottom-0 left-0 right-0 ${isMinimized ? "p-2" : "p-4"} border-t border-gray-200`}>
+      {/* Bottom section: Settings + User + Logout */}
+      <div className={`absolute bottom-0 left-0 right-0 ${isMinimized ? "p-2" : "p-4"} border-t border-gray-200 overflow-hidden`}>
+        {/* Logo when collapsed */}
+        {isMinimized && (
+          <div className="flex justify-center mb-6 pt-4">
+            <Image
+              src="/VazanaLogo-02.png"
+              alt="Vazana"
+              width={100}
+              height={100}
+              className="object-contain"
+              style={{ transform: 'rotate(-90deg)' }}
+            />
+          </div>
+        )}
+
+        {/* Settings button — always visible */}
+        <button
+          onClick={() => handleNavigation("/settings")}
+          className={`group relative flex items-center w-full ${
+            isMinimized ? "justify-center p-3" : "px-4 py-2.5"
+          } rounded-lg transition-colors font-hebrew mb-4 ${
+            isSettingsActive ? "bg-vazana-yellow text-vazana-dark font-semibold" : "text-gray-700 hover:bg-gray-100"
+          }`}
+          dir="rtl"
+          title={isMinimized ? "הגדרות" : undefined}
+        >
+          <Settings className="w-6 h-6 flex-shrink-0" />
+
+          {isMinimized && (
+            <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+              הגדרות
+              <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+            </div>
+          )}
+        </button>
+
+        {/* User greeting */}
         {!isMinimized && (
-          <div className="text-right mb-3">
+          <div className="text-right px-2 mb-2">
             <p className="text-sm font-semibold text-vazana-dark font-hebrew">
               שלום, {profile?.full_name || profile?.username || 'משתמש'}
             </p>
@@ -169,6 +193,8 @@ export default function SidebarNavigation() {
             </p>
           </div>
         )}
+
+        {/* Logout */}
         <button
           onClick={handleLogout}
           className={`group relative flex items-center ${
@@ -176,7 +202,7 @@ export default function SidebarNavigation() {
           } w-full bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-hebrew`}
           title={isMinimized ? "התנתק" : undefined}
         >
-          {!isMinimized && <span>התנתק</span>}
+          {!isMinimized && <span className="text-sm">התנתק</span>}
           <LogOut className="w-4 h-4 flex-shrink-0" />
 
           {isMinimized && (
@@ -196,11 +222,11 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`transition-all duration-300 w-full`}
+      className="transition-all duration-300 w-full overflow-x-hidden"
       style={{
-        marginRight: isMinimized ? "96px" : "256px",
+        marginRight: isMinimized ? "80px" : "256px",
         minHeight: "100vh",
-        width: `calc(100vw - ${isMinimized ? "96px" : "256px"})`,
+        width: `calc(100vw - ${isMinimized ? "80px" : "256px"})`,
       }}
     >
       {children}

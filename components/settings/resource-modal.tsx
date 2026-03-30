@@ -185,7 +185,7 @@ export default function ResourceModal({ type, open, onOpenChange }: ResourceModa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={getModalClasses('xl', true)}>
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between font-hebrew">
+          <DialogTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
             <Icon className="w-6 h-6 text-vazana-teal" />
             <span>{config.title}</span>
           </DialogTitle>

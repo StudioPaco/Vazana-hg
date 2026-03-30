@@ -105,11 +105,12 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
   const [clientFilter, setClientFilter] = useState("all")
   const [dateFilter, setDateFilter] = useState("all")
   const [loading, setLoading] = useState(true)
-  const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set())
+  const [expandedJob, setExpandedJob] = useState<string | null>(null)
   const [editingJob, setEditingJob] = useState<Job | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [importModalOpen, setImportModalOpen] = useState(false)
-  const [sortBy, setSortBy] = useState<'number' | 'date'>(preferences?.jobs_sort_by || 'number')
+  const [sortBy, setSortBy] = useState<'number' | 'date'>(preferences?.jobs_sort_by || 'date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   // Sync sortBy from saved preferences once they load
   useEffect(() => {
@@ -188,18 +189,19 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
     }
     
     // Apply sorting
+    const dir = sortDir === 'desc' ? -1 : 1
     filtered.sort((a, b) => {
       if (sortBy === 'number') {
         const aNum = parseInt(a.job_number) || 0
         const bNum = parseInt(b.job_number) || 0
-        return aNum - bNum
+        return (aNum - bNum) * dir
       } else {
-        return new Date(b.job_date).getTime() - new Date(a.job_date).getTime()
+        return (new Date(a.job_date).getTime() - new Date(b.job_date).getTime()) * dir
       }
     })
 
     setFilteredJobs(filtered)
-  }, [searchTerm, statusFilter, clientFilter, jobs, preferences, sortBy])
+  }, [searchTerm, statusFilter, clientFilter, jobs, preferences, sortBy, sortDir])
 
   const handleDeleteJob = async (id: string) => {
     if (confirm("האם אתה בטוח שברצונך למחוק עבודה זו?")) {
@@ -305,13 +307,7 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
   }, [totalRevenue, pendingJobs, urgentJobs, completedJobs, loading, onStatsCalculated])
 
   const toggleJobExpansion = (jobId: string) => {
-    const newExpanded = new Set(expandedJobs)
-    if (newExpanded.has(jobId)) {
-      newExpanded.delete(jobId)
-    } else {
-      newExpanded.add(jobId)
-    }
-    setExpandedJobs(newExpanded)
+    setExpandedJob(prev => prev === jobId ? null : jobId)
   }
 
   const handleEditJob = (job: Job) => {
@@ -388,8 +384,13 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
               variant="ghost"
               size="sm"
               onClick={() => {
-                setSortBy('number')
-                updatePreference('jobs_sort_by', 'number')
+                if (sortBy === 'number') {
+                  setSortDir(d => d === 'desc' ? 'asc' : 'desc')
+                } else {
+                  setSortBy('number')
+                  updatePreference('jobs_sort_by', 'number')
+                  setSortDir('desc')
+                }
               }}
               className={`font-hebrew text-xs px-3 py-1 transition-colors ${
                 sortBy === 'number'
@@ -397,14 +398,19 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
             >
-              מספר עבודה
+              מספר {sortBy === 'number' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                setSortBy('date')
-                updatePreference('jobs_sort_by', 'date')
+                if (sortBy === 'date') {
+                  setSortDir(d => d === 'desc' ? 'asc' : 'desc')
+                } else {
+                  setSortBy('date')
+                  updatePreference('jobs_sort_by', 'date')
+                  setSortDir('desc')
+                }
               }}
               className={`font-hebrew text-xs px-3 py-1 transition-colors ${
                 sortBy === 'date'
@@ -412,7 +418,7 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
             >
-              תאריך
+              תאריך {sortBy === 'date' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
             </Button>
           </div>
           </div>
@@ -421,15 +427,15 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
               variant="ghost"
               size="sm"
               onClick={() => updatePreference('jobs_view_mode', 'list')}
-              className={`px-2 py-1 ${preferences?.jobs_view_mode !== 'grid' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
+              className={`px-2 py-1 ${preferences?.jobs_view_mode !== 'table' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
             >
               <List className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => updatePreference('jobs_view_mode', 'grid')}
-              className={`px-2 py-1 ${preferences?.jobs_view_mode === 'grid' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
+              onClick={() => updatePreference('jobs_view_mode', 'table')}
+              className={`px-2 py-1 ${preferences?.jobs_view_mode === 'table' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
             >
               <Grid3X3 className="w-4 h-4" />
             </Button>
@@ -484,25 +490,25 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
         </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between" dir="rtl">
           <div className="flex gap-2 w-full sm:w-auto">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px] font-hebrew">
+            <Select value={statusFilter} onValueChange={setStatusFilter} dir="rtl">
+              <SelectTrigger className="w-full sm:w-[180px] font-hebrew text-right">
                 <SelectValue placeholder="כל הסטטוסים" />
               </SelectTrigger>
-                <SelectContent>
+                <SelectContent dir="rtl">
                 <SelectItem value="all">כל הסטטוסים</SelectItem>
-                <SelectItem value="פעיל">פעיל</SelectItem>
+                <SelectItem value="ממתין">ממתין</SelectItem>
                 <SelectItem value="בתהליך">בתהליך</SelectItem>
                 <SelectItem value="הושלם">הושלם</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger className="w-full sm:w-[180px] font-hebrew">
+            <Select value={clientFilter} onValueChange={setClientFilter} dir="rtl">
+              <SelectTrigger className="w-full sm:w-[180px] font-hebrew text-right">
                 <SelectValue placeholder="כל הלקוחות" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent dir="rtl">
                 <SelectItem value="all">כל הלקוחות</SelectItem>
                 {Array.from(new Set(jobs.map((job) => job.client_name))).map((client) => (
                   <SelectItem key={client} value={client}>
@@ -549,211 +555,177 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
         </div>
 
         {filteredJobs.length === 0 ? (
-          <Card className="relative">
-            <div className="absolute top-4 right-4 text-right">
-              <h3 className="font-bold text-vazana-dark font-hebrew">לא נמצאו עבודות</h3>
-            </div>
-            <Truck className="absolute top-4 left-4 w-6 h-6 text-gray-300" />
-            <CardContent className="text-center py-12 pt-16">
-              <div className="text-gray-500">
-                <p className="text-sm font-hebrew">
-                  {searchTerm || statusFilter !== "all"
-                    ? "נסה לשנות את החיפוש או המסננים"
-                    : "התחל ביצירת העבודה הראשונה שלך"}
-                </p>
-                <Button className="mt-4 bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew" asChild>
-                  <Link href="/jobs/new">
-                    <Plus className="ml-2 h-4 w-4" />
-                    צור עבודה חדשה
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="text-center py-12">
+            <Truck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="font-bold text-vazana-dark font-hebrew mb-2">לא נמצאו עבודות</h3>
+            <p className="text-sm text-gray-500 font-hebrew mb-4">
+              {searchTerm || statusFilter !== "all"
+                ? "נסה לשנות את החיפוש או המסננים"
+                : "התחל ביצירת העבודה הראשונה שלך"}
+            </p>
+            <Button className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew" asChild>
+              <Link href="/jobs/new">
+                <Plus className="ml-2 h-4 w-4" />
+                צור עבודה חדשה
+              </Link>
+            </Button>
+          </div>
+        ) : preferences?.jobs_view_mode === 'table' ? (
+          /* ── Table View ── */
+          <div className="bg-white border rounded-lg overflow-hidden mt-6">
+            <table className="w-full text-sm" dir="rtl">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">#</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">לקוח</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">תאריך</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">אתר</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">עיר</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">משמרת</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">סכום</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">סטטוס</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">פעולות</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filteredJobs.map((job) => (
+                  <tr key={job.id} className={`hover:bg-gray-50 transition-colors ${
+                    job.is_deleted ? 'bg-red-50' : ''
+                  }`}>
+                    <td className={`px-4 py-3 font-medium font-hebrew ${job.is_deleted ? 'text-red-600 line-through' : ''}`}>
+                      {job.job_number}
+                    </td>
+                    <td className="px-4 py-3 font-hebrew">{job.client_name}</td>
+                    <td className="px-4 py-3 font-hebrew">{new Date(job.job_date).toLocaleDateString("he-IL")}</td>
+                    <td className="px-4 py-3 text-gray-600 font-hebrew">{job.site}</td>
+                    <td className="px-4 py-3 text-gray-600 font-hebrew">{job.city}</td>
+                    <td className="px-4 py-3 font-hebrew">{getShiftTypeInHebrew(job.shift_type)}</td>
+                    <td className="px-4 py-3 font-medium" dir="ltr">₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3">
+                      <Badge className={`${getStatusColor(job.job_status)} text-xs`}>{job.job_status}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        {!job.is_deleted ? (
+                          <>
+                            <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew" onClick={() => handleEditJob(job)}>
+                              ערוך
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew text-red-600" onClick={() => handleDeleteJob(job.id)}>
+                              מחק
+                            </Button>
+                          </>
+                        ) : (
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew text-green-600" onClick={() => handleRestoreJob(job.id)}>
+                            שחזר
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <div className={`mt-6 ${preferences?.jobs_view_mode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}`}>
+          /* ── List View (compact cards) ── */
+          <div className="mt-6 space-y-2">
             {filteredJobs.map((job) => {
-              const isExpanded = expandedJobs.has(job.id)
+              const isExpanded = expandedJob === job.id
 
               return (
-                <Card key={job.id} className={`hover:shadow-md transition-all duration-200 relative cursor-pointer ${
-                  job.is_deleted ? 'border-red-300 bg-red-50' : 
-                  job.job_status === 'הושלם' ? 'border-green-300 bg-green-50' :
-                  job.job_status === 'בתהליך' ? 'border-yellow-300 bg-yellow-50' : ''
+                <Card key={job.id} className={`transition-all duration-200 cursor-pointer ${
+                  job.is_deleted ? 'border-red-300 bg-red-50' :
+                  job.job_status === 'הושלם' ? 'border-green-200' :
+                  job.job_status === 'בתהליך' ? 'border-yellow-200' : ''
                 }`}>
-                  <div className="absolute top-4 right-4 text-right">
-                    <h3 className={`font-bold font-hebrew ${
-                      job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'
-                    }`}>עבודה #{job.job_number}</h3>
-                    <p className={`text-sm font-hebrew ${
-                      job.is_deleted ? 'text-red-500' : 'text-gray-600'
-                    }`}>{job.client_name}</p>
-                    {job.is_deleted && (
-                      <Badge variant="destructive" className="mt-1 text-xs">
-                        נמחק
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="absolute top-4 left-4 flex items-center gap-2">
-                    {!job.is_deleted ? (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="font-hebrew bg-transparent"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleEditJob(job)
-                          }}
-                        >
-                          <Edit className="w-4 h-4 ml-1" />
-                          ערוך
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="font-hebrew text-red-600 hover:text-red-700 bg-transparent"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteJob(job.id)
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 ml-1" />
-                          מחק
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="font-hebrew text-green-600 hover:text-green-700 bg-transparent"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRestoreJob(job.id)
-                        }}
-                      >
-                        <RotateCcw className="w-4 h-4 ml-1" />
-                        שחזר
-                      </Button>
-                    )}
-                  </div>
+                  <CardContent className="p-0">
+                    {/* Compact title row */}
+                    <div
+                      className="flex items-center justify-between px-4 py-2"
+                      dir="rtl"
+                      onClick={() => toggleJobExpansion(job.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`font-bold font-hebrew text-sm ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>
+                          #{job.job_number}
+                        </span>
+                        <span className="text-sm font-hebrew text-gray-700">{job.client_name}</span>
+                        <span className="text-sm font-hebrew text-gray-500">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
+                        {job.is_deleted && (
+                          <Badge variant="destructive" className="text-xs">נמחק</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge className={`${getStatusColor(job.job_status)} text-xs`}>{job.job_status}</Badge>
+                        <p className="font-bold text-vazana-dark text-sm">
+                          ₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}
+                        </p>
+                        {!job.is_deleted ? (
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); handleEditJob(job) }}>
+                              <Edit className="w-3.5 h-3.5 text-gray-500" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); handleDeleteJob(job.id) }}>
+                              <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-hebrew text-green-600" onClick={(e) => { e.stopPropagation(); handleRestoreJob(job.id) }}>
+                            <RotateCcw className="w-3.5 h-3.5 ml-1" />
+                            שחזר
+                          </Button>
+                        )}
+                      </div>
+                    </div>
 
-                  <CardContent
-                    className={`transition-all duration-200 ${
-                      isExpanded ? "pt-12 pb-2 min-h-[200px]" : "pt-12 pb-1"
-                    }`}
-                    onClick={() => toggleJobExpansion(job.id)}
-                  >
-                    <div className="space-y-3">
-                      {!isExpanded ? (
-                        <div className="grid grid-cols-3 gap-2 text-sm">
+                    {/* Expanded details */}
+                    {isExpanded && (
+                      <div className="border-t px-4 py-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div className="text-right">
-                            <p className="text-gray-500 font-hebrew text-xs">תאריך</p>
-                            <p className="font-medium font-hebrew text-sm">
-                              {new Date(job.job_date).toLocaleDateString("he-IL")}
-                            </p>
+                            <p className="text-gray-500 font-hebrew text-xs">סוג עבודה</p>
+                            <p className="font-medium font-hebrew">{job.work_type}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-gray-500 font-hebrew text-xs">משמרת</p>
-                            <p className="font-medium font-hebrew text-sm">{getShiftTypeInHebrew(job.shift_type)}</p>
+                            <p className="font-medium font-hebrew">{getShiftTypeInHebrew(job.shift_type)}</p>
                           </div>
                           <div className="text-right">
-                            <div className="mb-1">
-                              <p className="text-gray-500 font-hebrew text-sm">אתר</p>
-                              <p className="font-medium font-hebrew text-sm">{job.site}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500 font-hebrew text-sm">עיר</p>
-                              <p className="font-medium font-hebrew text-sm">{job.city}</p>
-                            </div>
+                            <p className="text-gray-500 font-hebrew text-xs">אתר</p>
+                            <p className="font-medium font-hebrew">{job.site}</p>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-4">
-                          {/* Main Details Columns */}
-                          <div className="col-span-2 space-y-3 text-sm">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="text-right">
-                                <p className="text-gray-500 font-hebrew text-sm">תאריך</p>
-                                <p className="font-medium font-hebrew text-base">
-                                  {new Date(job.job_date).toLocaleDateString("he-IL")}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-gray-500 font-hebrew text-sm">סוג עבודה</p>
-                                <p className="font-medium font-hebrew text-base">{job.work_type}</p>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="text-right">
-                                <p className="text-gray-500 font-hebrew text-sm">אתר</p>
-                                <p className="font-medium font-hebrew text-base">{job.site}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-gray-500 font-hebrew text-sm">עיר</p>
-                                <p className="font-medium font-hebrew text-base">{job.city}</p>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="text-right">
-                                <p className="text-gray-500 font-hebrew text-sm">משמרת</p>
-                                <p className="font-medium font-hebrew text-base">{getShiftTypeInHebrew(job.shift_type)}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-gray-500 font-hebrew text-sm">סטטוס</p>
-                                <p className="font-medium font-hebrew text-base">{job.job_status}</p>
-                              </div>
-                            </div>
+                          <div className="text-right">
+                            <p className="text-gray-500 font-hebrew text-xs">עיר</p>
+                            <p className="font-medium font-hebrew">{job.city}</p>
                           </div>
-                          
-                          {/* Details Panel - Side Column */}
-                          <div className="bg-blue-50 p-3 rounded-lg text-right space-y-2">
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="text-sm text-gray-600 font-hebrew">{job.site}</span>
-                              <MapPin className="w-4 h-4 text-blue-500" />
-                            </div>
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="text-sm text-gray-600 font-hebrew">{job.worker_name}</span>
-                              <User className="w-4 h-4 text-blue-500" />
-                            </div>
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="text-sm text-gray-600 font-hebrew">{job.vehicle_name}</span>
-                              <Truck className="w-4 h-4 text-blue-500" />
-                            </div>
-                            {job.cart_name && (
-                              <div className="flex items-center justify-end gap-2">
-                                <span className="text-sm text-gray-600 font-hebrew">{job.cart_name}</span>
-                                <div className="w-4 h-4 text-blue-500 flex items-center justify-center">
-                                  <div className="w-3 h-3 border border-blue-500 rounded-sm"></div>
-                                </div>
-                              </div>
-                            )}
+                          <div className="text-right">
+                            <p className="text-gray-500 font-hebrew text-xs flex items-center justify-end gap-1"><User className="w-3 h-3" /> עובד</p>
+                            <p className="font-medium font-hebrew">{job.worker_name || '—'}</p>
                           </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-2">
-                          <Badge className={`${getStatusColor(job.job_status)} ${!isExpanded ? "text-base px-3 py-1" : ""}`}>{job.job_status}</Badge>
-                          {isExpanded && (
-                            <Badge className={getPaymentStatusColor(job.payment_status)}>{job.payment_status}</Badge>
+                          <div className="text-right">
+                            <p className="text-gray-500 font-hebrew text-xs flex items-center justify-end gap-1"><Truck className="w-3 h-3" /> רכב</p>
+                            <p className="font-medium font-hebrew">{job.vehicle_name || '—'}</p>
+                          </div>
+                          {job.cart_name && (
+                            <div className="text-right">
+                              <p className="text-gray-500 font-hebrew text-xs">עגלה</p>
+                              <p className="font-medium font-hebrew">{job.cart_name}</p>
+                            </div>
                           )}
+                          <div className="text-right">
+                            <p className="text-gray-500 font-hebrew text-xs">תשלום</p>
+                            <Badge className={`${getPaymentStatusColor(job.payment_status)} text-xs`}>{job.payment_status}</Badge>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className={`font-bold text-vazana-dark ${isExpanded ? "text-lg" : "text-sm"}`}>
-                            ₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}
-                          </p>
-                        </div>
+                        {job.notes && (
+                          <div className="mt-3 text-right">
+                            <p className="text-gray-500 font-hebrew text-xs">הערות</p>
+                            <p className="text-sm font-hebrew text-gray-700">{job.notes}</p>
+                          </div>
+                        )}
                       </div>
-
-                      {isExpanded && (
-                        <div className="text-center pt-1">
-                          <p className="text-xs text-gray-400 font-hebrew">לחץ כדי לכווץ</p>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               )

@@ -32,7 +32,7 @@ interface JobData {
   work_type: string
   worker_name?: string
   total_amount: number
-  payment_status: "pending" | "paid" | "overdue"
+  payment_status: "ממתין לתשלום" | "שולם" | "מאוחר" | "לא רלוונטי"
 }
 
 interface WorkerData {
@@ -148,7 +148,7 @@ export class Job extends BaseEntity {
 export class Worker extends BaseEntity {
   static tableName = "workers"
 
-  static async getAvailable(date: string, shiftType: "day" | "night") {
+  static async getAvailable(date: string, shiftType: "יום" | "לילה") {
     // This would need more complex logic to check availability JSON
     const { data, error } = await supabase.from(this.tableName).select("*").order("name")
 

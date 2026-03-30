@@ -61,8 +61,7 @@ interface SystemHealth {
   integrations: "healthy" | "warning" | "error" | "unknown"
 }
 
-export default function MaintenancePage() {
-  // Layout handled by (app) layout
+export function MaintenanceContent({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter()
   const { profile: authProfile, isLoading: authLoading } = useAuth()
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -664,15 +663,8 @@ export default function MaintenancePage() {
     )
   }
 
-  return (
-    <PageLayout
-      title="מרכז תחזוקה"
-      subtitle="מעקב בזמן אמת על בריאות המערכת ותפקודה"
-      titleIcon={Activity}
-      backHref="/"
-      variant="list"
-      maxWidth="7xl"
-    >
+  const mainContent = (
+    <>
           {/* System Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
@@ -1088,6 +1080,30 @@ export default function MaintenancePage() {
               </Card>
             </TabsContent>
           </Tabs>
+    </>
+  )
+
+  if (embedded) return mainContent
+
+  return (
+    <PageLayout
+      title="מרכז תחזוקה"
+      subtitle="מעקב בזמן אמת על בריאות המערכת ותפקודה"
+      titleIcon={Activity}
+      backHref="/"
+      variant="list"
+      maxWidth="7xl"
+    >
+      {mainContent}
     </PageLayout>
   )
+}
+
+export default function MaintenancePage() {
+  // Redirect to settings maintenance tab
+  const router = useRouter()
+  useEffect(() => {
+    router.replace('/settings?tab=maintenance')
+  }, [router])
+  return <div className="flex items-center justify-center py-20 font-hebrew text-gray-500">מעביר להגדרות...</div>
 }

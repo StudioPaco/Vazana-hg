@@ -288,71 +288,76 @@ export default function ManageGenericList({
           {items.map((item) => (
             <Card
               key={item.id}
-              className={`p-4 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow border-gray-200 ${rtl ? 'text-right' : 'text-left'}`}
+              className={`shadow-sm hover:shadow-md transition-shadow border-gray-200 ${rtl ? 'text-right' : 'text-left'}`}
               dir={rtl ? 'rtl' : 'ltr'}
             >
-              <div className={rtl ? 'text-right' : 'text-left'}>
-                {workerLayout && entityName === "עובד" ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-right">
-                      <p className="font-semibold text-base text-[#1A1A1A] font-hebrew">{item.name}</p>
-                      <p className="text-sm text-gray-600 font-hebrew">{item.phone_number}</p>
+              <div className="flex items-stretch">
+                {/* Content */}
+                <div className={`flex-1 px-4 py-2 ${rtl ? 'text-right' : 'text-left'}`}>
+                  {workerLayout && entityName === "עובד" ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-right">
+                        <p className="font-semibold text-sm text-[#1A1A1A] font-hebrew">{item.name}</p>
+                        <p className="text-xs text-gray-600 font-hebrew">{item.phone_number}</p>
+                      </div>
+                      <div className="text-right">
+                        {item.shift_rate && (
+                          <p className="text-xs text-gray-500 font-hebrew">
+                            תעריף: ₪{item.shift_rate}
+                          </p>
+                        )}
+                        {item.address && (
+                          <p className="text-xs text-gray-400 font-hebrew">
+                            {item.address}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      {item.shift_rate && (
-                        <p className="text-sm text-gray-500 font-hebrew">
-                          תעריף: ₪{item.shift_rate}
-                        </p>
-                      )}
-                      {item.address && (
-                        <p className="text-xs text-gray-400 font-hebrew">
-                          {item.address}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <p className={`font-medium text-[#1A1A1A] ${rtl ? 'font-hebrew' : ''}`}>
-                      {item[displayField] || item.name || item.name_en || "N/A"}
-                    </p>
-                    {entityName === (isHebrew ? "סוג עבודה" : "Work Type") &&
-                      item.name_he &&
-                      displayField !== "name_he" && (
-                        <p className={`text-xs text-gray-500 ${rtl ? 'font-hebrew' : ''}`}>
-                          {isHebrew ? "שם בעברית" : "Name (HE)"}: {item.name_he}
-                        </p>
-                      )}
-                    {fields
-                      .filter(
-                        (f) =>
-                          f.name !== displayField &&
-                          f.name !== "details" &&
-                          f.name !== "name_en" &&
-                          f.name !== "name_he" &&
-                          item[f.name],
-                      )
-                      .map((f) => (
-                        <p key={f.name} className={`text-xs text-gray-500 ${rtl ? 'font-hebrew' : ''}`}>
-                          {isHebrew ? f.labelHe : f.labelEn}: {item[f.name]}
-                        </p>
-                      ))}
-                    {item.details && <p className={`text-sm text-gray-600 mt-1 ${rtl ? 'font-hebrew' : ''}`}>{item.details}</p>}
-                  </>
-                )}
-              </div>
-              <div className={`flex gap-1 shrink-0 ${rtl ? 'order-first' : 'order-last'}`}>
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(item)} aria-label={t.edit}>
-                  <Edit2 className="w-4 h-4 text-gray-600 hover:text-[#1A1A1A]" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(item.id)}
-                  aria-label={isHebrew ? "מחק" : "Delete"}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500 hover:text-red-700" />
-                </Button>
+                  ) : (
+                    <>
+                      <p className={`font-medium text-sm text-[#1A1A1A] ${rtl ? 'font-hebrew' : ''}`}>
+                        {item[displayField] || item.name || item.name_en || "N/A"}
+                      </p>
+                      {entityName === (isHebrew ? "סוג עבודה" : "Work Type") &&
+                        item.name_he &&
+                        displayField !== "name_he" && (
+                          <p className={`text-xs text-gray-500 ${rtl ? 'font-hebrew' : ''}`}>
+                            {isHebrew ? "שם בעברית" : "Name (HE)"}: {item.name_he}
+                          </p>
+                        )}
+                      {fields
+                        .filter(
+                          (f) =>
+                            f.name !== displayField &&
+                            f.name !== "details" &&
+                            f.name !== "name_en" &&
+                            f.name !== "name_he" &&
+                            item[f.name],
+                        )
+                        .map((f) => (
+                          <p key={f.name} className={`text-xs text-gray-500 ${rtl ? 'font-hebrew' : ''}`}>
+                            {isHebrew ? f.labelHe : f.labelEn}: {item[f.name]}
+                          </p>
+                        ))}
+                      {item.details && <p className={`text-xs text-gray-600 mt-0.5 ${rtl ? 'font-hebrew' : ''}`}>{item.details}</p>}
+                    </>
+                  )}
+                </div>
+                {/* Action buttons — pinned to far left */}
+                <div className="flex flex-col justify-center gap-0.5 px-2 border-s border-gray-200 bg-gray-50/50">
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleEdit(item)} aria-label={t.edit}>
+                    <Edit2 className="w-3.5 h-3.5 text-gray-600 hover:text-[#1A1A1A]" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => handleDelete(item.id)}
+                    aria-label={isHebrew ? "מחק" : "Delete"}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-500 hover:text-red-700" />
+                  </Button>
+                </div>
               </div>
             </Card>
           ))}
