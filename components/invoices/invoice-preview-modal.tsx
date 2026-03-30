@@ -13,10 +13,17 @@ interface Job {
   total_amount: number
 }
 
+interface ManualItem {
+  description: string
+  quantity: number
+  unit_price: number
+}
+
 interface InvoicePreviewModalProps {
   isOpen: boolean
   onClose: () => void
   selectedJobs: Job[]
+  manualItems?: ManualItem[]
   clientName: string
   summary: {
     subtotal: number
@@ -28,10 +35,11 @@ interface InvoicePreviewModalProps {
   includeBankDetails: boolean
 }
 
-export function InvoicePreviewModal({ 
-  isOpen, 
-  onClose, 
-  selectedJobs, 
+export function InvoicePreviewModal({
+  isOpen,
+  onClose,
+  selectedJobs,
+  manualItems = [],
   clientName,
   summary,
   notes,
@@ -117,6 +125,17 @@ export function InvoicePreviewModal({
                       {new Date(job.job_date).toLocaleDateString('he-IL')}
                     </td>
                     <td className="border border-gray-200 p-3 text-right">#{job.job_number}</td>
+                  </tr>
+                ))}
+                {manualItems.filter(i => i.description && i.unit_price > 0).map((item, i) => (
+                  <tr key={`manual-${i}`} className="bg-amber-50/50">
+                    <td className="border border-gray-200 p-3 text-right font-medium">
+                      ₪{(item.quantity * item.unit_price).toLocaleString()}
+                    </td>
+                    <td className="border border-gray-200 p-3 text-right text-gray-500">—</td>
+                    <td className="border border-gray-200 p-3 text-right">ידני</td>
+                    <td className="border border-gray-200 p-3 text-right text-gray-500">—</td>
+                    <td className="border border-gray-200 p-3 text-right">{item.description}</td>
                   </tr>
                 ))}
               </tbody>

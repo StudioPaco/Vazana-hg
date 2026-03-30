@@ -65,6 +65,9 @@ export default function NewInvoicePage() {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true)
   const autoSave = new SimpleAutoSave('new-invoice-draft', 15)
   
+  // Invoice number
+  const [invoiceNumber, setInvoiceNumber] = useState("")
+
   // Form state
   const [selectedClient, setSelectedClient] = useState("")
   const [selectedMonth, setSelectedMonth] = useState("")
@@ -231,6 +234,19 @@ export default function NewInvoicePage() {
     }
     
     fetchClients()
+
+    // Generate next invoice number
+    const fetchInvoiceNumber = async () => {
+      const { data } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .order('created_at', { ascending: false })
+        .limit(1)
+      const lastNum = data?.[0]?.invoice_number
+      const num = lastNum ? parseInt(lastNum.replace(/\D/g, '')) + 1 : 1
+      setInvoiceNumber(String(num).padStart(4, '0'))
+    }
+    fetchInvoiceNumber()
   }, [])
   
   // Fetch jobs when client and month are selected
@@ -446,6 +462,7 @@ export default function NewInvoicePage() {
       
       const invoiceData = {
         client_id: selectedClient,
+        invoice_number: invoiceNumber,
         status: 'draft',
         subtotal: summary.subtotal,
         tax_amount: summary.tax_amount,
@@ -530,6 +547,12 @@ export default function NewInvoicePage() {
         maxWidth="6xl"
       >
           <div className="space-y-6" dir="rtl">
+            {/* Invoice Number */}
+            <div className="flex justify-end">
+              <div className="text-sm text-gray-500 font-hebrew">
+                <span>מספר חשבונית: </span><span className="text-teal-600 font-semibold">{invoiceNumber || '...'}</span>
+              </div>
+            </div>
             {/* Client and Period Selection */}
             <Card>
               <CardHeader>
@@ -881,10 +904,11 @@ export default function NewInvoicePage() {
       </PageLayout>
 
       {/* Invoice Preview Modal */}
-      <InvoicePreviewModal 
+      <InvoicePreviewModal
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
         selectedJobs={jobs.filter(job => job.selected)}
+        manualItems={manualItems.filter(i => i.description && i.unit_price > 0)}
         clientName={clients.find(c => c.id === selectedClient)?.company_name || ""}
         summary={summary}
         notes={notes}

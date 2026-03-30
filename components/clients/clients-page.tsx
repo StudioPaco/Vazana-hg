@@ -56,7 +56,10 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const [statusFilter, setStatusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("all")
   const [sortBy, setSortBy] = useState<'name' | 'date'>('name')
-  const [viewMode, setViewMode] = useState<'list' | 'table'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'table'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-clients-viewMode') as any) || 'list'
+    return 'list'
+  })
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientJobs, setClientJobs] = useState<{ [key: string]: Job[] }>({})
@@ -122,6 +125,8 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   }
 
   const mostActiveClient = getMostActiveClient()
+
+  useEffect(() => { localStorage.setItem('vazana-clients-viewMode', viewMode) }, [viewMode])
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -331,7 +336,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             onClick={() => setNewClientModalOpen(true)}
-            className="bg-vazana-teal hover:bg-vazana-teal/90 font-hebrew"
+            className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew"
           >
             <Plus className="w-4 h-4 ml-2" />
             לקוח חדש

@@ -21,8 +21,14 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
   const [uploading, setUploading] = useState(false)
   const [filter, setFilter] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-docs-sortBy') as any) || 'date'
+    return 'date'
+  })
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-docs-sortDir') as any) || 'desc'
+    return 'desc'
+  })
 
   // Upload form state
   const [entityType, setEntityType] = useState<string>("general")
@@ -33,6 +39,12 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
   useEffect(() => {
     fetchDocuments()
   }, [filter])
+
+  // Persist sort preferences
+  useEffect(() => {
+    localStorage.setItem('vazana-docs-sortBy', sortBy)
+    localStorage.setItem('vazana-docs-sortDir', sortDir)
+  }, [sortBy, sortDir])
 
   // Fetch clients and jobs for association dropdowns
   useEffect(() => {

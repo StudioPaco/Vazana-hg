@@ -3,9 +3,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Prevent horizontal overflow */
-html {
-  overflow-x: hidden;
+/* Scrollbar management: body doesn't scroll, content area does */
+html, body {
+  overflow: hidden;
+  height: 100%;
 }
 
 /* Custom Font Declarations */

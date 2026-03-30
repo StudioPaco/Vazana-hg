@@ -170,6 +170,16 @@ const resourceConfigs = {
         type: "text",
         required: true,
       },
+      {
+        name: "default_rate",
+        labelHe: "תעריף ברירת מחדל (₪)",
+        labelEn: "Default Rate (₪)",
+        placeholderHe: "800",
+        placeholderEn: "800",
+        type: "number",
+        required: false,
+        defaultValue: "800",
+      },
     ]
   }
 }
@@ -199,6 +209,7 @@ export default function ResourceModal({ type, open, onOpenChange }: ResourceModa
                 entityName={config.entityName}
                 entityNamePlural={config.entityNamePlural}
                 fields={config.fields}
+                textOverrides={{ addNew: "הוסף" }}
                 displayField={config.displayField}
                 language="he"
                 rtl={true}

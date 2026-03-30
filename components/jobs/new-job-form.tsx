@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon, RotateCcw } from "lucide-react"
+import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon, RotateCcw, DollarSignIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import DatabaseDropdown from "@/components/ui/database-dropdown"
 import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/hooks/use-job-form-data"
@@ -384,7 +384,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
         <>
           <div className="flex justify-between items-center mb-6">
             <div className="text-sm text-gray-500">
-              <span className="text-teal-600 font-semibold">{jobNumber}</span> :מספר עבודה
+              <span className="font-hebrew">מספר עבודה: </span><span className="text-teal-600 font-semibold">{jobNumber}</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">עבודה חדשה</h1>
           </div>
@@ -394,7 +394,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
       {!showHeader && (
         <div className="flex justify-end items-center mb-6">
           <div className="text-sm text-gray-500">
-            <span className="text-teal-600 font-semibold">{jobNumber}</span> :מספר עבודה
+            <span className="font-hebrew">מספר עבודה: </span><span className="text-teal-600 font-semibold">{jobNumber}</span>
           </div>
         </div>
       )}
@@ -402,7 +402,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
               <ClipboardIcon className="h-5 w-5 text-teal-600" />
               <span>פרטי העבודה</span>
             </CardTitle>
@@ -495,7 +495,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
               <SettingsIcon className="h-5 w-5 text-teal-600" />
               <span>פרטי הקצאה *</span>
             </CardTitle>
@@ -737,7 +737,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
               <span>משאבי עבודה</span>
               <UsersIcon className="h-5 w-5 text-teal-600" />
             </CardTitle>
@@ -798,9 +798,41 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
           </CardContent>
         </Card>
 
+        {/* Rate Input */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
+              <DollarSignIcon className="h-5 w-5 text-teal-600" />
+              <span>תעריף עבודה</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4" dir="rtl">
+              <div className="space-y-1 flex-1 max-w-xs">
+                <Label className="text-right block font-hebrew text-sm">
+                  תעריף (₪) {!formData.jobSpecificShiftRate && clientType === "existing" ? <span className="text-red-500">*</span> : ""}
+                </Label>
+                <Input
+                  type="number"
+                  value={formData.jobSpecificShiftRate ?? ""}
+                  onChange={(e) => setFormData({ ...formData, jobSpecificShiftRate: e.target.value ? Number(e.target.value) : null })}
+                  placeholder="800"
+                  className="text-right"
+                />
+              </div>
+              {formData.jobSpecificShiftRate && (
+                <p className="text-sm text-gray-500 font-hebrew mt-5">₪{formData.jobSpecificShiftRate.toLocaleString()}</p>
+              )}
+            </div>
+            {!formData.jobSpecificShiftRate && clientType === "existing" && (
+              <p className="text-xs text-amber-600 font-hebrew text-right mt-2">אם ללקוח אין תעריף מוגדר לסוג עבודה זה, חובה להזין תעריף ידנית</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
               <ClipboardIcon className="h-5 w-5 text-teal-600" />
               <span>תיאור העבודה והערות</span>
             </CardTitle>
@@ -819,22 +851,25 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
               <CalendarIcon className="h-5 w-5 text-teal-600" />
               <span>סכרון ליומן</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3" dir="rtl">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">הורד קובץ יומן (.ics) להוספה ליומן המכשיר (אופציונלי)</span>
-              <div className="flex items-center space-x-2">
-              <span className="text-sm">הוסף ליומן המכשיר</span>
-                <Switch
-                  checked={formData.calendarSync}
-                  onCheckedChange={(checked) => setFormData({ ...formData, calendarSync: checked })}
-                />
-              </div>
+              <span className="text-sm font-hebrew font-medium">הוסף ליומן (.ics)</span>
+              <Switch
+                checked={formData.calendarSync}
+                onCheckedChange={(checked) => setFormData({ ...formData, calendarSync: checked })}
+              />
             </div>
+            <p className="text-xs text-gray-500 font-hebrew">הורד קובץ יומן להוספה ליומן המכשיר</p>
+            <div className="flex items-center justify-between border-t pt-3">
+              <span className="text-sm font-hebrew font-medium text-gray-400">הוסף ל-Google Calendar</span>
+              <Switch disabled />
+            </div>
+            <p className="text-xs text-gray-400 font-hebrew">דורש חיבור Google בהגדרות → אינטגרציות</p>
           </CardContent>
         </Card>
 

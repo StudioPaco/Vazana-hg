@@ -73,8 +73,14 @@ export default function InvoicesPage({
   const [searchTerm, setSearchTerm] = useState(externalSearchTerm)
   const [statusFilter, setStatusFilter] = useState(externalStatusFilter)
   const [clientFilter, setClientFilter] = useState("all")
-  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'number'>('date')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'number'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-sortBy') as any) || 'date'
+    return 'date'
+  })
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-sortDir') as any) || 'desc'
+    return 'desc'
+  })
   const [dateRange, setDateRange] = useState<'all' | 'this_month' | 'last_month'>('all')
   const [loading, setLoading] = useState(true)
   const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null)
@@ -90,6 +96,12 @@ export default function InvoicesPage({
   useEffect(() => {
     setStatusFilter(externalStatusFilter)
   }, [externalStatusFilter])
+
+  // Persist sort preferences
+  useEffect(() => {
+    localStorage.setItem('vazana-invoices-sortBy', sortBy)
+    localStorage.setItem('vazana-invoices-sortDir', sortDir)
+  }, [sortBy, sortDir])
 
   // Fetch all clients for the filter dropdown
   useEffect(() => {

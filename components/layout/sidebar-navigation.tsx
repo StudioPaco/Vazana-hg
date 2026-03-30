@@ -222,14 +222,15 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="transition-all duration-300 w-full"
+      className="transition-all duration-300 h-screen overflow-y-auto overflow-x-hidden"
       style={{
         marginRight: isMinimized ? "80px" : "256px",
-        minHeight: "100vh",
         width: `calc(100vw - ${isMinimized ? "80px" : "256px"})`,
       }}
     >
-      {children}
+      <div className="min-h-full">
+        {children}
+      </div>
     </div>
   )
 }
