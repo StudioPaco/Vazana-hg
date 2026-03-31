@@ -359,7 +359,7 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
                     <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-red-500" onClick={() => removeClientRate(i)}>✕</Button>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={addClientRate} className="font-hebrew text-sm">
+                <Button type="button" variant="outline" size="sm" onClick={addClientRate} className="font-hebrew text-sm">
                   + הוסף תעריף
                 </Button>
                 {clientRates.length === 0 && (

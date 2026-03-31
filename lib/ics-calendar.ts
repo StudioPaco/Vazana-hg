@@ -99,11 +99,7 @@ export function downloadJobICS(job: JobCalendarData): void {
   const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" })
   const url = URL.createObjectURL(blob)
 
-  const link = document.createElement("a")
-  link.href = url
-  link.download = `vazana-job-${job.jobNumber}.ics`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  // Open in default calendar app instead of downloading
+  window.open(url, '_blank')
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
 }

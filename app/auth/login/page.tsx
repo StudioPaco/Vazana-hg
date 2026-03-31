@@ -71,10 +71,21 @@ function LoginForm() {
       const data = await res.json()
 
       if (res.ok && data.success) {
-        // Session cookies are set by the API route via @supabase/ssr
+        // Wait for session to propagate before redirecting
+        // Retry profile fetch until role is confirmed (max 3s)
+        let attempts = 0
+        while (attempts < 6) {
+          await new Promise(r => setTimeout(r, 500))
+          const profileRes = await fetch("/api/auth/profile")
+          if (profileRes.ok) {
+            const profileData = await profileRes.json()
+            if (profileData.profile?.role) break
+          }
+          attempts++
+        }
         const next = searchParams.get("next") || "/"
         router.push(next)
-        router.refresh() // Force re-render to pick up new session
+        router.refresh()
       } else {
         setError(data.error || "שגיאה בלתי ידועה")
       }
@@ -116,7 +127,8 @@ function LoginForm() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="text-left"
+                className="text-right"
+                dir="rtl"
                 autoComplete="username"
                 required
                 disabled={isLoading}
@@ -132,14 +144,15 @@ function LoginForm() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="text-left pl-10" // Changed from pr-10 to pl-10 to add padding on left side for icon
+                  className="text-right pr-10"
+                  dir="rtl"
                   autoComplete="current-password"
                   required
                   disabled={isLoading}
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" // Changed from left-3 to right-3 to position eye icon on opposite side from text (LTR)
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >

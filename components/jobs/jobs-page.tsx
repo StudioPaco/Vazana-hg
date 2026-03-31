@@ -541,6 +541,16 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                 </label>
               </div>
             </div>
+            {(statusFilter !== "all" || clientFilter !== "all" || searchTerm) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setStatusFilter("all"); setClientFilter("all"); setSearchTerm("") }}
+                className="font-hebrew text-xs text-gray-500 h-8"
+              >
+                נקה סינון
+              </Button>
+            )}
           </div>
 
           <div className="relative w-full sm:w-auto">
@@ -635,9 +645,9 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
 
               return (
                 <Card key={job.id} className={`transition-all duration-200 cursor-pointer ${
-                  job.is_deleted ? 'border-red-300 bg-red-50' :
-                  job.job_status === 'הושלם' ? 'border-green-200' :
-                  job.job_status === 'בתהליך' ? 'border-yellow-200' : ''
+                  job.is_deleted ? 'border-red-300 bg-red-50/50' :
+                  job.job_status === 'הושלם' ? 'border-green-200 bg-green-50/30' :
+                  job.job_status === 'בתהליך' ? 'border-yellow-200 bg-yellow-50/30' : ''
                 }`}>
                   <CardContent className="p-0">
                     {/* Compact title row */}
@@ -651,7 +661,8 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                           #{job.job_number}
                         </span>
                         <span className="text-sm font-hebrew text-gray-700">{job.client_name}</span>
-                        <span className="text-sm font-hebrew text-gray-500">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
+                        <span className="text-xs font-hebrew text-gray-400">{job.work_type}</span>
+                        <span className="text-sm font-hebrew text-gray-500 tabular-nums">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
                         {job.is_deleted && (
                           <Badge variant="destructive" className="text-xs">נמחק</Badge>
                         )}

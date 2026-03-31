@@ -411,10 +411,11 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
         />
         <StatCard
           icon={<UserCheck className="h-5 w-5 text-purple-600" />}
-          label="עובדים"
-          value={`${stats.availableWorkersThisWeek} פנויים`}
-          subtitle={`מתוך ${stats.totalWorkers} עובדים`}
+          label="עובדים פנויים"
+          value={stats.availableWorkersThisWeek}
+          subtitle={`מתוך ${stats.totalWorkers}`}
           color="bg-purple-500"
+          href="/calendar?type=workers"
         />
         <StatCard
           icon={<Truck className="h-5 w-5 text-gray-600" />}
@@ -422,6 +423,7 @@ export default function MainDashboard({ showHeader = true }: { showHeader?: bool
           value={`${stats.totalVehicles} / ${stats.totalCarts}`}
           subtitle={`${stats.totalVehicles} רכבים · ${stats.totalCarts} עגלות`}
           color="bg-gray-500"
+          href="/calendar?type=vehicles"
         />
       </div>
 

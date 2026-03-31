@@ -33,11 +33,32 @@ export async function POST(request: NextRequest) {
     const { action } = body
 
     if (action === 'download') {
-      // Return as downloadable JSON
       return new NextResponse(backupJson, {
         headers: {
           'Content-Type': 'application/json',
           'Content-Disposition': `attachment; filename="vazana-backup-${new Date().toISOString().split('T')[0]}.json"`,
+        },
+      })
+    }
+
+    if (action === 'download-csv') {
+      // Convert to CSV format — one CSV per table
+      const csvParts: string[] = []
+      for (const [table, rows] of Object.entries(backup)) {
+        if (!Array.isArray(rows) || rows.length === 0) continue
+        const headers = Object.keys(rows[0])
+        const csvRows = [headers.join(','), ...rows.map(row =>
+          headers.map(h => {
+            const val = String(row[h] ?? '').replace(/"/g, '""')
+            return val.includes(',') || val.includes('"') || val.includes('\n') ? `"${val}"` : val
+          }).join(',')
+        )]
+        csvParts.push(`--- ${table} ---\n${csvRows.join('\n')}`)
+      }
+      return new NextResponse(csvParts.join('\n\n'), {
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="vazana-backup-${new Date().toISOString().split('T')[0]}.csv"`,
         },
       })
     }

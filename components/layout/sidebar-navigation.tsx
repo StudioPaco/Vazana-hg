@@ -36,7 +36,7 @@ const navigationItems = [
   { name: "לקוחות", href: "/clients", icon: Users },
   { name: "חשבוניות", href: "/invoices", icon: FileText },
   { name: "מסמכים", href: "/documents", icon: Archive },
-  { name: "לוח זמנים", href: "/calendar", icon: Calendar },
+  { name: "יומן", href: "/calendar", icon: Calendar },
 ]
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {

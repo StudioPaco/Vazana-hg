@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -57,13 +58,15 @@ type ResourceType = "workers" | "vehicles" | "carts" | "cross"
 type ViewScope = "week" | "month"
 
 export default function CalendarPage() {
+  const searchParams = useSearchParams()
   const [jobs, setJobs] = useState<Job[]>([])
   const [workers, setWorkers] = useState<Worker[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [carts, setCarts] = useState<CartItem[]>([])
   const [availability, setAvailability] = useState<Availability[]>([])
   const [loading, setLoading] = useState(true)
-  const [resourceType, setResourceType] = useState<ResourceType>("workers")
+  const initialType = (searchParams.get('type') as ResourceType) || "workers"
+  const [resourceType, setResourceType] = useState<ResourceType>(initialType)
   const [viewScope, setViewScope] = useState<ViewScope>("week")
   const [weekOffset, setWeekOffset] = useState(0)
   const [showClashesOnly, setShowClashesOnly] = useState(false)

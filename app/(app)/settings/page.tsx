@@ -548,7 +548,7 @@ export default function SettingsPage() {
                       <SelectTrigger className="text-right font-hebrew">
                         <SelectValue placeholder="בחר ערכת צבעים..." />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent dir="rtl">
                         {colorThemes.map((theme) => (
                           <SelectItem key={theme.name} value={theme.name} className="font-hebrew">
                             <div className="flex items-center gap-2">
@@ -997,7 +997,7 @@ export default function SettingsPage() {
                           <SelectTrigger className="text-right font-hebrew w-48">
                             <SelectValue placeholder="בחר תנאי תשלום..." />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent dir="rtl">
                             {paymentTerms.map((term) => (
                               <SelectItem key={term.id} value={term.value} className="font-hebrew">
                                 {term.label}
@@ -1020,7 +1020,7 @@ export default function SettingsPage() {
                           <SelectTrigger className="text-right font-hebrew">
                             <SelectValue placeholder="בחר פורמט..." />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent dir="rtl">
                             <SelectItem value="YYYY-####" className="font-hebrew">2025-0001 (שנה-מספר רצוף)</SelectItem>
                             <SelectItem value="####-YYYY" className="font-hebrew">0001-2025 (מספר-שנה)</SelectItem>
                             <SelectItem value="VZ-####" className="font-hebrew">VZ-0001 (קידומת חברה)</SelectItem>
@@ -1400,7 +1400,7 @@ export default function SettingsPage() {
                         <SelectTrigger className="text-right" dir="rtl">
                           <SelectValue placeholder="בחר תפקיד..." />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent dir="rtl">
                           <SelectItem value="admin" className="font-hebrew">מנהל</SelectItem>
                           <SelectItem value="staff" className="font-hebrew">משתמש</SelectItem>
                         </SelectContent>
@@ -1637,12 +1637,39 @@ export default function SettingsPage() {
                           }}
                         >
                           <Download className="w-4 h-4 ml-1" />
-                          הורד גיבוי ידני
+                          JSON גיבוי
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="font-hebrew"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch('/api/backup', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'download-csv' }),
+                              })
+                              if (res.ok) {
+                                const blob = await res.blob()
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.csv`
+                                a.click()
+                                URL.revokeObjectURL(url)
+                                toast({ title: "גיבוי CSV הורד בהצלחה" })
+                              } else {
+                                toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
+                              }
+                            } catch {
+                              toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
+                            }
+                          }}
+                        >
+                          <Download className="w-4 h-4 ml-1" />
+                          CSV גיבוי
                         </Button>
                       </div>
-                      <p className="text-xs text-gray-400 text-right font-hebrew">
-                        לגיבוי אוטומטי ל-Google Drive, צור קשר עם מנהל המערכת להגדרת חיבור OAuth.
-                      </p>
                     </div>
                   </div>
                   
@@ -1655,7 +1682,7 @@ export default function SettingsPage() {
                           <SelectTrigger className="text-right font-hebrew">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent dir="rtl">
                             <SelectItem value="local_wins" className="font-hebrew">מעדיף שינויים מקומיים</SelectItem>
                             <SelectItem value="remote_wins" className="font-hebrew">מעדיף שינויים מרוחקים</SelectItem>
                             <SelectItem value="manual" className="font-hebrew">החלטה ידנית</SelectItem>
@@ -1825,7 +1852,7 @@ export default function SettingsPage() {
                             <SelectTrigger className="text-right font-hebrew">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent dir="rtl">
                               <SelectItem value="daily" className="font-hebrew">יומי</SelectItem>
                               <SelectItem value="weekly" className="font-hebrew">שבועי</SelectItem>
                               <SelectItem value="monthly" className="font-hebrew">חודשי</SelectItem>

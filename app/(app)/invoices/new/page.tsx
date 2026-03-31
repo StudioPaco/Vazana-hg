@@ -72,7 +72,7 @@ export default function NewInvoicePage() {
   const [selectedClient, setSelectedClient] = useState("")
   const [selectedMonth, setSelectedMonth] = useState("")
   const [notes, setNotes] = useState("")
-  const [paymentTerms, setPaymentTerms] = useState("נטו 30")
+  const [paymentTerms, setPaymentTerms] = useState("שוטף +30")
   const [includeBankDetails, setIncludeBankDetails] = useState(true)
   const [showOlderJobs, setShowOlderJobs] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
@@ -472,6 +472,7 @@ export default function NewInvoicePage() {
       const invoiceData = {
         client_id: selectedClient,
         invoice_number: invoiceNumber,
+        invoice_date: new Date().toISOString().split('T')[0],
         status: 'draft',
         subtotal: summary.subtotal,
         tax_amount: summary.tax_amount,
@@ -480,7 +481,6 @@ export default function NewInvoicePage() {
         due_date: dueDate.toISOString().split('T')[0],
         notes,
         payment_terms: paymentTerms,
-        // created_by handled by Supabase auth.uid() column default
       }
       
       const { data: invoice, error: invoiceError } = await supabase
@@ -705,9 +705,19 @@ export default function NewInvoicePage() {
                     <p className="text-gray-600">
                       לא נמצאו עבודות עבור {clients.find(c => c.id === lastSearchedClient)?.company_name || 'הלקוח'} ב{months.find(m => m.value === lastSearchedMonth)?.label || 'החודש שנבחר'}
                     </p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      נסה לבחור חודש אחר או לבדוק עבודות ישנות שלא חויבו
-                    </p>
+                    <div className="flex items-center gap-3 justify-center mt-4">
+                      <Checkbox
+                        id="showOlderJobsEmpty"
+                        checked={showOlderJobs}
+                        onCheckedChange={(checked) => {
+                          setShowOlderJobs(checked as boolean)
+                          if (checked) fetchOlderJobs()
+                        }}
+                      />
+                      <label htmlFor="showOlderJobsEmpty" className="text-sm font-medium cursor-pointer font-hebrew">
+                        הצג עבודות ישנות שלא חויבו
+                      </label>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -778,10 +788,11 @@ export default function NewInvoicePage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="נטו 30" className="text-right">נטו 30</SelectItem>
-                          <SelectItem value="נטו 45" className="text-right">נטו 45</SelectItem>
-                          <SelectItem value="נטו 60" className="text-right">נטו 60</SelectItem>
-                          <SelectItem value="מיידי" className="text-right">מיידי</SelectItem>
+                          <SelectItem value="מיידי">מיידי</SelectItem>
+                          <SelectItem value="שוטף +15">שוטף +15</SelectItem>
+                          <SelectItem value="שוטף +30">שוטף +30</SelectItem>
+                          <SelectItem value="שוטף +60">שוטף +60</SelectItem>
+                          <SelectItem value="שוטף +90">שוטף +90</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -857,7 +868,7 @@ export default function NewInvoicePage() {
                           setSelectedClient("")
                           setSelectedMonth("")
                           setNotes("")
-                          setPaymentTerms("נטו 30")
+                          setPaymentTerms("שוטף +30")
                           setIncludeBankDetails(true)
                           setShowOlderJobs(false)
                           setJobs([])

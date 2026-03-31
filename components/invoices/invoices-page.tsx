@@ -137,8 +137,8 @@ export default function InvoicesPage({
   useEffect(() => {
     let filtered = invoices.filter(
       (invoice) =>
-        invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.clients.company_name.toLowerCase().includes(searchTerm.toLowerCase()),
+        (invoice.invoice_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (invoice.clients?.company_name || '').toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
     if (statusFilter !== "all") {
@@ -146,7 +146,7 @@ export default function InvoicesPage({
     }
 
     if (clientFilter !== "all") {
-      filtered = filtered.filter((invoice) => invoice.clients.company_name === clientFilter)
+      filtered = filtered.filter((invoice) => invoice.clients?.company_name === clientFilter)
     }
 
     // Date range filter
@@ -433,7 +433,7 @@ export default function InvoicesPage({
                     {/* Invoice info - positioned at top-right */}
                     <div className="absolute top-0 right-0 text-right">
                       <h3 className="text-lg font-bold text-gray-900">חשבונית #{invoice.invoice_number}</h3>
-                      <p className="text-sm text-gray-600">{invoice.clients.company_name}</p>
+                      <p className="text-sm text-gray-600">{invoice.clients?.company_name || 'לקוח לא ידוע'}</p>
                       <Badge
                         className={getStatusColor(
                           isOverdue(invoice.due_date, invoice.status) ? "overdue" : invoice.status,
