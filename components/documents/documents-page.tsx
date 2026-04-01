@@ -87,7 +87,7 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
       if (filter !== "all") {
         params.append("entityType", filter)
       }
-      if (entityId) {
+      if (entityId && entityId !== "all") {
         params.append("entityId", entityId)
       }
 
@@ -311,7 +311,7 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
                 <SelectValue placeholder="כל העבודות" />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                <SelectItem value="">כל העבודות</SelectItem>
+                <SelectItem value="all">כל העבודות</SelectItem>
                 {jobs.slice(0, 10).map(j => (
                   <SelectItem key={j.id} value={j.id}>#{j.job_number} — {j.client_name}</SelectItem>
                 ))}
@@ -326,7 +326,7 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
                 <SelectValue placeholder="כל הלקוחות" />
               </SelectTrigger>
               <SelectContent dir="rtl">
-                <SelectItem value="">כל הלקוחות</SelectItem>
+                <SelectItem value="all">כל הלקוחות</SelectItem>
                 {clients.map(c => (
                   <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
                 ))}
