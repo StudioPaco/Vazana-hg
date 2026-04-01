@@ -661,9 +661,9 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                   <CardContent className="p-0">
                     {/* Compact title row — grid for column alignment */}
                     <div
-                      className="grid items-center px-4 py-1.5 gap-3 w-full"
+                      className="grid items-center px-4 py-1.5 w-full"
                       dir="rtl"
-                      style={{ gridTemplateColumns: '55px 1.5fr 1fr 95px 70px 85px 24px 55px' }}
+                      style={{ gridTemplateColumns: '1fr 2fr 1.5fr 1.5fr 1fr 1.2fr 0.4fr 0.8fr' }}
                       onClick={() => toggleJobExpansion(job.id)}
                     >
                       <span className={`font-bold font-hebrew text-sm text-center ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>#{job.job_number}</span>

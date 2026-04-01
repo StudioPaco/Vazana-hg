@@ -455,7 +455,7 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
       {/* File Preview Modal */}
       {previewDoc && (
         <Dialog open={true} onOpenChange={() => setPreviewDoc(null)}>
-          <DialogContent className="!max-w-[95vw] w-[95vw] h-[90vh] max-h-[90vh]" dir="rtl">
+          <DialogContent className="!max-w-[80vw] w-[80vw] h-[85vh] max-h-[85vh]" dir="rtl">
             <DialogHeader>
               <DialogTitle className="font-hebrew text-right">{previewDoc.filename}</DialogTitle>
             </DialogHeader>
