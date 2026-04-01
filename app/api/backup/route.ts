@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import * as XLSX from "xlsx"
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,6 +60,23 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
           'Content-Disposition': `attachment; filename="vazana-backup-${new Date().toISOString().split('T')[0]}.csv"`,
+        },
+      })
+    }
+
+    if (action === 'download-xlsx') {
+      const wb = XLSX.utils.book_new()
+      for (const [table, rows] of Object.entries(backup)) {
+        if (!Array.isArray(rows) || rows.length === 0) continue
+        const ws = XLSX.utils.json_to_sheet(rows)
+        // Truncate sheet name to 31 chars (Excel limit)
+        XLSX.utils.book_append_sheet(wb, ws, table.slice(0, 31))
+      }
+      const xlsxBuffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+      return new NextResponse(xlsxBuffer, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="vazana-backup-${new Date().toISOString().split('T')[0]}.xlsx"`,
         },
       })
     }

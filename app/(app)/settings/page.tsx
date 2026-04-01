@@ -1750,6 +1750,15 @@ export default function SettingsPage() {
                       }}>
                         <Download className="w-4 h-4 ml-1" /> CSV גיבוי
                       </Button>
+                      <Button variant="outline" className="font-hebrew" onClick={async () => {
+                        try {
+                          const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download-xlsx' }) })
+                          if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.xlsx`; a.click(); URL.revokeObjectURL(url); toast({ title: "גיבוי XLSX הורד בהצלחה" }) }
+                          else toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
+                        } catch { toast({ title: "שגיאה", variant: "destructive" }) }
+                      }}>
+                        <Download className="w-4 h-4 ml-1" /> XLSX גיבוי
+                      </Button>
                     </div>
                   </div>
 

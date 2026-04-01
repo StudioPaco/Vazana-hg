@@ -526,40 +526,20 @@ export default function InvoicesPage({
                     </button>
 
                     {expandedInvoice === invoice.id && (
-                      <div className="mt-3 space-y-2 bg-gray-50 rounded-lg p-3">
+                      <div className="mt-3 space-y-2 bg-gray-50 rounded-lg p-3" dir="rtl">
                         {invoiceJobs[invoice.id] && invoiceJobs[invoice.id].length > 0 ? (
                           invoiceJobs[invoice.id].map((jobItem) => (
                             <div
                               key={jobItem.id}
-                              className="flex justify-between items-start py-3 border-b border-gray-200 last:border-b-0"
+                              className="flex items-center gap-3 py-2 border-b border-gray-200 last:border-b-0 text-sm"
                             >
-                              <div className="flex flex-col items-start gap-1">
-                                <div className="flex items-center gap-2">
-                                  <StatusBadge
-                                    status={jobItem.jobs?.job_status || "הושלם"}
-                                    type="job"
-                                    size="sm"
-                                  />
-                                  <span className="text-xs text-gray-500">סכום: ₪{jobItem.line_total.toLocaleString()}</span>
-                                </div>
-                                {jobItem.jobs?.worker_name && (
-                                  <span className="text-xs text-gray-500">עובד: {jobItem.jobs.worker_name}</span>
-                                )}
-                                {jobItem.jobs?.shift_type && (
-                                  <span className="text-xs text-gray-500">משמרת: {jobItem.jobs.shift_type}</span>
-                                )}
-                              </div>
-                              <div className="text-right">
-                                <p className="font-medium text-sm">עבודה #{jobItem.jobs?.job_number || 'N/A'}</p>
-                                <p className="text-xs text-gray-600">
-                                  {jobItem.work_type} - {jobItem.site_location}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {new Date(jobItem.job_date).toLocaleDateString("he-IL")}
-                                </p>
-                                <p className="text-xs text-gray-600 mt-1">
-                                  כמות: {jobItem.quantity} x ₪{jobItem.unit_price.toLocaleString()}
-                                </p>
+                              <span className="font-medium font-hebrew whitespace-nowrap">#{jobItem.jobs?.job_number || '—'}</span>
+                              <span className="text-gray-500 font-hebrew">{new Date(jobItem.job_date).toLocaleDateString("he-IL")}</span>
+                              <span className="text-gray-600 font-hebrew truncate">{jobItem.work_type} - {jobItem.site_location}</span>
+                              {jobItem.jobs?.worker_name && <span className="text-xs text-gray-400 font-hebrew">{jobItem.jobs.worker_name}</span>}
+                              <div className="mr-auto flex items-center gap-2">
+                                <StatusBadge status={jobItem.jobs?.job_status || "הושלם"} type="job" size="sm" />
+                                <span className="text-xs font-medium">₪{Number(jobItem.line_total || 0).toLocaleString()}</span>
                               </div>
                             </div>
                           ))
