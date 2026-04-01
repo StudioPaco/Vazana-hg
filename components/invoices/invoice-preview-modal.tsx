@@ -1,7 +1,8 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Download, Printer } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 interface Job {
   id: string
@@ -51,17 +52,32 @@ export function InvoicePreviewModal({
   includeBankDetails
 }: InvoicePreviewModalProps) {
   
-  // Get business details from localStorage (from settings)
-  const businessName = typeof window !== 'undefined' ? localStorage.getItem('vazana-business-name') || 'חברת ואזנה' : 'חברת ואזנה'
-  const businessAddress = typeof window !== 'undefined' ? localStorage.getItem('vazana-business-address') || 'כתובת החברה' : 'כתובת החברה'
-  const businessPhone = typeof window !== 'undefined' ? localStorage.getItem('vazana-business-phone') || '050-1234567' : '050-1234567'
-  const businessEmail = typeof window !== 'undefined' ? localStorage.getItem('vazana-business-email') || 'info@vazana.com' : 'info@vazana.com'
-  
-  // Bank details
-  const bankAccountName = typeof window !== 'undefined' ? localStorage.getItem('vazana-bank-account-name') || 'חברת ואזנה בע"מ' : 'חברת ואזנה בע"מ'
-  const bankName = typeof window !== 'undefined' ? localStorage.getItem('vazana-bank-name') || 'בנק לאומי' : 'בנק לאומי'
-  const bankBranch = typeof window !== 'undefined' ? localStorage.getItem('vazana-bank-branch') || '123' : '123'
-  const bankAccountNumber = typeof window !== 'undefined' ? localStorage.getItem('vazana-bank-account-number') || '12-345-678901' : '12-345-678901'
+  // Fetch business details from DB
+  const [biz, setBiz] = useState({ name: 'וזאנה אבטחת כבישים', address: '', phone: '', email: '', bankAccountName: '', bankName: '', bankBranch: '', bankAccountNumber: '' })
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('business_settings').select('*').limit(1).single().then(({ data }) => {
+      if (data) setBiz({
+        name: data.company_name || 'וזאנה אבטחת כבישים',
+        address: data.address || '',
+        phone: data.phone || '',
+        email: data.company_email || '',
+        bankAccountName: data.bank_account_name || '',
+        bankName: data.bank_name || '',
+        bankBranch: data.bank_branch || '',
+        bankAccountNumber: data.bank_account_number || '',
+      })
+    })
+  }, [isOpen])
+
+  const businessName = biz.name
+  const businessAddress = biz.address
+  const businessPhone = biz.phone
+  const businessEmail = biz.email
+  const bankAccountName = biz.bankAccountName
+  const bankName = biz.bankName
+  const bankBranch = biz.bankBranch
+  const bankAccountNumber = biz.bankAccountNumber
   
   const currentDate = new Date().toLocaleDateString('he-IL')
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('he-IL') // 30 days from now
@@ -88,6 +104,7 @@ export function InvoicePreviewModal({
             </div>
             
             <div className="text-left">
+              <img src="/VazanaLogo-02.png" alt="Vazana" className="h-12 mb-2" />
               <h2 className="text-xl font-bold text-gray-800 mb-2">{businessName}</h2>
               <div className="text-sm text-gray-600">
                 <p>{businessAddress}</p>
@@ -249,55 +266,41 @@ export function InvoicePreviewModal({
             <Printer className="h-4 w-4" />
             הדפס
           </Button>
-          <Button variant="outline" className="flex items-center gap-2" onClick={() => {
-            const invoiceEl = document.getElementById('invoice-preview-content')
-            if (!invoiceEl) { alert('לא נמצא תוכן'); return }
-            const w = window.open('', '_blank')
-            if (!w) return
-            w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8">
-              <title>חשבונית ${invoiceNumber}</title>
-              <style>
-                @page { size: A4 landscape; margin: 10mm; }
-                @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } }
-                * { font-family: Arial, Helvetica, sans-serif; direction: rtl; box-sizing: border-box; margin: 0; }
-                html, body { direction: rtl; padding: 0; }
-                body { padding: 20px; color: #1a1a1a; text-align: right; font-size: 13px; }
-                h1 { font-size: 28px; color: #0d9488; margin-bottom: 8px; }
-                h2 { font-size: 18px; margin-bottom: 6px; }
-                h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-                p { margin: 2px 0; }
-                table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-                th { background: #f5f5f5 !important; border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: 600; }
-                td { border: 1px solid #d1d5db; padding: 8px; text-align: right; }
-                tr.bg-amber-50\\/50, tr[class*="amber"] { background: #fffbeb !important; }
-                .bg-gray-50 { background: #f9fafb !important; }
-                .text-teal-600 { color: #0d9488; }
-                .text-gray-600, .text-gray-500 { color: #6b7280; }
-                .text-gray-300 { color: #d1d5db; }
-                .font-bold, .font-semibold { font-weight: 700; }
-                .font-medium { font-weight: 500; }
-                .text-sm { font-size: 13px; } .text-xs { font-size: 11px; } .text-lg { font-size: 18px; } .text-xl { font-size: 20px; } .text-3xl { font-size: 28px; }
-                .text-right { text-align: right; } .text-left { text-align: left; }
-                .mb-2 { margin-bottom: 8px; } .mb-8 { margin-bottom: 24px; }
-                .p-4 { padding: 12px; } .p-3 { padding: 8px; } .px-3 { padding-left: 12px; padding-right: 12px; }
-                .py-2 { padding-top: 8px; padding-bottom: 8px; } .py-3 { padding-top: 12px; padding-bottom: 12px; }
-                .rounded { border-radius: 6px; } .rounded-lg { border-radius: 8px; }
-                .border { border: 1px solid #e5e7eb; } .border-b { border-bottom: 1px solid #e5e7eb; } .border-t { border-top: 1px solid #e5e7eb; }
-                .flex { display: flex; } .justify-between { justify-content: space-between; } .justify-end { justify-content: flex-end; }
-                .items-start { align-items: flex-start; }
-                .w-72 { width: 280px; }
-                div[dir="rtl"] { direction: rtl; text-align: right; }
-                svg, button, [data-slot] { display: none !important; }
-              </style>
-            </head><body>
-              ${invoiceEl.innerHTML}
-              <div class="no-print" style="text-align:center;margin-top:20px;padding:10px;border-top:1px solid #eee;">
-                <button onclick="window.print()" style="padding:8px 24px;background:#0d9488;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;">
-                  שמור כ-PDF (Ctrl+P → שמור כ-PDF)
-                </button>
-              </div>
-            </body></html>`)
-            w.document.close()
+          <Button variant="outline" className="flex items-center gap-2" onClick={async () => {
+            // Try server-side PDF first (Chromium on Vercel), fall back to print dialog
+            try {
+              // For preview (no saved invoice yet), use print dialog
+              const invoiceEl = document.getElementById('invoice-preview-content')
+              if (!invoiceEl) { alert('לא נמצא תוכן'); return }
+              const w = window.open('', '_blank')
+              if (!w) return
+              w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8">
+                <title>חשבונית ${invoiceNumber}</title>
+                <style>
+                  @page { size: A4 landscape; margin: 10mm; }
+                  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+                  * { font-family: Arial, Helvetica, sans-serif; direction: rtl; box-sizing: border-box; margin: 0; }
+                  html, body { direction: rtl; padding: 0; }
+                  body { padding: 20px; color: #1a1a1a; text-align: right; font-size: 13px; }
+                  h1 { font-size: 28px; color: #0d9488; margin-bottom: 8px; }
+                  h2 { font-size: 18px; margin-bottom: 6px; } h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+                  p { margin: 2px 0; } img { max-height: 48px; margin-bottom: 8px; }
+                  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+                  th { background: #f5f5f5 !important; border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: 600; }
+                  td { border: 1px solid #d1d5db; padding: 8px; text-align: right; }
+                  .bg-gray-50 { background: #f9fafb !important; } .text-teal-600 { color: #0d9488; }
+                  .text-gray-600, .text-gray-500 { color: #6b7280; } .font-bold, .font-semibold { font-weight: 700; } .font-medium { font-weight: 500; }
+                  .text-sm { font-size: 13px; } .text-xs { font-size: 11px; } .text-lg { font-size: 18px; } .text-xl { font-size: 20px; } .text-3xl { font-size: 28px; }
+                  .text-right { text-align: right; } .text-left { text-align: left; }
+                  .mb-2 { margin-bottom: 8px; } .mb-8 { margin-bottom: 24px; }
+                  .p-4 { padding: 12px; } .rounded { border-radius: 6px; } .rounded-lg { border-radius: 8px; }
+                  .border { border: 1px solid #e5e7eb; } .border-b { border-bottom: 1px solid #e5e7eb; }
+                  .flex { display: flex; } .justify-between { justify-content: space-between; } .justify-end { justify-content: flex-end; }
+                  .w-72 { width: 280px; } svg, button { display: none !important; }
+                </style>
+              </head><body>${invoiceEl.innerHTML}<script>setTimeout(function(){window.print()},600);</script></body></html>`)
+              w.document.close()
+            } catch { alert('שגיאה בהורדת PDF') }
           }}>
             <Download className="h-4 w-4" />
             הורד PDF

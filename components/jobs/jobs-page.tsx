@@ -100,6 +100,7 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
   const { preferences, loading: preferencesLoading, updatePreference } = useUserPreferences()
   const [jobs, setJobs] = useState<Job[]>([])
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
+  const [jobDocCounts, setJobDocCounts] = useState<Record<string, number>>({})
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [clientFilter, setClientFilter] = useState("all")
@@ -149,6 +150,12 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
         // Don't show sample data - just show empty state
         setJobs([])
         setFilteredJobs([])
+      // Fetch document counts per job
+      fetch('/api/documents?entityType=job').then(r => r.json()).then((docs: any[]) => {
+        const counts: Record<string, number> = {}
+        if (Array.isArray(docs)) docs.forEach(d => { if (d.entity_id) counts[d.entity_id] = (counts[d.entity_id] || 0) + 1 })
+        setJobDocCounts(counts)
+      }).catch(() => {})
       } finally {
         setLoading(false)
       }
@@ -657,7 +664,10 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                       style={{ gridTemplateColumns: '55px minmax(100px,1.5fr) minmax(60px,0.8fr) 95px 70px 85px 65px' }}
                       onClick={() => toggleJobExpansion(job.id)}
                     >
-                      <span className={`font-bold font-hebrew text-sm ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>#{job.job_number}</span>
+                      <span className={`font-bold font-hebrew text-sm ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>
+                        #{job.job_number}
+                        {jobDocCounts[job.id] > 0 && <span className="inline-flex items-center justify-center w-4 h-4 text-[9px] bg-blue-100 text-blue-700 rounded-full mr-1">{jobDocCounts[job.id]}</span>}
+                      </span>
                       <span className="text-sm font-hebrew text-gray-700 truncate">{job.client_name}</span>
                       <span className="text-xs font-hebrew text-gray-400 truncate">{job.work_type}</span>
                       <span className="text-sm font-hebrew text-gray-500 tabular-nums text-center">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>

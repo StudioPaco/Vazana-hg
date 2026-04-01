@@ -81,24 +81,44 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       notes: invoice.notes,
     }
 
-    // Generate PDF
-    const pdfResult = await invoiceService.generateInvoicePDF(invoiceData)
+    // Generate HTML
+    const html = invoiceService.generateInvoiceHTML(invoiceData)
 
-    if (!pdfResult.success) {
-      // Fallback to HTML if PDF generation fails
-      const html = invoiceService.generateInvoiceHTML(invoiceData)
-      return new NextResponse(html, {
+    // Generate real PDF using Chromium (works on Vercel serverless)
+    try {
+      const chromium = (await import('@sparticuz/chromium')).default
+      const puppeteer = (await import('puppeteer-core')).default
+
+      const browser = await puppeteer.launch({
+        args: [...chromium.args, '--no-sandbox'],
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      })
+
+      const page = await browser.newPage()
+      await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 10000 })
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        landscape: true,
+        printBackground: true,
+        margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+      })
+      await browser.close()
+
+      return new NextResponse(Buffer.from(pdfBuffer), {
         headers: {
-          "Content-Type": "text/html; charset=utf-8",
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${invoice.invoice_number || 'invoice'}.pdf"`,
         },
+      })
+    } catch (pdfError) {
+      console.error("Chromium PDF failed, returning HTML:", pdfError)
+      return new NextResponse(html, {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       })
     }
 
-    if (!pdfResult.pdfBuffer) {
-      return NextResponse.json({ error: "PDF generation failed" }, { status: 500 })
-    }
-
-    return new NextResponse(pdfResult.pdfBuffer as BodyInit, {
+    return new NextResponse(html as BodyInit, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="invoice-${invoice.invoice_number}.pdf"`,
