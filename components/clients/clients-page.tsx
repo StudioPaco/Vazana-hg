@@ -56,6 +56,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const [statusFilter, setStatusFilter] = useState("all")
   const [cityFilter, setCityFilter] = useState("all")
   const [sortBy, setSortBy] = useState<'name' | 'date'>('name')
+  const [clientDocCounts, setClientDocCounts] = useState<Record<string, number>>({})
   const [viewMode, setViewMode] = useState<'list' | 'table'>(() => {
     if (typeof window !== 'undefined') return (localStorage.getItem('vazana-clients-viewMode') as any) || 'list'
     return 'list'
@@ -127,6 +128,15 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const mostActiveClient = getMostActiveClient()
 
   useEffect(() => { localStorage.setItem('vazana-clients-viewMode', viewMode) }, [viewMode])
+
+  // Fetch document counts per client
+  useEffect(() => {
+    fetch('/api/documents?entityType=client').then(r => r.json()).then((docs: any[]) => {
+      const counts: Record<string, number> = {}
+      if (Array.isArray(docs)) docs.forEach(d => { if (d.entity_id) counts[d.entity_id] = (counts[d.entity_id] || 0) + 1 })
+      setClientDocCounts(counts)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -488,7 +498,10 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
               <tbody className="divide-y">
                 {filteredClients.map((client) => (
                   <tr key={client.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium">{client.company_name}</td>
+                    <td className="px-4 py-3 font-medium">
+                      {client.company_name}
+                      {clientDocCounts[client.id] > 0 && <span className="inline-flex items-center justify-center w-4 h-4 text-[9px] bg-blue-100 text-blue-700 rounded-full mr-1">{clientDocCounts[client.id]}</span>}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{client.contact_person}</td>
                     <td className="px-4 py-3 text-gray-600" dir="ltr">{client.phone}</td>
                     <td className="px-4 py-3 text-gray-600">{client.city || '—'}</td>
@@ -517,7 +530,10 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                 <div className="relative mb-4">
                   {/* Client name and info - positioned at top-right */}
                   <div className="absolute top-0 right-0 text-right">
-                    <h3 className="text-lg font-bold text-gray-900">{client.company_name}</h3>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {client.company_name}
+                      {clientDocCounts[client.id] > 0 && <span className="inline-flex items-center justify-center w-4 h-4 text-[9px] bg-blue-100 text-blue-700 rounded-full mr-1">{clientDocCounts[client.id]}</span>}
+                    </h3>
                     <p className="text-sm text-gray-600">{client.contact_person}</p>
                     <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
                       {client.status === "active" ? "פעיל" : "לא פעיל"}

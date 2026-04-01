@@ -40,6 +40,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
   const { carts, loading: cartsLoading, error: cartsError } = useCarts()
   const [clientType, setClientType] = useState<"new" | "existing">("existing")
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [conflictWarnings, setConflictWarnings] = useState<string[]>([])
   const [clientRates, setClientRates] = useState<{ work_type_id: string; rate: number }[]>([])
   const [newClientRates, setNewClientRates] = useState<{ id: string; work_type_id: string; rate: number }[]>([])
   const [formData, setFormData] = useState({
@@ -141,6 +142,46 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
       }
     }
   }, [clientRates, formData.jobType])
+
+  // Check for worker/vehicle conflicts on same date
+  useEffect(() => {
+    const checkConflicts = async () => {
+      if (!formData.date) { setConflictWarnings([]); return }
+      const warnings: string[] = []
+      const supabase = createClient()
+
+      if (formData.employee) {
+        const selectedWorker = employees.find((e: any) => e.id === formData.employee)
+        if (selectedWorker) {
+          const { data: conflicts } = await supabase
+            .from('jobs')
+            .select('job_number, client_name')
+            .eq('worker_id', formData.employee)
+            .eq('job_date', formData.date)
+          if (conflicts && conflicts.length > 0) {
+            warnings.push(`⚠️ ${selectedWorker.name} כבר משובץ בתאריך זה (עבודה #${conflicts[0].job_number} - ${conflicts[0].client_name})`)
+          }
+        }
+      }
+
+      if (formData.vehicle) {
+        const selectedVehicle = vehicles.find((v: any) => v.id === formData.vehicle)
+        if (selectedVehicle) {
+          const { data: conflicts } = await supabase
+            .from('jobs')
+            .select('job_number, client_name')
+            .eq('vehicle_id', formData.vehicle)
+            .eq('job_date', formData.date)
+          if (conflicts && conflicts.length > 0) {
+            warnings.push(`⚠️ ${selectedVehicle.name} כבר בשימוש בתאריך זה (עבודה #${conflicts[0].job_number} - ${conflicts[0].client_name})`)
+          }
+        }
+      }
+
+      setConflictWarnings(warnings)
+    }
+    checkConflicts()
+  }, [formData.employee, formData.vehicle, formData.date])
 
   useEffect(() => {
     const fetchJobNumber = async () => {
@@ -860,6 +901,15 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
             <p className="text-xs text-gray-400 font-hebrew">דורש חיבור Google בהגדרות → אינטגרציות</p>
           </CardContent>
         </Card>
+
+        {conflictWarnings.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1" dir="rtl">
+            {conflictWarnings.map((w, i) => (
+              <p key={i} className="text-sm text-amber-800 font-hebrew">{w}</p>
+            ))}
+            <p className="text-xs text-amber-600 font-hebrew">ניתן להמשיך, אך שים לב להתנגשות</p>
+          </div>
+        )}
 
         <div className="flex gap-4 justify-start">
           <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white px-8">
