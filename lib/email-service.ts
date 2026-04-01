@@ -107,7 +107,7 @@ export class EmailService {
         
         <div style="margin-top: 20px; text-align: center;">
           <p style="color: #6b7280; font-size: 14px;">
-            This is an automated message from Vazana Studio<br>
+            This is an automated message from Vazana<br>
             וזאנה אבטחת כבישים
           </p>
         </div>
@@ -169,7 +169,7 @@ export class EmailService {
         
         <div style="margin-top: 20px; text-align: center;">
           <p style="color: #6b7280; font-size: 14px;">
-            Thank you for choosing Vazana Studio<br>
+            Thank you for choosing Vazana<br>
             תודה שבחרתם בוזאנה אבטחת כבישים
           </p>
         </div>
@@ -224,7 +224,7 @@ export class EmailService {
         
         <div style="margin-top: 20px; text-align: center;">
           <p style="color: #6b7280; font-size: 14px;">
-            Vazana Studio - Road Safety Services<br>
+            Vazana - Road Safety Services<br>
             וזאנה אבטחת כבישים
           </p>
         </div>

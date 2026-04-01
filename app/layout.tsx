@@ -12,9 +12,12 @@ import AuthProvider from "@/components/auth/auth-provider"
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: "Vazana Studio - וזאנה סטודיו",
+  title: "Vazana - וזאנה",
   description: "Business Management System - מערכת ניהול עסקי",
-  generator: "v0.dev",
+  icons: {
+    icon: "/VazanaLogo-02.png",
+    apple: "/VazanaLogo-02.png",
+  },
 }
 
 export default function RootLayout({

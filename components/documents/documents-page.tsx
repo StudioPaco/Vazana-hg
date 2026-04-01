@@ -242,7 +242,8 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
             <><Upload className="w-4 h-4 ml-1" />העלה</>
           )}
         </Button>
-        <Link href="/documents/form" className="mr-auto">
+        <div className="flex-1" />
+        <Link href="/documents/form">
           <Button type="button" className="h-9 bg-amber-500 hover:bg-amber-600 text-white font-hebrew text-sm">
             <FileSpreadsheet className="w-4 h-4 ml-1" />
             טופס עבודה

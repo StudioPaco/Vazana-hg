@@ -463,7 +463,7 @@ export default function CalendarPage() {
           <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w + 1)}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm font-hebrew text-gray-600 min-w-[120px]">
+          <span className="text-sm font-hebrew text-gray-600 min-w-[120px] mr-4">
             {viewScope === 'month'
               ? new Date(monthGrid.year, monthGrid.month).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
               : `${formatDate(dates[0])} — ${formatDate(dates[dates.length - 1])}`

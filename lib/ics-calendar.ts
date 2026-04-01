@@ -66,7 +66,7 @@ function generateICSContent(job: JobCalendarData): string {
     `משמרת: ${job.shiftType}`,
     job.notes ? `הערות: ${job.notes}` : "",
     "",
-    "נוצר ע\"י וזאנה סטודיו",
+    "נוצר ע\"י וזאנה",
   ]
     .filter(Boolean)
     .join("\\n")
@@ -74,7 +74,7 @@ function generateICSContent(job: JobCalendarData): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Vazana Studio//Job Calendar//HE",
+    "PRODID:-//Vazana//Job Calendar//HE",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
