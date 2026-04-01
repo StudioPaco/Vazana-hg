@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp, Edit, Trash2, Copy, ArrowUpDown, Filter, Grid3X3, List, Download, Briefcase } from "lucide-react"
+import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp, Edit, Trash2, Copy, ArrowUpDown, Filter, Grid3X3, List, Download, Briefcase, FileText } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "@/hooks/use-toast"
 import ClientEditModal from "@/components/clients/client-edit-modal"
@@ -500,7 +500,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                   <tr key={client.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 font-medium">
                       {client.company_name}
-                      {clientDocCounts[client.id] > 0 && <a href={`/documents?filter=client&entityId=${client.id}`} className="inline-flex items-center justify-center w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full mr-1 hover:bg-blue-600" title={`${clientDocCounts[client.id]} קבצים`}>{clientDocCounts[client.id]}</a>}
+                      {clientDocCounts[client.id] > 0 && <a href={`/documents?filter=client&entityId=${client.id}`} className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800 mr-2" title={`${clientDocCounts[client.id]} קבצים מצורפים`}><FileText className="w-3.5 h-3.5" /><span className="font-bold">{clientDocCounts[client.id]}</span></a>}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{client.contact_person}</td>
                     <td className="px-4 py-3 text-gray-600" dir="ltr">{client.phone}</td>
@@ -532,7 +532,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                   <div className="absolute top-0 right-0 text-right">
                     <h3 className="text-lg font-bold text-gray-900">
                       {client.company_name}
-                      {clientDocCounts[client.id] > 0 && <a href={`/documents?filter=client&entityId=${client.id}`} className="inline-flex items-center justify-center w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full mr-1 hover:bg-blue-600" title={`${clientDocCounts[client.id]} קבצים`}>{clientDocCounts[client.id]}</a>}
+                      {clientDocCounts[client.id] > 0 && <a href={`/documents?filter=client&entityId=${client.id}`} className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800 mr-2" title={`${clientDocCounts[client.id]} קבצים מצורפים`}><FileText className="w-3.5 h-3.5" /><span className="font-bold">{clientDocCounts[client.id]}</span></a>}
                     </h3>
                     <p className="text-sm text-gray-600">{client.contact_person}</p>
                     <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">

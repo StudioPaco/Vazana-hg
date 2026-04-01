@@ -62,6 +62,7 @@ import {
   Briefcase,
   RotateCcw,
   Upload,
+  FileText,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -659,20 +660,20 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                   <CardContent className="p-0">
                     {/* Compact title row — grid for column alignment */}
                     <div
-                      className="grid items-center pe-6 ps-2 py-1.5 gap-3"
+                      className="grid items-center pe-6 ps-3 py-1.5 gap-4"
                       dir="rtl"
-                      style={{ gridTemplateColumns: '50px 1.5fr 0.8fr 90px 65px 75px 20px 50px' }}
+                      style={{ gridTemplateColumns: '50px 1.5fr 0.8fr 90px 65px 80px 24px 50px' }}
                       onClick={() => toggleJobExpansion(job.id)}
                     >
-                      <span className={`font-bold font-hebrew text-sm ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>#{job.job_number}</span>
+                      <span className={`font-bold font-hebrew text-sm text-center ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>#{job.job_number}</span>
                       <span className="text-sm font-hebrew text-gray-700 truncate">{job.client_name}</span>
-                      <span className="text-xs font-hebrew text-gray-400 truncate">{job.work_type}</span>
-                      <span className="text-sm font-hebrew text-gray-500 tabular-nums">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
+                      <span className="text-xs font-hebrew text-gray-400 truncate text-center">{job.work_type}</span>
+                      <span className="text-sm font-hebrew text-gray-500 tabular-nums text-center">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
                       <Badge className={`${getStatusColor(job.job_status)} text-xs justify-center`}>{job.job_status}</Badge>
-                      <span className="font-bold text-vazana-dark text-sm tabular-nums">₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}</span>
+                      <span className="font-bold text-vazana-dark text-sm tabular-nums text-center">₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}</span>
                       {jobDocCounts[job.id] > 0 ? (
-                        <a href={`/documents?filter=job&entityId=${job.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center justify-center w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full hover:bg-blue-600" title={`${jobDocCounts[job.id]} קבצים`}>
-                          {jobDocCounts[job.id]}
+                        <a href={`/documents?filter=job&entityId=${job.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800" title={`${jobDocCounts[job.id]} קבצים מצורפים`}>
+                          <FileText className="w-3.5 h-3.5" /><span className="font-bold">{jobDocCounts[job.id]}</span>
                         </a>
                       ) : <span />}
                       <div className="flex gap-0.5 justify-center">
