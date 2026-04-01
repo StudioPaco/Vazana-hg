@@ -18,7 +18,7 @@ export interface Document {
 }
 
 export class DocumentService {
-  async uploadDocument(file: File, entityType: Document["entity_type"], entityId?: string): Promise<Document> {
+  async uploadDocument(file: File, entityType: Document["entity_type"], entityId?: string, uploadedBy?: string): Promise<Document> {
     const supabase = getSupabase()
     // Sanitize filename — remove Hebrew chars that may cause issues
     const safeName = file.name.replace(/[^\w.-]/g, '_')
@@ -51,7 +51,7 @@ export class DocumentService {
         mime_type: file.type,
         entity_type: entityType,
         entity_id: entityId,
-        uploaded_by: 'system',
+        uploaded_by: uploadedBy || '00000000-0000-0000-0000-000000000001',
       })
       .select()
       .single()

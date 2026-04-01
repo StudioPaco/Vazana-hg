@@ -186,9 +186,14 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
           <Label htmlFor="file" className="font-hebrew text-xs text-gray-500">קובץ</Label>
           <label htmlFor="file" className="flex items-center gap-2 h-9 px-3 border border-dashed border-gray-400 rounded-md cursor-pointer hover:border-teal-500 hover:bg-teal-50/30 transition-colors text-sm font-hebrew text-gray-600">
             <Upload className="w-4 h-4 text-gray-400" />
-            <span>בחר קובץ</span>
+            <span id="file-label">בחר קובץ</span>
           </label>
-          <input id="file" name="file" type="file" required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" className="sr-only" />
+          <input id="file" name="file" type="file" required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" className="sr-only" onChange={(e) => {
+            const label = document.getElementById('file-label')
+            if (label && e.target.files?.[0]) {
+              label.textContent = e.target.files[0].name
+            }
+          }} />
         </div>
         <div className="w-32">
           <Label className="font-hebrew text-xs text-gray-500">שייך ל</Label>

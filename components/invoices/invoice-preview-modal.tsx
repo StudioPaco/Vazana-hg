@@ -210,25 +210,47 @@ export function InvoicePreviewModal({
         <div className="sticky bottom-0 bg-white border-t pt-4 flex gap-4 justify-center mt-6 z-10 print:hidden">
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
             const invoiceEl = document.getElementById('invoice-preview-content')
-            const content = invoiceEl?.innerHTML || document.querySelector('[data-slot="dialog-content"]')?.querySelector('.bg-white.border')?.innerHTML || ''
-            if (!content) { alert('לא נמצא תוכן להדפסה'); return }
+            if (!invoiceEl) { alert('לא נמצא תוכן'); return }
+            const css = `
+              @page { size: landscape; margin: 12mm; }
+              * { font-family: Arial, Helvetica, sans-serif; direction: rtl; box-sizing: border-box; margin: 0; }
+              body { padding: 16px; direction: rtl; color: #1a1a1a; }
+              h1 { font-size: 28px; color: #0d9488; margin-bottom: 8px; }
+              h2 { font-size: 20px; margin-bottom: 8px; }
+              h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+              p { margin: 2px 0; font-size: 13px; }
+              table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+              th { background: #f5f5f5; border: 1px solid #d1d5db; padding: 8px; text-align: right; font-size: 13px; font-weight: 600; }
+              td { border: 1px solid #d1d5db; padding: 8px; text-align: right; font-size: 13px; }
+              .bg-gray-50, [class*="bg-gray"] { background: #f9fafb; }
+              .bg-amber-50 { background: #fffbeb; }
+              .text-teal-600 { color: #0d9488; }
+              .text-gray-600, .text-gray-500 { color: #6b7280; }
+              .text-sm { font-size: 13px; } .text-xs { font-size: 11px; } .text-lg { font-size: 18px; }
+              .font-bold, .font-semibold { font-weight: 700; } .font-medium { font-weight: 500; }
+              .text-right { text-align: right; } .text-left { text-align: left; }
+              .mb-2 { margin-bottom: 8px; } .mb-8 { margin-bottom: 24px; } .mt-2 { margin-top: 8px; }
+              .p-4, .p-3 { padding: 12px; } .px-3 { padding: 0 12px; } .py-2, .py-3 { padding: 8px 0; }
+              .rounded { border-radius: 6px; } .rounded-lg { border-radius: 8px; }
+              .border { border: 1px solid #e5e7eb; } .border-b { border-bottom: 1px solid #e5e7eb; } .border-t { border-top: 1px solid #e5e7eb; }
+              .flex { display: flex; } .justify-between { justify-content: space-between; } .items-start { align-items: flex-start; }
+              .w-64, .w-72 { width: 280px; }
+              svg { display: none; }
+            `
             const w = window.open('', '_blank')
             if (!w) return
-            w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8">
-              <title>חשבונית ${invoiceNumber}</title>
-              <style>@page{size:landscape;margin:15mm}*{font-family:Arial,sans-serif;direction:rtl;box-sizing:border-box}body{padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px;text-align:right}h1,h2,h3{margin:0 0 8px}.text-right{text-align:right}.font-bold,.font-semibold,.font-medium{font-weight:bold}.text-sm{font-size:13px}.text-xs{font-size:11px}.text-lg{font-size:18px}.text-3xl{font-size:28px}.mb-2{margin-bottom:8px}.mb-8{margin-bottom:24px}.p-4{padding:12px}.rounded{border-radius:6px}.bg-gray-50{background:#f5f5f5}.border-b{border-bottom:1px solid #eee}</style>
-            </head><body>${content}</body></html>`)
+            w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>חשבונית ${invoiceNumber}</title><style>${css}</style></head><body>${invoiceEl.innerHTML}</body></html>`)
             w.document.close()
-            setTimeout(() => w.print(), 300)
+            setTimeout(() => w.print(), 500)
           }}>
             <Printer className="h-4 w-4" />
             הדפס
           </Button>
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
             const invoiceEl = document.getElementById('invoice-preview-content')
-            const content = invoiceEl?.innerHTML || document.querySelector('[data-slot="dialog-content"]')?.querySelector('.bg-white.border')?.innerHTML || ''
-            if (!content) { alert('לא נמצא תוכן להורדה'); return }
-            const html = `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>חשבונית ${invoiceNumber}</title><style>*{font-family:Arial,sans-serif;direction:rtl}body{padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px;text-align:right}.font-bold{font-weight:bold}.text-sm{font-size:13px}.bg-gray-50{background:#f5f5f5}</style></head><body>${content}</body></html>`
+            if (!invoiceEl) { alert('לא נמצא תוכן'); return }
+            const css = `* { font-family: Arial, sans-serif; direction: rtl; } body { padding: 20px; } table { width: 100%; border-collapse: collapse; } th { background: #f5f5f5; } td, th { border: 1px solid #d1d5db; padding: 8px; text-align: right; font-size: 13px; } h1 { color: #0d9488; } .bg-gray-50 { background: #f9fafb; } .font-bold { font-weight: bold; } .text-sm { font-size: 13px; } svg { display: none; }`
+            const html = `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>${invoiceNumber}</title><style>${css}</style></head><body>${invoiceEl.innerHTML}</body></html>`
             const blob = new Blob([html], { type: 'text/html' })
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')

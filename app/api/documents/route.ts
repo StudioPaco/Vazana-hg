@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { DocumentService } from "@/lib/document-service"
+import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,8 +13,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
+    // Get authenticated user ID
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id
+
     const documentService = new DocumentService()
-    const document = await documentService.uploadDocument(file, entityType as any, entityId)
+    const document = await documentService.uploadDocument(file, entityType as any, entityId, userId)
 
     return NextResponse.json(document)
   } catch (error: any) {
