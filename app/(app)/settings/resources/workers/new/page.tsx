@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
 import PageLayout from "@/components/layout/page-layout"
 import { Plus } from "lucide-react"
@@ -22,7 +21,7 @@ export default function NewWorkerPage() {
     phone_number: "",
     address: "",
     shift_rate: "",
-    availability: "available",
+    availability: {} as Record<string, boolean>,
     payment_terms_days: "30",
     notes: "",
   })
@@ -134,19 +133,51 @@ export default function NewWorkerPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="availability" className="text-right block">
-                זמינות
-              </Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, availability: value })}>
-                <SelectTrigger className="text-right">
-                  <SelectValue placeholder="בחר זמינות" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="available">זמין</SelectItem>
-                  <SelectItem value="busy">עסוק</SelectItem>
-                  <SelectItem value="unavailable">לא זמין</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="text-right block">זמינות שבועית</Label>
+              <div className="border rounded-lg overflow-hidden" dir="rtl">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-2 py-1.5 text-right font-hebrew font-medium text-gray-600">משמרת</th>
+                      {['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'].map(day => (
+                        <th key={day} className="px-1 py-1.5 text-center font-hebrew font-medium text-gray-600">{day}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {['יום', 'לילה'].map(shift => (
+                      <tr key={shift} className="border-t">
+                        <td className="px-2 py-1 text-right font-hebrew font-medium text-gray-700">{shift}</td>
+                        {[0,1,2,3,4,5,6].map(dayIdx => {
+                          const key = `${shift}_${dayIdx}`
+                          const avail = typeof formData.availability === 'object' && formData.availability !== null ? formData.availability : {}
+                          const isOn = avail[key] !== false && avail[key] !== undefined ? avail[key] : true
+                          return (
+                            <td key={dayIdx} className="px-1 py-1 text-center">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = typeof formData.availability === 'object' && formData.availability !== null ? { ...formData.availability } : {}
+                                  current[key] = !isOn
+                                  setFormData({ ...formData, availability: current })
+                                }}
+                                className={`w-6 h-6 rounded text-[10px] font-bold transition-colors ${
+                                  isOn
+                                    ? 'bg-green-500 text-white hover:bg-green-600'
+                                    : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
+                                }`}
+                              >
+                                {isOn ? '✓' : '✗'}
+                              </button>
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-[10px] text-gray-400 font-hebrew text-right">לחץ לשינוי זמינות. ירוק = זמין, אפור = לא זמין</p>
             </div>
 
             <div className="space-y-2">

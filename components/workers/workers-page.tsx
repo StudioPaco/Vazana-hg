@@ -90,15 +90,16 @@ export default function WorkersPage({ showHeader = true }: WorkersPageProps) {
   }
 
   const getAvailabilityBadges = (availability: any) => {
-    if (!availability) return []
+    if (!availability || typeof availability !== 'object') return []
 
-    const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
     const dayNames = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]
     const availableDays: string[] = []
 
-    days.forEach((day, index) => {
-      if (availability[day]?.day || availability[day]?.night) {
-        availableDays.push(dayNames[index])
+    dayNames.forEach((name, index) => {
+      const dayKey = `יום_${index}`
+      const nightKey = `לילה_${index}`
+      if (availability[dayKey] !== false || availability[nightKey] !== false) {
+        availableDays.push(name)
       }
     })
 

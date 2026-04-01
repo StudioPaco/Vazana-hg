@@ -6,13 +6,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp, Edit, Trash2, Copy, ArrowUpDown, Filter, Grid3X3, List, Download, Briefcase, FileText } from "lucide-react"
+import { Plus, Search, Phone, Mail, MapPin, Users, Trophy, ChevronDown, ChevronUp, Edit, Trash2, Copy, ArrowUpDown, Filter, Grid3X3, List, Download, Upload, Briefcase, FileText } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "@/hooks/use-toast"
 import ClientEditModal from "@/components/clients/client-edit-modal"
 import NewClientModal from "@/components/clients/new-client-modal"
 import StatusBadge from "@/components/ui/status-badge"
 import { StatsContainer } from "@/components/ui/stats-container"
+import ImportClientsModal from "@/components/clients/import-clients-modal"
+import { exportToXLSX, exportToCSV } from "@/lib/export-utils"
 
 interface Client {
   id: string
@@ -69,6 +71,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [newClientModalOpen, setNewClientModalOpen] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
 
   // Calculate client statistics
   const activeClientsCount = clients.filter((client) => client.status === "active").length
@@ -257,32 +260,27 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
     }
   }
 
-  const handleExportCSV = async () => {
-    const headers = ["שם חברה", "איש קשר", "טלפון", "אימייל", "כתובת", "עיר", "תעריף אבטחה", "תעריף התקנה", "אופן תשלום", "סטטוס", "מספר עבודות"]
-    const paymentMethodMap: Record<string, string> = {
-      '1': 'מיידי', '2': 'שוטף +15', '3': 'שוטף +30', '4': 'שוטף +60', '5': 'שוטף +90'
-    }
-    const rows = filteredClients.map(c => [
-      c.company_name,
-      c.contact_person,
-      c.phone,
-      c.email,
-      c.address || '',
-      c.city || '',
-      String(c.security_rate || 0),
-      String(c.installation_rate || 0),
-      paymentMethodMap[String(c.payment_method)] || c.payment_method || '',
-      c.status === 'active' ? 'פעיל' : 'לא פעיל',
-      String(realClientStats[c.id] || 0),
-    ])
+  const clientExportHeaders = [
+    { key: 'company_name', label: 'שם חברה' },
+    { key: 'contact_person', label: 'איש קשר' },
+    { key: 'phone', label: 'טלפון' },
+    { key: 'email', label: 'אימייל' },
+    { key: 'address', label: 'כתובת' },
+    { key: 'city', label: 'עיר' },
+    { key: 'security_rate', label: 'תעריף אבטחה' },
+    { key: 'installation_rate', label: 'תעריף התקנה' },
+    { key: 'payment_method', label: 'אופן תשלום' },
+    { key: 'status', label: 'סטטוס' },
+  ]
 
-    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n')
-    try {
-      await navigator.clipboard.writeText(csvContent)
-      toast({ title: `נתוני ${filteredClients.length} לקוחות הועתקו ללוח כ-CSV`, variant: "success" })
-    } catch (error) {
-      console.error("Failed to copy CSV:", error)
-    }
+  const handleExportXLSX = () => {
+    exportToXLSX(filteredClients, clientExportHeaders, 'לקוחות')
+    toast({ title: `${filteredClients.length} לקוחות יוצאו ל-Excel`, variant: "success" })
+  }
+
+  const handleExportCSV = () => {
+    exportToCSV(filteredClients, clientExportHeaders, 'לקוחות')
+    toast({ title: `${filteredClients.length} לקוחות יוצאו ל-CSV`, variant: "success" })
   }
 
   // Note: Job statuses are now managed solely through database values
@@ -355,11 +353,29 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setImportModalOpen(true)}
+            className="font-hebrew text-xs"
+          >
+            <Upload className="w-4 h-4 ml-1" />
+            ייבוא
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportXLSX}
+            className="font-hebrew text-xs"
+          >
+            <Download className="w-4 h-4 ml-1" />
+            Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleExportCSV}
             className="font-hebrew text-xs"
           >
             <Download className="w-4 h-4 ml-1" />
-            ייצוא CSV
+            CSV
           </Button>
 
           {/* Sorting Toggle */}
@@ -744,6 +760,14 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
         onClientCreated={(newClient) => {
           setClients([newClient, ...clients])
           setFilteredClients([newClient, ...filteredClients])
+        }}
+      />
+
+      <ImportClientsModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onImportComplete={() => {
+          window.location.reload()
         }}
       />
     </div>

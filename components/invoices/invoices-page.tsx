@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { StatsContainer } from "@/components/ui/stats-container"
 import StatusBadge from "@/components/ui/status-badge"
 import { InvoicePreviewModal } from "@/components/invoices/invoice-preview-modal"
+import { exportToXLSX, exportToCSV } from "@/lib/export-utils"
 
 interface Invoice {
   id: string
@@ -367,6 +368,44 @@ export default function InvoicesPage({
               <Plus className="w-4 h-4 ml-1" />
               חשבונית חדשה
             </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const headers = [
+                { key: 'invoice_number', label: 'מספר חשבונית' },
+                { key: 'client_name', label: 'לקוח' },
+                { key: 'issue_date', label: 'תאריך הנפקה' },
+                { key: 'total_amount', label: 'סכום' },
+                { key: 'status', label: 'סטטוס' },
+                { key: 'notes', label: 'הערות' },
+              ]
+              exportToXLSX(filteredInvoices, headers, 'חשבוניות')
+            }}
+            className="font-hebrew text-xs h-9"
+          >
+            <Download className="w-4 h-4 ml-1" />
+            Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const headers = [
+                { key: 'invoice_number', label: 'מספר חשבונית' },
+                { key: 'client_name', label: 'לקוח' },
+                { key: 'issue_date', label: 'תאריך הנפקה' },
+                { key: 'total_amount', label: 'סכום' },
+                { key: 'status', label: 'סטטוס' },
+                { key: 'notes', label: 'הערות' },
+              ]
+              exportToCSV(filteredInvoices, headers, 'חשבוניות')
+            }}
+            className="font-hebrew text-xs h-9"
+          >
+            <Download className="w-4 h-4 ml-1" />
+            CSV
           </Button>
           <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
             {([["date", "תאריך"], ["amount", "סכום"], ["number", "מספר"]] as const).map(([key, label]) => (

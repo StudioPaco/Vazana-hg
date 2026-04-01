@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import EditJobModal from "@/components/jobs/edit-job-modal"
 import ImportJobsModal from "@/components/jobs/import-jobs-modal"
+import { exportToXLSX, exportToCSV } from "@/lib/export-utils"
 import { toast } from "@/hooks/use-toast"
 import StatusBadge from "@/components/ui/status-badge"
 
@@ -62,6 +63,7 @@ import {
   Briefcase,
   RotateCcw,
   Upload,
+  Download,
   FileText,
 } from "lucide-react"
 import Link from "next/link"
@@ -328,6 +330,21 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
     setJobs(jobs.map(job => job.id === updatedJob.id ? updatedJob : job))
   }
 
+  const jobExportHeaders = [
+    { key: 'job_number', label: 'מספר עבודה' },
+    { key: 'client_name', label: 'שם לקוח' },
+    { key: 'work_type', label: 'סוג עבודה' },
+    { key: 'job_date', label: 'תאריך' },
+    { key: 'shift_type', label: 'משמרת' },
+    { key: 'site', label: 'אתר' },
+    { key: 'city', label: 'עיר' },
+    { key: 'worker_name', label: 'עובד' },
+    { key: 'vehicle_name', label: 'רכב' },
+    { key: 'total_amount', label: 'סכום' },
+    { key: 'payment_status', label: 'סטטוס תשלום' },
+    { key: 'notes', label: 'הערות' },
+  ]
+
   if (loading || preferencesLoading) {
     return (
       <div className="relative space-y-6">
@@ -384,7 +401,25 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
               className="font-hebrew"
             >
               <Upload className="w-4 h-4 ml-2" />
-              ייבוא מקובץ
+              ייבוא
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToXLSX(filteredJobs, jobExportHeaders, 'עבודות')}
+              className="font-hebrew text-xs"
+            >
+              <Download className="w-4 h-4 ml-1" />
+              Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToCSV(filteredJobs, jobExportHeaders, 'עבודות')}
+              className="font-hebrew text-xs"
+            >
+              <Download className="w-4 h-4 ml-1" />
+              CSV
             </Button>
 
             {/* Sorting Toggle */}
