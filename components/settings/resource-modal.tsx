@@ -134,6 +134,15 @@ const resourceConfigs = {
         required: true,
       },
       {
+        name: "license_plate",
+        labelHe: "מספר רישוי",
+        labelEn: "License Plate",
+        placeholderHe: "000-00-000",
+        placeholderEn: "000-00-000",
+        type: "text",
+        required: false,
+      },
+      {
         name: "details",
         labelHe: "פרטים נוספים",
         labelEn: "Additional Details",

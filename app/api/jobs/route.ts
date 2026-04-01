@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { logActivity } from "@/lib/activity-log"
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,6 +74,10 @@ export async function POST(request: NextRequest) {
         code: error.code 
       }, { status: 500 })
     }
+
+    // Log activity
+    const { data: { user } } = await supabase.auth.getUser()
+    await logActivity(user?.id, body.worker_name, 'create_job', 'job', job.id, { job_number: job.job_number, client: body.client_name })
 
     return NextResponse.json({ data: job }, { status: 201 })
   } catch (error) {

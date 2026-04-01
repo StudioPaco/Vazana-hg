@@ -211,36 +211,38 @@ export function InvoicePreviewModal({
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
             const invoiceEl = document.getElementById('invoice-preview-content')
             if (!invoiceEl) { alert('לא נמצא תוכן'); return }
-            const css = `
-              @page { size: landscape; margin: 12mm; }
-              * { font-family: Arial, Helvetica, sans-serif; direction: rtl; box-sizing: border-box; margin: 0; unicode-bidi: embed; }
-              html, body { direction: rtl; }
-              body { padding: 16px; direction: rtl; color: #1a1a1a; text-align: right; }
-              h1 { font-size: 28px; color: #0d9488; margin-bottom: 8px; }
-              h2 { font-size: 20px; margin-bottom: 8px; }
-              h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
-              p { margin: 2px 0; font-size: 13px; }
-              table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-              th { background: #f5f5f5; border: 1px solid #d1d5db; padding: 8px; text-align: right; font-size: 13px; font-weight: 600; }
-              td { border: 1px solid #d1d5db; padding: 8px; text-align: right; font-size: 13px; }
-              .bg-gray-50, [class*="bg-gray"] { background: #f9fafb; }
-              .bg-amber-50 { background: #fffbeb; }
-              .text-teal-600 { color: #0d9488; }
-              .text-gray-600, .text-gray-500 { color: #6b7280; }
-              .text-sm { font-size: 13px; } .text-xs { font-size: 11px; } .text-lg { font-size: 18px; }
-              .font-bold, .font-semibold { font-weight: 700; } .font-medium { font-weight: 500; }
-              .text-right { text-align: right; } .text-left { text-align: left; }
-              .mb-2 { margin-bottom: 8px; } .mb-8 { margin-bottom: 24px; } .mt-2 { margin-top: 8px; }
-              .p-4, .p-3 { padding: 12px; } .px-3 { padding: 0 12px; } .py-2, .py-3 { padding: 8px 0; }
-              .rounded { border-radius: 6px; } .rounded-lg { border-radius: 8px; }
-              .border { border: 1px solid #e5e7eb; } .border-b { border-bottom: 1px solid #e5e7eb; } .border-t { border-top: 1px solid #e5e7eb; }
-              .flex { display: flex; direction: rtl; } .justify-between { justify-content: space-between; } .justify-end { justify-content: flex-start; } .items-start { align-items: flex-start; }
-              .w-64, .w-72 { width: 280px; margin-right: 0; margin-left: auto; }
-              svg { display: none; }
-            `
             const w = window.open('', '_blank')
             if (!w) return
-            w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>חשבונית ${invoiceNumber}</title><style>${css}</style></head><body>${invoiceEl.innerHTML}</body></html>`)
+            w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8">
+              <title>חשבונית ${invoiceNumber}</title>
+              <style>
+                @page { size: A4 landscape; margin: 10mm; }
+                @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+                * { font-family: Arial, Helvetica, sans-serif; direction: rtl; box-sizing: border-box; margin: 0; }
+                html, body { direction: rtl; padding: 0; }
+                body { padding: 20px; color: #1a1a1a; text-align: right; font-size: 13px; }
+                h1 { font-size: 28px; color: #0d9488; margin-bottom: 8px; }
+                h2 { font-size: 18px; margin-bottom: 6px; }
+                h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+                p { margin: 2px 0; }
+                table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+                th { background: #f5f5f5 !important; border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: 600; }
+                td { border: 1px solid #d1d5db; padding: 8px; text-align: right; }
+                tr.bg-amber-50\\/50, tr[class*="amber"] { background: #fffbeb !important; }
+                .bg-gray-50 { background: #f9fafb !important; }
+                .text-teal-600 { color: #0d9488; }
+                .text-gray-600, .text-gray-500 { color: #6b7280; }
+                .font-bold, .font-semibold { font-weight: 700; } .font-medium { font-weight: 500; }
+                .text-sm { font-size: 13px; } .text-xs { font-size: 11px; } .text-lg { font-size: 18px; } .text-xl { font-size: 20px; } .text-3xl { font-size: 28px; }
+                .text-right { text-align: right; } .text-left { text-align: left; }
+                .mb-2 { margin-bottom: 8px; } .mb-8 { margin-bottom: 24px; }
+                .p-4 { padding: 12px; } .rounded { border-radius: 6px; } .rounded-lg { border-radius: 8px; }
+                .border { border: 1px solid #e5e7eb; } .border-b { border-bottom: 1px solid #e5e7eb; } .border-t { border-top: 1px solid #e5e7eb; }
+                .flex { display: flex; } .justify-between { justify-content: space-between; } .justify-end { justify-content: flex-end; }
+                .w-72 { width: 280px; }
+                svg, button { display: none !important; }
+              </style>
+            </head><body>${invoiceEl.innerHTML}</body></html>`)
             w.document.close()
             setTimeout(() => w.print(), 500)
           }}>
@@ -248,43 +250,54 @@ export function InvoicePreviewModal({
             הדפס
           </Button>
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
-            import('@/lib/pdf-generator').then(({ generateInvoicePDF }) => {
-              generateInvoicePDF({
-                invoiceNumber: invoiceNumber || 'INV-0000',
-                clientName: clientName,
-                businessName: businessName,
-                businessAddress: businessAddress,
-                businessPhone: businessPhone,
-                businessEmail: businessEmail,
-                issueDate: currentDate,
-                dueDate: dueDate,
-                jobs: selectedJobs.map(job => ({
-                  jobNumber: job.job_number,
-                  date: new Date(job.job_date).toLocaleDateString('he-IL'),
-                  workType: job.work_type,
-                  site: `${job.site}, ${job.city}`,
-                  amount: job.total_amount || 0,
-                })),
-                manualItems: manualItems.map(item => ({
-                  description: item.description,
-                  date: item.job_date ? new Date(item.job_date).toLocaleDateString('he-IL') : '',
-                  workType: item.work_type || 'ידני',
-                  site: item.site || '',
-                  amount: item.unit_price || 0,
-                })),
-                subtotal: summary.subtotal,
-                tax: summary.tax_amount,
-                total: summary.total_amount,
-                paymentTerms: paymentTerms,
-                notes: notes,
-                bankDetails: includeBankDetails ? {
-                  accountName: bankAccountName,
-                  bankName: bankName,
-                  branch: bankBranch,
-                  accountNumber: bankAccountNumber,
-                } : undefined,
-              })
-            })
+            const invoiceEl = document.getElementById('invoice-preview-content')
+            if (!invoiceEl) { alert('לא נמצא תוכן'); return }
+            const w = window.open('', '_blank')
+            if (!w) return
+            w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8">
+              <title>חשבונית ${invoiceNumber}</title>
+              <style>
+                @page { size: A4 landscape; margin: 10mm; }
+                @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } }
+                * { font-family: Arial, Helvetica, sans-serif; direction: rtl; box-sizing: border-box; margin: 0; }
+                html, body { direction: rtl; padding: 0; }
+                body { padding: 20px; color: #1a1a1a; text-align: right; font-size: 13px; }
+                h1 { font-size: 28px; color: #0d9488; margin-bottom: 8px; }
+                h2 { font-size: 18px; margin-bottom: 6px; }
+                h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+                p { margin: 2px 0; }
+                table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+                th { background: #f5f5f5 !important; border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: 600; }
+                td { border: 1px solid #d1d5db; padding: 8px; text-align: right; }
+                tr.bg-amber-50\\/50, tr[class*="amber"] { background: #fffbeb !important; }
+                .bg-gray-50 { background: #f9fafb !important; }
+                .text-teal-600 { color: #0d9488; }
+                .text-gray-600, .text-gray-500 { color: #6b7280; }
+                .text-gray-300 { color: #d1d5db; }
+                .font-bold, .font-semibold { font-weight: 700; }
+                .font-medium { font-weight: 500; }
+                .text-sm { font-size: 13px; } .text-xs { font-size: 11px; } .text-lg { font-size: 18px; } .text-xl { font-size: 20px; } .text-3xl { font-size: 28px; }
+                .text-right { text-align: right; } .text-left { text-align: left; }
+                .mb-2 { margin-bottom: 8px; } .mb-8 { margin-bottom: 24px; }
+                .p-4 { padding: 12px; } .p-3 { padding: 8px; } .px-3 { padding-left: 12px; padding-right: 12px; }
+                .py-2 { padding-top: 8px; padding-bottom: 8px; } .py-3 { padding-top: 12px; padding-bottom: 12px; }
+                .rounded { border-radius: 6px; } .rounded-lg { border-radius: 8px; }
+                .border { border: 1px solid #e5e7eb; } .border-b { border-bottom: 1px solid #e5e7eb; } .border-t { border-top: 1px solid #e5e7eb; }
+                .flex { display: flex; } .justify-between { justify-content: space-between; } .justify-end { justify-content: flex-end; }
+                .items-start { align-items: flex-start; }
+                .w-72 { width: 280px; }
+                div[dir="rtl"] { direction: rtl; text-align: right; }
+                svg, button, [data-slot] { display: none !important; }
+              </style>
+            </head><body>
+              ${invoiceEl.innerHTML}
+              <div class="no-print" style="text-align:center;margin-top:20px;padding:10px;border-top:1px solid #eee;">
+                <button onclick="window.print()" style="padding:8px 24px;background:#0d9488;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;">
+                  שמור כ-PDF (Ctrl+P → שמור כ-PDF)
+                </button>
+              </div>
+            </body></html>`)
+            w.document.close()
           }}>
             <Download className="h-4 w-4" />
             הורד PDF
