@@ -735,6 +735,31 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                             <p className="text-sm font-hebrew text-gray-700">{job.notes}</p>
                           </div>
                         )}
+                        <div className="mt-3 pt-2 border-t flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs font-hebrew"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              import('@/lib/ics-calendar').then(({ downloadJobICS }) => {
+                                downloadJobICS({
+                                  jobNumber: job.job_number,
+                                  clientName: job.client_name,
+                                  workerName: job.worker_name || '',
+                                  jobDate: job.job_date,
+                                  site: job.site,
+                                  city: job.city,
+                                  workType: job.work_type,
+                                  shiftType: job.shift_type,
+                                  notes: job.notes || undefined,
+                                })
+                              })
+                            }}
+                          >
+                            הוסף ליומן
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </CardContent>

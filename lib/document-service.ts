@@ -51,6 +51,7 @@ export class DocumentService {
         mime_type: file.type,
         entity_type: entityType,
         entity_id: entityId,
+        uploaded_by: 'system',
       })
       .select()
       .single()

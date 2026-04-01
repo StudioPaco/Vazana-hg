@@ -210,23 +210,25 @@ export function InvoicePreviewModal({
         <div className="sticky bottom-0 bg-white border-t pt-4 flex gap-4 justify-center mt-6 z-10 print:hidden">
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
             const invoiceEl = document.getElementById('invoice-preview-content')
-            if (!invoiceEl) return
+            const content = invoiceEl?.innerHTML || document.querySelector('[data-slot="dialog-content"]')?.querySelector('.bg-white.border')?.innerHTML || ''
+            if (!content) { alert('לא נמצא תוכן להדפסה'); return }
             const w = window.open('', '_blank')
             if (!w) return
             w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8">
               <title>חשבונית ${invoiceNumber}</title>
-              <style>@page{size:landscape;margin:15mm}body{font-family:Arial,sans-serif;padding:20px;direction:rtl}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}.bg-gray-50{background:#f9f9f9}</style>
-            </head><body>${invoiceEl.innerHTML}</body></html>`)
+              <style>@page{size:landscape;margin:15mm}*{font-family:Arial,sans-serif;direction:rtl;box-sizing:border-box}body{padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px;text-align:right}h1,h2,h3{margin:0 0 8px}.text-right{text-align:right}.font-bold,.font-semibold,.font-medium{font-weight:bold}.text-sm{font-size:13px}.text-xs{font-size:11px}.text-lg{font-size:18px}.text-3xl{font-size:28px}.mb-2{margin-bottom:8px}.mb-8{margin-bottom:24px}.p-4{padding:12px}.rounded{border-radius:6px}.bg-gray-50{background:#f5f5f5}.border-b{border-bottom:1px solid #eee}</style>
+            </head><body>${content}</body></html>`)
             w.document.close()
-            w.print()
+            setTimeout(() => w.print(), 300)
           }}>
             <Printer className="h-4 w-4" />
             הדפס
           </Button>
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
             const invoiceEl = document.getElementById('invoice-preview-content')
-            if (!invoiceEl) return
-            const html = `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>חשבונית ${invoiceNumber}</title><style>body{font-family:Arial,sans-serif;padding:20px;direction:rtl}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}.bg-gray-50{background:#f9f9f9}</style></head><body>${invoiceEl.innerHTML}</body></html>`
+            const content = invoiceEl?.innerHTML || document.querySelector('[data-slot="dialog-content"]')?.querySelector('.bg-white.border')?.innerHTML || ''
+            if (!content) { alert('לא נמצא תוכן להורדה'); return }
+            const html = `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>חשבונית ${invoiceNumber}</title><style>*{font-family:Arial,sans-serif;direction:rtl}body{padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px;text-align:right}.font-bold{font-weight:bold}.text-sm{font-size:13px}.bg-gray-50{background:#f5f5f5}</style></head><body>${content}</body></html>`
             const blob = new Blob([html], { type: 'text/html' })
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')

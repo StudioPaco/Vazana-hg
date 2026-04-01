@@ -184,7 +184,11 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
       <form onSubmit={handleUpload} className="flex flex-wrap items-end gap-3" dir="rtl">
         <div className="shrink-0">
           <Label htmlFor="file" className="font-hebrew text-xs text-gray-500">קובץ</Label>
-          <Input id="file" name="file" type="file" required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" className="h-9 text-sm" />
+          <label htmlFor="file" className="flex items-center gap-2 h-9 px-3 border border-dashed border-gray-400 rounded-md cursor-pointer hover:border-teal-500 hover:bg-teal-50/30 transition-colors text-sm font-hebrew text-gray-600">
+            <Upload className="w-4 h-4 text-gray-400" />
+            <span>בחר קובץ</span>
+          </label>
+          <input id="file" name="file" type="file" required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" className="sr-only" />
         </div>
         <div className="w-32">
           <Label className="font-hebrew text-xs text-gray-500">שייך ל</Label>
