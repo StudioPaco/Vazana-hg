@@ -336,34 +336,38 @@ export default function InvoicesPage({
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* Toolbar: Button + Sort + Filters + Search — single row */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Button asChild className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew h-9 text-sm">
-          <Link href="/invoices/new">
-            <Plus className="w-4 h-4 ml-1" />
-            חשבונית חדשה
-          </Link>
-        </Button>
-
-        <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
-          {([["date", "תאריך"], ["amount", "סכום"], ["number", "מספר"]] as const).map(([key, label]) => (
-            <Button
-              key={key}
-              variant="ghost"
-              size="sm"
-              onClick={() => { if (sortBy === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc'); else { setSortBy(key); setSortDir('desc') } }}
-              className={`font-hebrew text-xs px-2 py-1 h-7 ${
-                sortBy === key ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {label} {sortBy === key ? (sortDir === 'desc' ? '↓' : '↑') : ''}
-            </Button>
-          ))}
+      {/* Row 1: Button + Sort */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <Button asChild className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew h-9 text-sm">
+            <Link href="/invoices/new">
+              <Plus className="w-4 h-4 ml-1" />
+              חשבונית חדשה
+            </Link>
+          </Button>
+          <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+            {([["date", "תאריך"], ["amount", "סכום"], ["number", "מספר"]] as const).map(([key, label]) => (
+              <Button
+                key={key}
+                variant="ghost"
+                size="sm"
+                onClick={() => { if (sortBy === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc'); else { setSortBy(key); setSortDir('desc') } }}
+                className={`font-hebrew text-xs px-2 py-1 h-7 ${
+                  sortBy === key ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {label} {sortBy === key ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+              </Button>
+            ))}
+          </div>
         </div>
+      </div>
 
+      {/* Row 2: Filters + Search */}
+      <div className="flex flex-wrap items-center justify-between gap-3" dir="rtl">
         <div className="flex flex-wrap gap-2">
           <Select value={clientFilter} onValueChange={(value) => setClientFilter(value)} dir="rtl">
-            <SelectTrigger className="w-full sm:w-[180px] font-hebrew text-right">
+            <SelectTrigger className="w-full sm:w-[160px] font-hebrew text-right h-9">
               <SelectValue placeholder="כל הלקוחות" />
             </SelectTrigger>
             <SelectContent dir="rtl">
@@ -375,7 +379,7 @@ export default function InvoicesPage({
           </Select>
 
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)} dir="rtl">
-            <SelectTrigger className="w-full sm:w-[160px] font-hebrew text-right">
+            <SelectTrigger className="w-full sm:w-[140px] font-hebrew text-right h-9">
               <SelectValue placeholder="כל הסטטוסים" />
             </SelectTrigger>
             <SelectContent dir="rtl">
@@ -389,7 +393,7 @@ export default function InvoicesPage({
           </Select>
 
           <Select value={dateRange} onValueChange={(value: 'all' | 'this_month' | 'last_month') => setDateRange(value)} dir="rtl">
-            <SelectTrigger className="w-full sm:w-[160px] font-hebrew text-right">
+            <SelectTrigger className="w-full sm:w-[140px] font-hebrew text-right h-9">
               <SelectValue placeholder="כל התקופות" />
             </SelectTrigger>
             <SelectContent dir="rtl">
@@ -398,9 +402,15 @@ export default function InvoicesPage({
               <SelectItem value="last_month">חודש קודם</SelectItem>
             </SelectContent>
           </Select>
+
+          {(clientFilter !== "all" || statusFilter !== "all" || dateRange !== "all" || searchTerm) && (
+            <Button variant="ghost" size="sm" onClick={() => { setClientFilter("all"); setStatusFilter("all"); setDateRange("all"); setSearchTerm("") }} className="font-hebrew text-xs text-gray-500 h-9">
+              נקה סינון
+            </Button>
+          )}
         </div>
 
-        <div className="relative mr-auto">
+        <div className="relative">
           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="חפש חשבוניות..."

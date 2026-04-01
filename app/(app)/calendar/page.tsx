@@ -493,12 +493,23 @@ export default function CalendarPage() {
                 const isCurrentMonth = date.getMonth() === monthGrid.month
                 const isTodayDate = date.toDateString() === new Date().toDateString()
                 const isSabbath = date.getDay() === 6
+                // Detect clashes: same worker or vehicle on same day
+                const dayHasClash = dayJobs.length > 1 && (
+                  new Set(dayJobs.map(j => j.worker_name).filter(Boolean)).size < dayJobs.filter(j => j.worker_name).length ||
+                  new Set(dayJobs.map(j => j.vehicle_name).filter(Boolean)).size < dayJobs.filter(j => j.vehicle_name).length
+                )
+                // When showClashesOnly, skip non-clash days
+                if (showClashesOnly && isCurrentMonth && !dayHasClash && dayJobs.length > 0) {
+                  // Dim non-clash days
+                }
 
                 return (
                   <div
                     key={`${wi}-${di}`}
                     className={`border-b border-l min-h-[90px] p-1 ${
+                      dayHasClash && isCurrentMonth ? 'bg-red-50' :
                       !isCurrentMonth ? 'bg-gray-50/50 text-gray-300' :
+                      showClashesOnly && !dayHasClash ? 'bg-gray-50/30 opacity-40' :
                       isTodayDate ? 'bg-teal-50' :
                       isSabbath ? 'bg-gray-50' : 'bg-white'
                     }`}

@@ -178,6 +178,13 @@ export default function JobFormPage() {
 
   return (
     <PageLayout title="טופס עבודה" subtitle="מילוי והדפסת טופס עבודה" titleIcon={FileText} variant="form" maxWidth="7xl">
+      {/* Form Number — top right like job/invoice */}
+      <div className="flex justify-end mb-2">
+        <div className="text-sm text-gray-500 font-hebrew">
+          <span>מספר טופס: </span><span className="text-teal-600 font-semibold">FRM-{formNumber}</span>
+        </div>
+      </div>
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 mb-4" dir="rtl">
         <Link href="/documents">
@@ -186,9 +193,6 @@ export default function JobFormPage() {
             חזרה
           </Button>
         </Link>
-        <Badge variant="outline" className="h-9 px-3 font-hebrew text-sm">
-          טופס #FRM-{formNumber}
-        </Badge>
         <Select value={selectedJobId} onValueChange={handleJobChange} dir="rtl">
           <SelectTrigger className="w-[260px] font-hebrew text-right h-9 text-sm">
             <SelectValue placeholder="בחר עבודה" />
