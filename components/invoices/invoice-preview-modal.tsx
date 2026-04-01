@@ -248,20 +248,46 @@ export function InvoicePreviewModal({
             הדפס
           </Button>
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
-            const invoiceEl = document.getElementById('invoice-preview-content')
-            if (!invoiceEl) { alert('לא נמצא תוכן'); return }
-            const css = `* { font-family: Arial, sans-serif; direction: rtl; } body { padding: 20px; } table { width: 100%; border-collapse: collapse; } th { background: #f5f5f5; } td, th { border: 1px solid #d1d5db; padding: 8px; text-align: right; font-size: 13px; } h1 { color: #0d9488; } .bg-gray-50 { background: #f9fafb; } .font-bold { font-weight: bold; } .text-sm { font-size: 13px; } svg { display: none; }`
-            const html = `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>${invoiceNumber}</title><style>${css}</style></head><body>${invoiceEl.innerHTML}</body></html>`
-            const blob = new Blob([html], { type: 'text/html' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `${invoiceNumber || 'invoice'}.html`
-            a.click()
-            URL.revokeObjectURL(url)
+            import('@/lib/pdf-generator').then(({ generateInvoicePDF }) => {
+              generateInvoicePDF({
+                invoiceNumber: invoiceNumber || 'INV-0000',
+                clientName: clientName,
+                businessName: businessName,
+                businessAddress: businessAddress,
+                businessPhone: businessPhone,
+                businessEmail: businessEmail,
+                issueDate: currentDate,
+                dueDate: dueDate,
+                jobs: selectedJobs.map(job => ({
+                  jobNumber: job.job_number,
+                  date: new Date(job.job_date).toLocaleDateString('he-IL'),
+                  workType: job.work_type,
+                  site: `${job.site}, ${job.city}`,
+                  amount: job.total_amount || 0,
+                })),
+                manualItems: manualItems.map(item => ({
+                  description: item.description,
+                  date: item.job_date ? new Date(item.job_date).toLocaleDateString('he-IL') : '',
+                  workType: item.work_type || 'ידני',
+                  site: item.site || '',
+                  amount: item.unit_price || 0,
+                })),
+                subtotal: summary.subtotal,
+                tax: summary.tax_amount,
+                total: summary.total_amount,
+                paymentTerms: paymentTerms,
+                notes: notes,
+                bankDetails: includeBankDetails ? {
+                  accountName: bankAccountName,
+                  bankName: bankName,
+                  branch: bankBranch,
+                  accountNumber: bankAccountNumber,
+                } : undefined,
+              })
+            })
           }}>
             <Download className="h-4 w-4" />
-            הורד
+            הורד PDF
           </Button>
           <Button onClick={onClose} className="bg-teal-600 hover:bg-teal-700">
             סגור
