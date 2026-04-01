@@ -661,19 +661,21 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                   <CardContent className="p-0">
                     {/* Compact title row — grid for column alignment */}
                     <div
-                      className="grid items-center px-4 py-1.5 w-full"
+                      className="grid items-center px-4 py-1.5 w-full gap-1"
                       dir="rtl"
-                      style={{ gridTemplateColumns: '1fr 2fr 1.5fr 1.5fr 1fr 1.2fr 0.4fr 0.8fr' }}
+                      style={{ gridTemplateColumns: '60px 140px 90px 90px 1fr 70px 80px 1fr 24px 60px' }}
                       onClick={() => toggleJobExpansion(job.id)}
                     >
-                      <span className={`font-bold font-hebrew text-sm text-center ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>#{job.job_number}</span>
+                      <span className={`font-bold font-hebrew text-sm ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>#{job.job_number}</span>
                       <span className="text-sm font-hebrew text-gray-700 truncate">{job.client_name}</span>
-                      <span className="text-xs font-hebrew text-gray-400 truncate text-center">{job.work_type}</span>
-                      <span className="text-sm font-hebrew text-gray-500 tabular-nums text-center">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
+                      <span className="text-xs font-hebrew text-gray-400 truncate">{job.work_type}</span>
+                      <span className="text-sm font-hebrew text-gray-500 tabular-nums">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
+                      <span />
                       <Badge className={`${getStatusColor(job.job_status)} text-xs justify-center`}>{job.job_status}</Badge>
                       <span className="font-bold text-vazana-dark text-sm tabular-nums text-center">₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}</span>
+                      <span />
                       {jobDocCounts[job.id] > 0 ? (
-                        <a href={`/documents?filter=job&entityId=${job.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800" title={`${jobDocCounts[job.id]} קבצים מצורפים`}>
+                        <a href={`/documents?filter=job&entityId=${job.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800">
                           <FileText className="w-3.5 h-3.5" /><span className="font-bold">{jobDocCounts[job.id]}</span>
                         </a>
                       ) : <span />}
