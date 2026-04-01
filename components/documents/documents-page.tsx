@@ -334,6 +334,21 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
             </Select>
           )}
 
+          {/* Sub-filter: specific invoice */}
+          {filter === "invoice" && (
+            <Select value={entityId} onValueChange={setEntityId} dir="rtl">
+              <SelectTrigger className="w-[220px] h-9 font-hebrew text-sm text-right">
+                <SelectValue placeholder="כל החשבוניות" />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                <SelectItem value="all">כל החשבוניות</SelectItem>
+                {invoices.map(inv => (
+                  <SelectItem key={inv.id} value={inv.id}>{inv.invoice_number} — {inv.client_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
             <Button
               variant="ghost"
@@ -438,11 +453,11 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
       {/* File Preview Modal */}
       {previewDoc && (
         <Dialog open={true} onOpenChange={() => setPreviewDoc(null)}>
-          <DialogContent className="max-w-3xl max-h-[85vh]" dir="rtl">
+          <DialogContent className="w-[80vw] min-w-[48rem] max-w-[90vw] h-[80vh] min-h-[32rem] max-h-[90vh]" dir="rtl">
             <DialogHeader>
               <DialogTitle className="font-hebrew text-right">{previewDoc.filename}</DialogTitle>
             </DialogHeader>
-            <div className="flex items-center justify-center p-4 overflow-auto max-h-[70vh]">
+            <div className="flex items-center justify-center p-4 overflow-auto flex-1">
               {(() => {
                 const ext = previewDoc.filename?.split('.').pop()?.toLowerCase() || ''
                 const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico', 'tiff', 'tif', 'avif', 'heic', 'heif']
@@ -451,7 +466,7 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
                 const isPdf = previewDoc.mime_type === 'application/pdf' || pdfExts.includes(ext)
 
                 if (isImage) {
-                  return <img src={`/api/documents/${previewDoc.id}/download`} alt={previewDoc.filename} className="max-w-full max-h-[65vh] object-contain rounded" />
+                  return <img src={`/api/documents/${previewDoc.id}/download`} alt={previewDoc.filename} className="max-w-full max-h-full object-contain rounded" />
                 }
                 if (isPdf) {
                   return <iframe src={`/api/documents/${previewDoc.id}/download`} className="w-full h-[65vh] rounded border" title={previewDoc.filename} />
