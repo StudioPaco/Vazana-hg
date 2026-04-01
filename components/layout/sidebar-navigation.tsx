@@ -81,9 +81,10 @@ export default function SidebarNavigation() {
 
   return (
     <div
+      data-print-hide
       className={`${
         isMinimized ? "w-20" : "w-64"
-      } bg-white border-l border-gray-200 h-screen fixed right-0 top-0 z-40 shadow-lg transition-all duration-300 overflow-x-hidden`}
+      } bg-white border-l border-gray-200 h-screen fixed right-0 top-0 z-40 shadow-lg transition-all duration-300 overflow-x-hidden print:hidden`}
     >
       {/* Header with Logo */}
       <div className={`${isMinimized ? "p-2" : "p-6"} border-b border-gray-200 relative`}>
@@ -222,7 +223,7 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="transition-all duration-300 h-screen overflow-y-auto overflow-x-hidden"
+      className="transition-all duration-300 h-screen overflow-y-auto overflow-x-hidden print:!m-0 print:!w-full print:!h-auto print:overflow-visible"
       style={{
         marginRight: isMinimized ? "80px" : "256px",
         width: `calc(100vw - ${isMinimized ? "80px" : "256px"})`,

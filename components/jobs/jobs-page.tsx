@@ -151,15 +151,16 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
         // Don't show sample data - just show empty state
         setJobs([])
         setFilteredJobs([])
-      // Fetch document counts per job
+      } finally {
+        setLoading(false)
+      }
+
+      // Fetch document counts per job (separate from jobs fetch)
       fetch('/api/documents?entityType=job').then(r => r.json()).then((docs: any[]) => {
         const counts: Record<string, number> = {}
         if (Array.isArray(docs)) docs.forEach(d => { if (d.entity_id) counts[d.entity_id] = (counts[d.entity_id] || 0) + 1 })
         setJobDocCounts(counts)
       }).catch(() => {})
-      } finally {
-        setLoading(false)
-      }
     }
 
     fetchJobs()

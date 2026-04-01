@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, FileText, Download, Trash2, Search, FileSpreadsheet } from "lucide-react"
+import { Upload, FileText, Download, Trash2, Search, FileSpreadsheet, Eye } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import Link from "next/link"
 import type { Document } from "@/lib/document-service"
 
@@ -19,7 +20,14 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
-  const [filter, setFilter] = useState<string>("all")
+  // Read URL params for pre-filtering from badge clicks
+  const [filter, setFilter] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      return url.searchParams.get('filter') || 'all'
+    }
+    return 'all'
+  })
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>(() => {
     if (typeof window !== 'undefined') return (localStorage.getItem('vazana-docs-sortBy') as any) || 'date'
@@ -32,13 +40,20 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
 
   // Upload form state
   const [entityType, setEntityType] = useState<string>("general")
-  const [entityId, setEntityId] = useState<string>("")
+  const [entityId, setEntityId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return new URL(window.location.href).searchParams.get('entityId') || ''
+    }
+    return ''
+  })
   const [clients, setClients] = useState<{ id: string; company_name: string }[]>([])
   const [jobs, setJobs] = useState<{ id: string; job_number: string; client_name: string; job_date: string; site: string; city: string; work_type: string; shift_type: string; worker_name: string; vehicle_name: string }[]>([])
+  const [invoices, setInvoices] = useState<{ id: string; invoice_number: string; client_name: string; total_amount?: number; notes?: string; payment_terms?: string }[]>([])
+  const [previewDoc, setPreviewDoc] = useState<Document | null>(null)
 
   useEffect(() => {
     fetchDocuments()
-  }, [filter])
+  }, [filter, entityId])
 
   // Persist sort preferences
   useEffect(() => {
@@ -54,6 +69,16 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
     fetch("/api/jobs").then(r => r.json()).then(result => {
       setJobs((result.data || []).sort((a: any, b: any) => Number(b.job_number) - Number(a.job_number)))
     }).catch(() => {})
+    fetch("/api/invoices").then(r => r.json()).then(result => {
+      setInvoices((result.data || []).map((inv: any) => ({
+        id: inv.id,
+        invoice_number: inv.invoice_number || '',
+        client_name: inv.clients?.company_name || '',
+        total_amount: Number(inv.total_amount) || 0,
+        notes: inv.notes || '',
+        payment_terms: inv.payment_terms || '',
+      })).slice(0, 10))
+    }).catch(() => {})
   }, [])
 
   const fetchDocuments = async () => {
@@ -61,6 +86,9 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
       const params = new URLSearchParams()
       if (filter !== "all") {
         params.append("entityType", filter)
+      }
+      if (entityId) {
+        params.append("entityId", entityId)
       }
 
       const response = await fetch(`/api/documents?${params}`)
@@ -230,9 +258,18 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
           </div>
         )}
         {entityType === "invoice" && (
-          <div className="w-48">
-            <Label className="font-hebrew text-xs text-gray-500">מזהה חשבונית</Label>
-            <Input name="entityId" value={entityId} onChange={(e) => setEntityId(e.target.value)} placeholder="מזהה" className="h-9 text-sm text-right" />
+          <div className="w-56">
+            <Label className="font-hebrew text-xs text-gray-500">חשבונית</Label>
+            <Select value={entityId} onValueChange={setEntityId} dir="rtl">
+              <SelectTrigger className="h-9 font-hebrew text-sm text-right">
+                <SelectValue placeholder="בחר חשבונית" />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                {invoices.map(inv => (
+                  <SelectItem key={inv.id} value={inv.id}>{inv.invoice_number} — {inv.client_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
         <Button type="submit" disabled={uploading} className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-hebrew text-sm min-w-[80px]">
@@ -253,9 +290,9 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
 
       {/* Filters + Sort Row */}
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between" dir="rtl">
-        <div className="flex gap-2 items-center">
-          <Select value={filter} onValueChange={setFilter} dir="rtl">
-            <SelectTrigger className="w-[140px] h-9 font-hebrew text-sm text-right">
+        <div className="flex gap-2 items-center flex-wrap">
+          <Select value={filter} onValueChange={(v) => { setFilter(v); setEntityId("") }} dir="rtl">
+            <SelectTrigger className="w-[130px] h-9 font-hebrew text-sm text-right">
               <SelectValue placeholder="כל הסוגים" />
             </SelectTrigger>
             <SelectContent dir="rtl">
@@ -266,6 +303,36 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
               <SelectItem value="general">כללי</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Sub-filter: specific job */}
+          {filter === "job" && (
+            <Select value={entityId} onValueChange={setEntityId} dir="rtl">
+              <SelectTrigger className="w-[200px] h-9 font-hebrew text-sm text-right">
+                <SelectValue placeholder="כל העבודות" />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                <SelectItem value="">כל העבודות</SelectItem>
+                {jobs.slice(0, 10).map(j => (
+                  <SelectItem key={j.id} value={j.id}>#{j.job_number} — {j.client_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Sub-filter: specific client */}
+          {filter === "client" && (
+            <Select value={entityId} onValueChange={setEntityId} dir="rtl">
+              <SelectTrigger className="w-[180px] h-9 font-hebrew text-sm text-right">
+                <SelectValue placeholder="כל הלקוחות" />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                <SelectItem value="">כל הלקוחות</SelectItem>
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
             <Button
@@ -345,10 +412,21 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
                     </p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => window.open(`/api/documents/${doc.id}/download`, "_blank")}>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => window.open(`/api/documents/${doc.id}/download`, "_blank")} title="הורד">
                       <Download className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleDelete(doc.id)}>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => {
+                      // Open file preview — images in modal, others in new tab
+                      const isImage = doc.mime_type?.startsWith('image/')
+                      if (isImage) {
+                        setPreviewDoc(doc)
+                      } else {
+                        window.open(`/api/documents/${doc.id}/download`, '_blank')
+                      }
+                    }} title="תצוגה מקדימה">
+                      <Eye className="h-3.5 w-3.5 text-teal-600" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleDelete(doc.id)} title="מחק">
                       <Trash2 className="h-3.5 w-3.5 text-red-500" />
                     </Button>
                   </div>
@@ -363,6 +441,30 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
         <div className="text-center text-xs text-gray-400 font-hebrew">
           {filteredDocuments.length} מסמכים
         </div>
+      )}
+
+      {/* File Preview Modal */}
+      {previewDoc && (
+        <Dialog open={true} onOpenChange={() => setPreviewDoc(null)}>
+          <DialogContent className="max-w-3xl max-h-[85vh]" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="font-hebrew text-right">{previewDoc.filename}</DialogTitle>
+            </DialogHeader>
+            <div className="flex items-center justify-center p-4 overflow-auto max-h-[70vh]">
+              {previewDoc.mime_type?.startsWith('image/') ? (
+                <img src={`/api/documents/${previewDoc.id}/download`} alt={previewDoc.filename} className="max-w-full max-h-[65vh] object-contain rounded" />
+              ) : (
+                <div className="text-center text-gray-500 font-hebrew py-12">
+                  <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>תצוגה מקדימה לא זמינה לסוג קובץ זה</p>
+                  <Button variant="outline" className="mt-4 font-hebrew" onClick={() => window.open(`/api/documents/${previewDoc.id}/download`, '_blank')}>
+                    <Download className="w-4 h-4 ml-1" /> הורד קובץ
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )

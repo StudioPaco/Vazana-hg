@@ -12,6 +12,7 @@ import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { StatsContainer } from "@/components/ui/stats-container"
 import StatusBadge from "@/components/ui/status-badge"
+import { InvoicePreviewModal } from "@/components/invoices/invoice-preview-modal"
 
 interface Invoice {
   id: string
@@ -192,6 +193,22 @@ export default function InvoicesPage({
 
     setFilteredInvoices(filtered)
   }, [searchTerm, statusFilter, clientFilter, sortBy, sortDir, dateRange, invoices])
+
+  const [printInvoice, setPrintInvoice] = useState<Invoice | null>(null)
+  const [invoiceDocCounts, setInvoiceDocCounts] = useState<Record<string, number>>({})
+
+  // Fetch document counts for invoices
+  useEffect(() => {
+    fetch('/api/documents?entityType=invoice').then(r => r.json()).then((docs: any[]) => {
+      const counts: Record<string, number> = {}
+      if (Array.isArray(docs)) docs.forEach(d => { if (d.entity_id) counts[d.entity_id] = (counts[d.entity_id] || 0) + 1 })
+      setInvoiceDocCounts(counts)
+    }).catch(() => {})
+  }, [])
+
+  const handlePrintInvoice = (invoice: Invoice) => {
+    setPrintInvoice(invoice)
+  }
 
   const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
     try {
@@ -469,7 +486,10 @@ export default function InvoicesPage({
               <tbody className="divide-y">
                 {filteredInvoices.map((invoice) => (
                   <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium font-hebrew">{invoice.invoice_number}</td>
+                    <td className="px-4 py-3 font-medium font-hebrew">
+                      {invoice.invoice_number}
+                      {invoiceDocCounts[invoice.id] > 0 && <a href={`/documents?filter=invoice&entityId=${invoice.id}`} className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800 mr-2"><FileText className="w-3 h-3" />{invoiceDocCounts[invoice.id]}</a>}
+                    </td>
                     <td className="px-4 py-3 font-hebrew">{invoice.clients?.company_name || 'לקוח לא ידוע'}</td>
                     <td className="px-4 py-3 font-hebrew">{new Date(invoice.invoice_date).toLocaleDateString("he-IL")}</td>
                     <td className="px-4 py-3 font-hebrew">{new Date(invoice.due_date).toLocaleDateString("he-IL")}</td>
@@ -480,12 +500,8 @@ export default function InvoicesPage({
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew"
-                          onClick={() => handleDownloadPDF(invoice.id, invoice.invoice_number)}>הורד</Button>
-                        <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew"
-                          onClick={() => { const w = window.open(`/api/invoices/${invoice.id}/pdf`, '_blank'); if (w) setTimeout(() => w.print(), 1000) }}>הדפס</Button>
-                      </div>
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew"
+                        onClick={() => handlePrintInvoice(invoice)}>תצוגה</Button>
                     </td>
                   </tr>
                 ))}
@@ -501,7 +517,10 @@ export default function InvoicesPage({
                   <div className="relative mb-4">
                     {/* Invoice info - positioned at top-right */}
                     <div className="absolute top-0 right-0 text-right">
-                      <h3 className="text-lg font-bold text-gray-900">חשבונית #{invoice.invoice_number}</h3>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        חשבונית #{invoice.invoice_number}
+                        {invoiceDocCounts[invoice.id] > 0 && <a href={`/documents?filter=invoice&entityId=${invoice.id}`} className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800 mr-2"><FileText className="w-3.5 h-3.5" />{invoiceDocCounts[invoice.id]}</a>}
+                      </h3>
                       <p className="text-sm text-gray-600">{invoice.clients?.company_name || 'לקוח לא ידוע'}</p>
                       <Badge
                         className={getStatusColor(
@@ -512,27 +531,15 @@ export default function InvoicesPage({
                       </Badge>
                     </div>
 
-                    {/* Action buttons - positioned at top-left */}
-                    <div className="absolute top-0 left-0 flex gap-2">
+                    {/* Preview button */}
+                    <div className="absolute top-0 left-0">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownloadPDF(invoice.id, invoice.invoice_number)}
-                        className="bg-transparent border-gray-300 h-8 px-3 text-xs"
+                        onClick={() => handlePrintInvoice(invoice)}
+                        className="bg-transparent border-gray-300 h-8 px-3 text-xs font-hebrew"
                       >
-                        הורד
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // Open print view in new window
-                          const w = window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')
-                          if (w) setTimeout(() => w.print(), 1000)
-                        }}
-                        className="bg-transparent border-gray-300 h-8 px-3 text-xs"
-                      >
-                        הדפס
+                        תצוגה
                       </Button>
                     </div>
 
@@ -624,6 +631,66 @@ export default function InvoicesPage({
           </span>
         </div>
       )}
+
+      {/* Print Modal — same as preview, fetches jobs for selected invoice */}
+      {printInvoice && (
+        <PrintInvoiceModal
+          invoice={printInvoice}
+          onClose={() => setPrintInvoice(null)}
+        />
+      )}
     </div>
+  )
+}
+
+/** Inline print modal that reuses InvoicePreviewModal */
+function PrintInvoiceModal({ invoice, onClose }: { invoice: any; onClose: () => void }) {
+  const [jobs, setJobs] = useState<any[]>([])
+  const [manualItems, setManualItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = (window as any).__supabase || null
+    // Fetch line items via API
+    fetch(`/api/invoices/${invoice.id}/line-items`).then(r => r.json()).then(result => {
+      const items = result.data || []
+      setJobs(items.filter((li: any) => li.job_id).map((li: any) => ({
+        id: li.job_id || li.id,
+        job_number: li.jobs?.job_number || 'N/A',
+        work_type: li.work_type || '',
+        job_date: li.job_date || '',
+        site: li.site_location || '',
+        city: '',
+        total_amount: Number(li.line_total) || 0,
+      })))
+      setManualItems(items.filter((li: any) => !li.job_id).map((li: any) => ({
+        description: li.description || '',
+        job_date: li.job_date || '',
+        unit_price: Number(li.line_total) || 0,
+        work_type: li.work_type || 'ידני',
+        site: li.site_location || '',
+      })))
+    }).catch(() => {}).finally(() => setLoading(false))
+  }, [invoice.id])
+
+  if (loading) return null
+
+  return (
+    <InvoicePreviewModal
+      isOpen={true}
+      onClose={onClose}
+      selectedJobs={jobs}
+      manualItems={manualItems}
+      invoiceNumber={invoice.invoice_number}
+      clientName={invoice.clients?.company_name || 'לקוח לא ידוע'}
+      summary={{
+        subtotal: Number(invoice.total_amount) / 1.18 || 0,
+        tax_amount: Number(invoice.total_amount) - (Number(invoice.total_amount) / 1.18) || 0,
+        total_amount: Number(invoice.total_amount) || 0,
+      }}
+      notes={invoice.notes || ''}
+      paymentTerms={invoice.payment_terms || ''}
+      includeBankDetails={true}
+    />
   )
 }
