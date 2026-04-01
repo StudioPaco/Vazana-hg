@@ -170,23 +170,13 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
 
   return (
     <div className="space-y-4">
-      {/* Action Row */}
-      <div className="flex items-center gap-3" dir="rtl">
-        <Link href="/documents/form">
-          <Button className="h-9 bg-amber-500 hover:bg-amber-600 text-white font-hebrew text-sm">
-            <FileSpreadsheet className="w-4 h-4 ml-1" />
-            טופס עבודה
-          </Button>
-        </Link>
-      </div>
-
-      {/* Compact Upload Bar */}
+      {/* Upload Bar + Form Button */}
       <form onSubmit={handleUpload} className="flex flex-wrap items-end gap-3" dir="rtl">
-        <div className="shrink-0">
+        <div className="flex-1 min-w-[200px]">
           <Label htmlFor="file" className="font-hebrew text-xs text-gray-500">קובץ</Label>
-          <label htmlFor="file" className="flex items-center gap-2 h-9 px-3 border border-dashed border-gray-400 rounded-md cursor-pointer hover:border-teal-500 hover:bg-teal-50/30 transition-colors text-sm font-hebrew text-gray-600">
-            <Upload className="w-4 h-4 text-gray-400" />
-            <span id="file-label">בחר קובץ</span>
+          <label htmlFor="file" className="flex items-center gap-2 h-9 px-3 border border-dashed border-gray-400 rounded-md cursor-pointer hover:border-teal-500 hover:bg-teal-50/30 transition-colors text-sm font-hebrew text-gray-600 w-full">
+            <Upload className="w-4 h-4 text-gray-400 shrink-0" />
+            <span id="file-label" className="truncate">בחר קובץ</span>
           </label>
           <input id="file" name="file" type="file" required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" className="sr-only" onChange={(e) => {
             const label = document.getElementById('file-label')
@@ -245,10 +235,19 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
             <Input name="entityId" value={entityId} onChange={(e) => setEntityId(e.target.value)} placeholder="מזהה" className="h-9 text-sm text-right" />
           </div>
         )}
-        <Button type="submit" disabled={uploading} className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-hebrew text-sm">
-          <Upload className="w-4 h-4 ml-1" />
-          {uploading ? "מעלה..." : "העלה"}
+        <Button type="submit" disabled={uploading} className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-hebrew text-sm min-w-[80px]">
+          {uploading ? (
+            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+          ) : (
+            <><Upload className="w-4 h-4 ml-1" />העלה</>
+          )}
         </Button>
+        <Link href="/documents/form" className="mr-auto">
+          <Button type="button" className="h-9 bg-amber-500 hover:bg-amber-600 text-white font-hebrew text-sm">
+            <FileSpreadsheet className="w-4 h-4 ml-1" />
+            טופס עבודה
+          </Button>
+        </Link>
       </form>
 
       {/* Filters + Sort Row */}

@@ -52,6 +52,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Update last_login timestamp
+    await admin.from('user_profiles').update({ last_login: new Date().toISOString() }).eq('email', profile.email)
+
     // Session cookies are automatically set by @supabase/ssr via the server client
     return NextResponse.json({
       success: true,

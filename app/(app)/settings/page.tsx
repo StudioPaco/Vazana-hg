@@ -1603,77 +1603,6 @@ export default function SettingsPage() {
                     
                   </div>
 
-                  {/* Google Drive Backup Section */}
-                  <div className="border-t pt-6">
-                    <h3 className="font-semibold mb-4 text-right font-hebrew">גיבוי ל-Google Drive</h3>
-                    <div className="space-y-4 max-w-lg">
-                      <p className="text-sm text-gray-600 text-right font-hebrew">
-                        גבה את כל הנתונים (לקוחות, עבודות, חשבוניות, עובדים) כקובץ JSON ל-Google Drive.
-                      </p>
-                      <div className="flex gap-3">
-                        <Button
-                          variant="outline"
-                          className="font-hebrew"
-                          onClick={async () => {
-                            try {
-                              const res = await fetch('/api/backup', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'download' }),
-                              })
-                              if (res.ok) {
-                                const blob = await res.blob()
-                                const url = URL.createObjectURL(blob)
-                                const a = document.createElement('a')
-                                a.href = url
-                                a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.json`
-                                a.click()
-                                URL.revokeObjectURL(url)
-                                toast({ title: "הגיבוי הורד בהצלחה" })
-                              } else {
-                                toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
-                              }
-                            } catch {
-                              toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
-                            }
-                          }}
-                        >
-                          <Download className="w-4 h-4 ml-1" />
-                          JSON גיבוי
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="font-hebrew"
-                          onClick={async () => {
-                            try {
-                              const res = await fetch('/api/backup', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'download-csv' }),
-                              })
-                              if (res.ok) {
-                                const blob = await res.blob()
-                                const url = URL.createObjectURL(blob)
-                                const a = document.createElement('a')
-                                a.href = url
-                                a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.csv`
-                                a.click()
-                                URL.revokeObjectURL(url)
-                                toast({ title: "גיבוי CSV הורד בהצלחה" })
-                              } else {
-                                toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
-                              }
-                            } catch {
-                              toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
-                            }
-                          }}
-                        >
-                          <Download className="w-4 h-4 ml-1" />
-                          CSV גיבוי
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
                   
                   <div className="border-t pt-4">
                     <h3 className="font-semibold mb-4 text-right font-hebrew">פתרון קונפליקטי סינכרון</h3>
@@ -1798,6 +1727,32 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Backup Section */}
+                  <div className="p-4 border rounded-lg space-y-3">
+                    <h3 className="font-semibold text-right font-hebrew">גיבוי נתונים</h3>
+                    <p className="text-sm text-gray-600 text-right font-hebrew">הורד גיבוי מלא של כל הנתונים (לקוחות, עבודות, חשבוניות, עובדים)</p>
+                    <div className="flex gap-3 justify-end">
+                      <Button variant="outline" className="font-hebrew" onClick={async () => {
+                        try {
+                          const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download' }) })
+                          if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); toast({ title: "הגיבוי הורד בהצלחה" }) }
+                          else toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
+                        } catch { toast({ title: "שגיאה", variant: "destructive" }) }
+                      }}>
+                        <Download className="w-4 h-4 ml-1" /> JSON גיבוי
+                      </Button>
+                      <Button variant="outline" className="font-hebrew" onClick={async () => {
+                        try {
+                          const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download-csv' }) })
+                          if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.csv`; a.click(); URL.revokeObjectURL(url); toast({ title: "גיבוי CSV הורד בהצלחה" }) }
+                          else toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
+                        } catch { toast({ title: "שגיאה", variant: "destructive" }) }
+                      }}>
+                        <Download className="w-4 h-4 ml-1" /> CSV גיבוי
+                      </Button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 p-4 border rounded-lg">
                       <h3 className="font-semibold text-right font-hebrew">יציאת נתונים</h3>

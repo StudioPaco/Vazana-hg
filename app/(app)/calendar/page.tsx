@@ -401,10 +401,11 @@ export default function CalendarPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4" dir="rtl">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3 mb-3" dir="rtl">
+        {/* Right side: resource filter + clash + export */}
+        <div className="flex items-center gap-2 shrink-0">
           <Select value={resourceType} onValueChange={(v) => setResourceType(v as ResourceType)} dir="rtl">
-            <SelectTrigger className="w-[140px] font-hebrew text-right h-9 text-sm">
+            <SelectTrigger className="w-[130px] font-hebrew text-right h-8 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent dir="rtl">
@@ -415,15 +416,6 @@ export default function CalendarPage() {
             </SelectContent>
           </Select>
 
-          <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
-            {([["week", "שבוע"], ["month", "חודש"]] as const).map(([val, label]) => (
-              <Button key={val} variant="ghost" size="sm"
-                onClick={() => setViewScope(val)}
-                className={`font-hebrew text-xs px-2 py-1 h-7 ${viewScope === val ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
-              >{label}</Button>
-            ))}
-          </div>
-
           {clashCount > 0 && (
             <Button
               variant={showClashesOnly ? "default" : "outline"} size="sm"
@@ -431,22 +423,20 @@ export default function CalendarPage() {
                 const newVal = !showClashesOnly
                 setShowClashesOnly(newVal)
                 if (newVal && clashes.size > 0) {
-                  // Navigate to week containing first clash
                   const firstClash = Array.from(clashes)[0]
                   const clashDate = firstClash.split('_').pop()
                   if (clashDate) {
                     const d = new Date(clashDate)
                     const today = new Date()
                     const diffDays = Math.floor((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-                    const targetWeek = Math.floor((diffDays + today.getDay()) / 7)
-                    setWeekOffset(targetWeek)
+                    setWeekOffset(Math.floor((diffDays + today.getDay()) / 7))
                   }
                 }
               }}
               className={`h-8 text-xs font-hebrew gap-1 ${showClashesOnly ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-red-600 border-red-300'}`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
-              {clashCount} התנגשויות
+              {clashCount}
             </Button>
           )}
 
@@ -456,15 +446,24 @@ export default function CalendarPage() {
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Center: scope toggle + navigation + date */}
+        <div className="flex items-center gap-2 mx-auto">
+          <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+            {([["week", "שבוע"], ["month", "חודש"]] as const).map(([val, label]) => (
+              <Button key={val} variant="ghost" size="sm"
+                onClick={() => setViewScope(val)}
+                className={`font-hebrew text-xs px-2 py-1 h-7 ${viewScope === val ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
+              >{label}</Button>
+            ))}
+          </div>
           <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w - 1)}>
             <ChevronRight className="w-4 h-4" />
           </Button>
-          <Button variant="outline" size="sm" className="h-8 font-hebrew text-xs" onClick={() => setWeekOffset(0)}>היום</Button>
+          <Button variant="outline" size="sm" className="h-8 font-hebrew text-xs min-w-[40px]" onClick={() => setWeekOffset(0)}>היום</Button>
           <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w + 1)}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm font-hebrew text-gray-600">
+          <span className="text-sm font-hebrew text-gray-600 min-w-[120px]">
             {viewScope === 'month'
               ? new Date(monthGrid.year, monthGrid.month).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
               : `${formatDate(dates[0])} — ${formatDate(dates[dates.length - 1])}`
@@ -475,7 +474,7 @@ export default function CalendarPage() {
 
       {/* Month Calendar View */}
       {viewScope === 'month' && (
-        <div className="border rounded-lg bg-white min-h-[calc(100vh-320px)]">
+        <div className="border rounded-lg bg-white min-h-[calc(100vh-380px)]">
           <div className="text-center py-2 border-b bg-gray-50 font-hebrew font-semibold text-gray-700">
             {new Date(monthGrid.year, monthGrid.month).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}
           </div>
@@ -535,7 +534,7 @@ export default function CalendarPage() {
 
       {/* Resource Matrix (today/week view) */}
       {viewScope !== 'month' && (
-      <div className="border rounded-lg overflow-x-auto bg-white min-h-[calc(100vh-280px)]">
+      <div className="border rounded-lg overflow-x-auto bg-white min-h-[calc(100vh-380px)]">
         <table className="w-full text-sm h-full" dir="rtl" style={{ minHeight: 'calc(100vh - 300px)' }}>
           <thead>
             <tr className="bg-gray-50 border-b">

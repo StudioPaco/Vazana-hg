@@ -108,7 +108,8 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
       return true // No password change requested
     }
 
-    if (!passwordData.currentPassword) {
+    // Admin can change other user's password without current password
+    if (!isAdmin && !passwordData.currentPassword) {
       toast({ title: "נדרשת סיסמה נוכחית לשינוי סיסמה", variant: "destructive" })
       return false
     }
@@ -178,8 +179,9 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               userId: user.id,
-              currentPassword: passwordData.currentPassword,
+              currentPassword: isAdmin ? undefined : passwordData.currentPassword,
               newPassword: passwordData.newPassword,
+              adminOverride: isAdmin,
             }),
           })
 
@@ -316,6 +318,7 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
                 </div>
 
                 <div className="space-y-3">
+                  {!isAdmin && (
                   <div className="space-y-2">
                     <Label className="font-hebrew text-right block text-sm">סיסמה נוכחית</Label>
                     <div className="relative">
@@ -338,6 +341,7 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
                       </Button>
                     </div>
                   </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label className="font-hebrew text-right block text-sm">סיסמה חדשה</Label>

@@ -650,41 +650,32 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                   job.job_status === 'בתהליך' ? 'border-yellow-200 bg-yellow-50/30' : ''
                 }`}>
                   <CardContent className="p-0">
-                    {/* Compact title row */}
+                    {/* Compact title row — grid for column alignment */}
                     <div
-                      className="flex items-center justify-between px-4 py-2"
+                      className="grid items-center px-4 py-1.5 gap-2"
                       dir="rtl"
+                      style={{ gridTemplateColumns: '50px minmax(80px,1fr) auto 85px 65px 75px 60px' }}
                       onClick={() => toggleJobExpansion(job.id)}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className={`font-bold font-hebrew text-sm ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>
-                          #{job.job_number}
-                        </span>
-                        <span className="text-sm font-hebrew text-gray-700">{job.client_name}</span>
-                        <span className="text-xs font-hebrew text-gray-400">{job.work_type}</span>
-                        <span className="text-sm font-hebrew text-gray-500 tabular-nums">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
-                        {job.is_deleted && (
-                          <Badge variant="destructive" className="text-xs">נמחק</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge className={`${getStatusColor(job.job_status)} text-xs`}>{job.job_status}</Badge>
-                        <p className="font-bold text-vazana-dark text-sm">
-                          ₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}
-                        </p>
+                      <span className={`font-bold font-hebrew text-sm ${job.is_deleted ? 'text-red-600 line-through' : 'text-vazana-dark'}`}>#{job.job_number}</span>
+                      <span className="text-sm font-hebrew text-gray-700 truncate">{job.client_name}</span>
+                      <span className="text-xs font-hebrew text-gray-400 truncate">{job.work_type}</span>
+                      <span className="text-sm font-hebrew text-gray-500 tabular-nums text-center">{new Date(job.job_date).toLocaleDateString("he-IL")}</span>
+                      <Badge className={`${getStatusColor(job.job_status)} text-xs justify-center`}>{job.job_status}</Badge>
+                      <p className="font-bold text-vazana-dark text-sm text-center tabular-nums">₪{(job.total_amount || job.job_specific_shift_rate || 0).toLocaleString()}</p>
+                      <div className="flex gap-0.5 justify-center">
                         {!job.is_deleted ? (
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); handleEditJob(job) }}>
+                          <>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); handleEditJob(job) }}>
                               <Edit className="w-3.5 h-3.5 text-gray-500" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); handleDeleteJob(job.id) }}>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); handleDeleteJob(job.id) }}>
                               <Trash2 className="w-3.5 h-3.5 text-red-400" />
                             </Button>
-                          </div>
+                          </>
                         ) : (
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-hebrew text-green-600" onClick={(e) => { e.stopPropagation(); handleRestoreJob(job.id) }}>
-                            <RotateCcw className="w-3.5 h-3.5 ml-1" />
-                            שחזר
+                          <Button variant="ghost" size="sm" className="h-6 px-1 text-xs font-hebrew text-green-600" onClick={(e) => { e.stopPropagation(); handleRestoreJob(job.id) }}>
+                            <RotateCcw className="w-3 h-3" />
                           </Button>
                         )}
                       </div>
@@ -735,11 +726,11 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                             <p className="text-sm font-hebrew text-gray-700">{job.notes}</p>
                           </div>
                         )}
-                        <div className="mt-3 pt-2 border-t flex gap-2 justify-end pb-0">
+                        <div className="flex gap-2 justify-end -mt-1">
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-7 text-xs font-hebrew"
+                            className="h-6 text-[11px] font-hebrew"
                             onClick={(e) => {
                               e.stopPropagation()
                               import('@/lib/ics-calendar').then(({ downloadJobICS }) => {
