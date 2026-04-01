@@ -92,24 +92,24 @@ export function InvoicePreviewModal({
         <div className="overflow-y-auto px-1 max-h-[calc(90vh-180px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           {/* Invoice Preview */}
           <div id="invoice-preview-content" className="bg-white border border-gray-200 p-8 rounded-lg shadow-sm">
-          {/* Header */}
-          <div className="flex justify-between items-start mb-8">
+          {/* Header — business on right, invoice meta on left */}
+          <div className="flex justify-between items-start mb-8" dir="rtl">
             <div className="text-right">
-              <h1 className="text-3xl font-bold text-teal-600 mb-2">חשבונית</h1>
-              <div className="text-sm text-gray-600">
-                <p>מספר: INV-2025-0001</p>
-                <p>תאריך: {currentDate}</p>
-                <p>תאריך פרעון: {dueDate}</p>
-              </div>
-            </div>
-            
-            <div className="text-left">
               <img src="/VazanaLogo-02.png" alt="Vazana" className="h-12 mb-2" />
-              <h2 className="text-xl font-bold text-gray-800 mb-2">{businessName}</h2>
+              <h2 className="text-xl font-bold text-gray-800 mb-1">{businessName}</h2>
               <div className="text-sm text-gray-600">
                 <p>{businessAddress}</p>
                 <p>טלפון: {businessPhone}</p>
                 <p>דוא"ל: {businessEmail}</p>
+              </div>
+            </div>
+
+            <div className="text-left">
+              <h1 className="text-3xl font-bold text-teal-600 mb-2">חשבונית</h1>
+              <div className="text-sm text-gray-600 text-left">
+                <p>מספר: {invoiceNumber || 'INV-2025-0001'}</p>
+                <p>תאריך: {currentDate}</p>
+                <p>תאריך פרעון: {dueDate}</p>
               </div>
             </div>
           </div>

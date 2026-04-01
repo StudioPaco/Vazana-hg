@@ -500,7 +500,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                   <tr key={client.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 font-medium">
                       {client.company_name}
-                      {clientDocCounts[client.id] > 0 && <span className="inline-flex items-center justify-center w-4 h-4 text-[9px] bg-blue-100 text-blue-700 rounded-full mr-1">{clientDocCounts[client.id]}</span>}
+                      {clientDocCounts[client.id] > 0 && <a href={`/documents?filter=client&entityId=${client.id}`} className="inline-flex items-center justify-center w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full mr-1 hover:bg-blue-600" title={`${clientDocCounts[client.id]} קבצים`}>{clientDocCounts[client.id]}</a>}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{client.contact_person}</td>
                     <td className="px-4 py-3 text-gray-600" dir="ltr">{client.phone}</td>
@@ -532,7 +532,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
                   <div className="absolute top-0 right-0 text-right">
                     <h3 className="text-lg font-bold text-gray-900">
                       {client.company_name}
-                      {clientDocCounts[client.id] > 0 && <span className="inline-flex items-center justify-center w-4 h-4 text-[9px] bg-blue-100 text-blue-700 rounded-full mr-1">{clientDocCounts[client.id]}</span>}
+                      {clientDocCounts[client.id] > 0 && <a href={`/documents?filter=client&entityId=${client.id}`} className="inline-flex items-center justify-center w-5 h-5 text-[10px] bg-blue-500 text-white rounded-full mr-1 hover:bg-blue-600" title={`${clientDocCounts[client.id]} קבצים`}>{clientDocCounts[client.id]}</a>}
                     </h3>
                     <p className="text-sm text-gray-600">{client.contact_person}</p>
                     <Badge variant={client.status === "active" ? "default" : "secondary"} className="mt-1 text-xs">
