@@ -415,15 +415,7 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
                     <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => window.open(`/api/documents/${doc.id}/download`, "_blank")} title="הורד">
                       <Download className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => {
-                      // Open file preview — images in modal, others in new tab
-                      const isImage = doc.mime_type?.startsWith('image/')
-                      if (isImage) {
-                        setPreviewDoc(doc)
-                      } else {
-                        window.open(`/api/documents/${doc.id}/download`, '_blank')
-                      }
-                    }} title="תצוגה מקדימה">
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setPreviewDoc(doc)} title="תצוגה מקדימה">
                       <Eye className="h-3.5 w-3.5 text-teal-600" />
                     </Button>
                     <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleDelete(doc.id)} title="מחק">
@@ -451,17 +443,30 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
               <DialogTitle className="font-hebrew text-right">{previewDoc.filename}</DialogTitle>
             </DialogHeader>
             <div className="flex items-center justify-center p-4 overflow-auto max-h-[70vh]">
-              {previewDoc.mime_type?.startsWith('image/') ? (
-                <img src={`/api/documents/${previewDoc.id}/download`} alt={previewDoc.filename} className="max-w-full max-h-[65vh] object-contain rounded" />
-              ) : (
-                <div className="text-center text-gray-500 font-hebrew py-12">
-                  <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p>תצוגה מקדימה לא זמינה לסוג קובץ זה</p>
-                  <Button variant="outline" className="mt-4 font-hebrew" onClick={() => window.open(`/api/documents/${previewDoc.id}/download`, '_blank')}>
-                    <Download className="w-4 h-4 ml-1" /> הורד קובץ
-                  </Button>
-                </div>
-              )}
+              {(() => {
+                const ext = previewDoc.filename?.split('.').pop()?.toLowerCase() || ''
+                const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico', 'tiff', 'tif', 'avif', 'heic', 'heif']
+                const pdfExts = ['pdf']
+                const isImage = previewDoc.mime_type?.startsWith('image/') || imageExts.includes(ext)
+                const isPdf = previewDoc.mime_type === 'application/pdf' || pdfExts.includes(ext)
+
+                if (isImage) {
+                  return <img src={`/api/documents/${previewDoc.id}/download`} alt={previewDoc.filename} className="max-w-full max-h-[65vh] object-contain rounded" />
+                }
+                if (isPdf) {
+                  return <iframe src={`/api/documents/${previewDoc.id}/download`} className="w-full h-[65vh] rounded border" title={previewDoc.filename} />
+                }
+                return (
+                  <div className="text-center text-gray-500 font-hebrew py-12">
+                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="mb-2 font-medium">{previewDoc.filename}</p>
+                    <p className="text-sm mb-4">תצוגה מקדימה לא זמינה לסוג קובץ זה</p>
+                    <Button variant="outline" className="font-hebrew" onClick={() => window.open(`/api/documents/${previewDoc.id}/download`, '_blank')}>
+                      <Download className="w-4 h-4 ml-1" /> הורד קובץ
+                    </Button>
+                  </div>
+                )
+              })()}
             </div>
           </DialogContent>
         </Dialog>
