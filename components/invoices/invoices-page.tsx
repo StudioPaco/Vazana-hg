@@ -247,11 +247,16 @@ export default function InvoicesPage({
     }
   }
 
+  // Helper: check if invoice is overdue (must be defined before useMemo that references it)
+  const isOverdue = (dueDate: string, status: string) => {
+    return status !== "paid" && new Date(dueDate) < new Date()
+  }
+
   // Calculate statistics - memoized to prevent infinite loops
   const stats = useMemo(() => {
     const totalRevenue = filteredInvoices
       .filter(inv => inv.status === "paid")
-      .reduce((sum, inv) => sum + inv.total_amount, 0)
+      .reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0)
 
     const pendingInvoices = filteredInvoices.filter(inv => inv.status === "sent").length
     const overdueInvoices = filteredInvoices.filter(inv => isOverdue(inv.due_date, inv.status)).length
@@ -275,10 +280,6 @@ export default function InvoicesPage({
       onStatsCalculated(stats)
     }
   }, [stats, loading, onStatsCalculated])
-
-  const isOverdue = (dueDate: string, status: string) => {
-    return status !== "paid" && new Date(dueDate) < new Date()
-  }
 
   const toggleJobHistory = async (invoiceId: string) => {
     if (expandedInvoice === invoiceId) {
@@ -318,7 +319,7 @@ export default function InvoicesPage({
 
   // Total amount of filtered invoices
   const filteredTotal = useMemo(() => {
-    return filteredInvoices.reduce((sum, inv) => sum + inv.total_amount, 0)
+    return filteredInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0)
   }, [filteredInvoices])
 
   if (loading) {

@@ -205,25 +205,42 @@ export default function CalendarPage() {
 
   const clashCount = clashes.size
 
+  const [togglingCells, setTogglingCells] = useState<Set<string>>(new Set())
+
   const toggleAvailability = async (resourceId: string, dateStr: string, resType: string) => {
     const key = `${resourceId}_${dateStr}`
-    const existing = availabilityMap[key]
-    if (existing) {
-      if (!existing.is_available) {
-        await supabase.from("resource_availability").delete().eq("id", existing.id)
+    setTogglingCells(prev => new Set(prev).add(key))
+    try {
+      const existing = availabilityMap[key]
+      if (existing) {
+        if (!existing.is_available) {
+          const { error } = await supabase.from("resource_availability").delete().eq("id", existing.id)
+          if (error) throw error
+        } else {
+          const { error } = await supabase.from("resource_availability").update({ is_available: false }).eq("id", existing.id)
+          if (error) throw error
+        }
       } else {
-        await supabase.from("resource_availability").update({ is_available: false }).eq("id", existing.id)
+        const { error } = await supabase.from("resource_availability").insert({
+          resource_type: resType,
+          resource_id: resourceId,
+          date: dateStr,
+          is_available: false,
+          reason: "סומן ידנית",
+        })
+        if (error) throw error
       }
-    } else {
-      await supabase.from("resource_availability").insert({
-        resource_type: resType,
-        resource_id: resourceId,
-        date: dateStr,
-        is_available: false,
-        reason: "סומן ידנית",
+      await fetchAvailability()
+    } catch (err) {
+      console.error("Failed to toggle availability:", err)
+      toast({ title: "שגיאה בעדכון זמינות", variant: "destructive" })
+    } finally {
+      setTogglingCells(prev => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
       })
     }
-    await fetchAvailability()
   }
 
   const getJobsForCell = (resourceName: string, resourceTypeStr: string, dateStr: string): Job[] => {
@@ -296,6 +313,47 @@ export default function CalendarPage() {
   }, [resources, dates, jobs])
   const capacityPct = totalSlots > 0 ? Math.round((busySlots / totalSlots) * 100) : 0
 
+  // Enhanced stats: jobs this week, jobs this month, top worker
+  const weekJobCount = useMemo(() => {
+    const today = new Date()
+    const startOfWeek = new Date(today)
+    startOfWeek.setDate(today.getDate() - today.getDay())
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+    const startStr = startOfWeek.toISOString().split("T")[0]
+    const endStr = endOfWeek.toISOString().split("T")[0]
+    return jobs.filter(j => {
+      const d = j.job_date?.split("T")[0]
+      return d && d >= startStr && d <= endStr
+    }).length
+  }, [jobs])
+
+  const monthJobCount = useMemo(() => {
+    const today = new Date()
+    const startStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    const endStr = lastDay.toISOString().split("T")[0]
+    return jobs.filter(j => {
+      const d = j.job_date?.split("T")[0]
+      return d && d >= startStr && d <= endStr
+    }).length
+  }, [jobs])
+
+  const topWorker = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const j of jobs) {
+      if (j.worker_name) {
+        counts[j.worker_name] = (counts[j.worker_name] || 0) + 1
+      }
+    }
+    let best = ""
+    let max = 0
+    for (const [name, count] of Object.entries(counts)) {
+      if (count > max) { max = count; best = name }
+    }
+    return best ? { name: best, count: max } : null
+  }, [jobs])
+
   if (loading) {
     return (
       <PageLayout title="לוח זמנים" subtitle="זמינות משאבים ועבודות" titleIcon={CalendarIcon} variant="list" maxWidth="7xl">
@@ -309,7 +367,7 @@ export default function CalendarPage() {
   return (
     <PageLayout title="לוח זמנים" subtitle="זמינות משאבים ועבודות" titleIcon={CalendarIcon} variant="list" maxWidth="7xl">
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3" dir="rtl">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-3" dir="rtl">
         <Card><CardContent className="px-3 py-2 flex items-center justify-between">
           <span className="text-lg font-bold text-vazana-dark">{resources.length}</span>
           <span className="text-xs text-gray-500 font-hebrew">משאבים</span>
@@ -326,6 +384,20 @@ export default function CalendarPage() {
           <span className={`text-lg font-bold ${clashCount > 0 ? 'text-red-500' : 'text-green-500'}`}>{clashCount}</span>
           <span className="text-xs text-gray-500 font-hebrew">התנגשויות</span>
         </CardContent></Card>
+        <Card><CardContent className="px-3 py-2 flex items-center justify-between">
+          <span className="text-lg font-bold text-blue-600">{weekJobCount}</span>
+          <span className="text-xs text-gray-500 font-hebrew">הזמנות השבוע</span>
+        </CardContent></Card>
+        <Card><CardContent className="px-3 py-2 flex items-center justify-between">
+          <span className="text-lg font-bold text-indigo-600">{monthJobCount}</span>
+          <span className="text-xs text-gray-500 font-hebrew">הזמנות החודש</span>
+        </CardContent></Card>
+        {topWorker && (
+          <Card><CardContent className="px-3 py-2 flex items-center justify-between">
+            <span className="text-sm font-bold text-amber-600 truncate max-w-[80px]" title={topWorker.name}>{topWorker.name}</span>
+            <span className="text-xs text-gray-500 font-hebrew">עובד מוביל ({topWorker.count})</span>
+          </CardContent></Card>
+        )}
       </div>
 
       {/* Toolbar */}
@@ -385,11 +457,11 @@ export default function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w - (viewScope === 'month' ? 4 : 1))}>
+          <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w - 1)}>
             <ChevronRight className="w-4 h-4" />
           </Button>
           <Button variant="outline" size="sm" className="h-8 font-hebrew text-xs" onClick={() => setWeekOffset(0)}>היום</Button>
-          <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w + (viewScope === 'month' ? 4 : 1))}>
+          <Button variant="outline" size="sm" className="h-8" onClick={() => setWeekOffset(w => w + 1)}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <span className="text-sm font-hebrew text-gray-600">
@@ -512,13 +584,18 @@ export default function CalendarPage() {
                       >
                         {/* Click area for availability toggle */}
                         <div
-                          className="min-h-[32px] cursor-pointer"
+                          className={`min-h-[32px] cursor-pointer ${togglingCells.has(`${resource.id}_${dateStr}`) ? 'opacity-50 pointer-events-none' : ''}`}
                           onClick={(e) => {
                             if ((e.target as HTMLElement).closest('[data-job]')) return
                             toggleAvailability(resource.id, dateStr, resource.type)
                           }}
                         >
-                          {isUnavailable && cellJobs.length === 0 && (
+                          {togglingCells.has(`${resource.id}_${dateStr}`) && (
+                            <div className="flex items-center justify-center h-8">
+                              <div className="w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          )}
+                          {!togglingCells.has(`${resource.id}_${dateStr}`) && isUnavailable && cellJobs.length === 0 && (
                             <div className="flex items-center justify-center h-8">
                               <X className="w-3.5 h-3.5 text-gray-400" />
                             </div>
@@ -541,7 +618,7 @@ export default function CalendarPage() {
                               ))}
                             </div>
                           )}
-                          {cellJobs.length === 0 && !isUnavailable && (
+                          {cellJobs.length === 0 && !isUnavailable && !togglingCells.has(`${resource.id}_${dateStr}`) && (
                             <div className="flex items-center justify-center h-8">
                               <Check className="w-3 h-3 text-green-300" />
                             </div>

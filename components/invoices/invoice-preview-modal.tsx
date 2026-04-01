@@ -206,11 +206,21 @@ export function InvoicePreviewModal({
         
         {/* Action Buttons - Fixed positioning */}
         <div className="sticky bottom-0 bg-white border-t pt-4 flex gap-4 justify-center mt-6 z-10">
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2" onClick={() => window.print()}>
             <Printer className="h-4 w-4" />
             הדפס
           </Button>
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2" onClick={() => {
+            // Generate printable HTML and trigger download
+            const content = document.querySelector('[data-slot="dialog-content"]')?.innerHTML || ''
+            const blob = new Blob([`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>חשבונית</title><style>body{font-family:Arial;padding:20px;direction:rtl}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}</style></head><body>${content}</body></html>`], { type: 'text/html' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'invoice.html'
+            a.click()
+            URL.revokeObjectURL(url)
+          }}>
             <Download className="h-4 w-4" />
             הורד PDF
           </Button>

@@ -292,11 +292,11 @@ export default function UserEditModal({ user, open, onOpenChange, onUserUpdated,
                     {user.dbRole === "owner" ? (
                       <Input value="בעלים" disabled className="text-right font-hebrew bg-gray-50" dir="rtl" />
                     ) : (
-                      <Select value={userData.role} onValueChange={(value) => setUserData({ ...userData, role: value })}>
+                      <Select value={userData.role} onValueChange={(value) => setUserData({ ...userData, role: value })} dir="rtl">
                         <SelectTrigger className="text-right font-hebrew">
                           <SelectValue placeholder="בחר תפקיד..." />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent dir="rtl">
                           <SelectItem value="admin" className="font-hebrew">מנהל</SelectItem>
                           <SelectItem value="staff" className="font-hebrew">משתמש</SelectItem>
                         </SelectContent>

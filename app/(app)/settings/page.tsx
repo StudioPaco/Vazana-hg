@@ -1630,6 +1630,8 @@ export default function SettingsPage() {
                                 a.click()
                                 URL.revokeObjectURL(url)
                                 toast({ title: "הגיבוי הורד בהצלחה" })
+                              } else {
+                                toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
                               }
                             } catch {
                               toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })

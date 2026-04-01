@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json().catch(() => ({}))
+    const { action } = body
+
     const supabase = await createClient()
 
     // Verify auth
@@ -28,9 +31,6 @@ export async function POST(request: NextRequest) {
       created_by: user.email,
       tables: backup,
     }, null, 2)
-
-    const body = await request.json().catch(() => ({}))
-    const { action } = body
 
     if (action === 'download') {
       return new NextResponse(backupJson, {

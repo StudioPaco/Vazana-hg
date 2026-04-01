@@ -95,9 +95,14 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
         ;(event.target as HTMLFormElement).reset()
         setEntityType("general")
         setEntityId("")
+      } else {
+        const err = await response.json().catch(() => ({ error: "שגיאה לא ידועה" }))
+        console.error("Upload failed:", err)
+        alert(`שגיאה בהעלאה: ${err.error || response.statusText}`)
       }
     } catch (error) {
       console.error("Upload failed:", error)
+      alert("שגיאה בהעלאה: " + (error instanceof Error ? error.message : "שגיאה לא ידועה"))
     } finally {
       setUploading(false)
     }

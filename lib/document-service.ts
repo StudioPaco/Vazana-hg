@@ -1,12 +1,7 @@
-import { createClient } from "@supabase/supabase-js"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 function getSupabase() {
-  // Use service role key server-side to bypass RLS for storage operations
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  return createAdminClient()
 }
 
 export interface Document {

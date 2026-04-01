@@ -118,7 +118,7 @@ export default function JobFormPage() {
         created_at: new Date().toISOString(),
       })], { type: 'application/json' })
 
-      const file = new File([formBlob], `טופס-${formNumber}.json`, { type: 'application/json' })
+      const file = new File([formBlob], `form-${formNumber}.json`, { type: 'application/json' })
       const formData = new FormData()
       formData.append('file', file)
       formData.append('entityType', 'job')
@@ -127,7 +127,7 @@ export default function JobFormPage() {
       const res = await fetch('/api/documents', { method: 'POST', body: formData })
       if (!res.ok) throw new Error('Upload failed')
 
-      toast({ title: `טופס #${formNumber} נשמר ושויך לעבודה` })
+      toast({ title: `טופס #FRM-${formNumber} נשמר ושויך לעבודה` })
       // Increment form number
       setFormNumber(String(parseInt(formNumber) + 1).padStart(4, '0'))
     } catch (error) {
@@ -187,7 +187,7 @@ export default function JobFormPage() {
           </Button>
         </Link>
         <Badge variant="outline" className="h-9 px-3 font-hebrew text-sm">
-          טופס #{formNumber}
+          טופס #FRM-{formNumber}
         </Badge>
         <Select value={selectedJobId} onValueChange={handleJobChange} dir="rtl">
           <SelectTrigger className="w-[260px] font-hebrew text-right h-9 text-sm">
