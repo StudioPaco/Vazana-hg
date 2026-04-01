@@ -439,6 +439,11 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
               </SelectContent>
             </Select>
           )}
+          {(statusFilter !== "all" || cityFilter !== "all" || searchTerm) && (
+            <Button variant="ghost" size="sm" onClick={() => { setStatusFilter("all"); setCityFilter("all"); setSearchTerm("") }} className="font-hebrew text-xs text-gray-500 h-8">
+              נקה סינון
+            </Button>
+          )}
         </div>
 
         <div className="relative w-full sm:w-auto">

@@ -52,27 +52,31 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const getSession = async () => {
+    const getSession = async (retryCount = 0) => {
       try {
-        // Use the server API to get both auth state and profile in one call
         const res = await fetch("/api/auth/profile")
         const data = res.ok ? await res.json() : { user: null, profile: null }
 
         if (data.user && data.profile) {
-          // Reconstruct a minimal User object for context consumers
           setUser({ id: data.user.id, email: data.user.email } as User)
           setProfile(data.profile)
+        } else if (retryCount < 2) {
+          // Retry — session cookie may not have propagated yet after login
+          setTimeout(() => getSession(retryCount + 1), 800)
+          return
         } else {
           setUser(null)
           setProfile(null)
-          supabase.auth.signOut().catch(() => {})
           if (!isAuthRoute) {
             router.replace("/auth/login")
           }
         }
       } catch (error) {
         console.error("Auth check failed:", error)
-        supabase.auth.signOut().catch(() => {})
+        if (retryCount < 2) {
+          setTimeout(() => getSession(retryCount + 1), 800)
+          return
+        }
         if (!isAuthRoute) {
           router.replace("/auth/login")
         }

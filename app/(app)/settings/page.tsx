@@ -1727,30 +1727,26 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Backup Section */}
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <h3 className="font-semibold text-right font-hebrew">גיבוי נתונים</h3>
-                    <p className="text-sm text-gray-600 text-right font-hebrew">הורד גיבוי מלא של כל הנתונים (לקוחות, עבודות, חשבוניות, עובדים)</p>
-                    <div className="flex gap-3 justify-end">
-                      <Button variant="outline" className="font-hebrew" onClick={async () => {
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    {/* Backup */}
+                    <div className="space-y-3 p-4 border rounded-lg">
+                      <h3 className="font-semibold text-right font-hebrew">גיבוי מלא</h3>
+                      <p className="text-xs text-gray-600 text-right font-hebrew">גיבוי כל הנתונים כקובץ JSON</p>
+                      <Button variant="outline" className="w-full font-hebrew text-sm" onClick={async () => {
                         try {
                           const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download' }) })
                           if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); toast({ title: "הגיבוי הורד בהצלחה" }) }
-                          else toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
+                          else toast({ title: "שגיאה", variant: "destructive" })
                         } catch { toast({ title: "שגיאה", variant: "destructive" }) }
                       }}>
-                        <Download className="w-4 h-4 ml-1" /> JSON גיבוי
+                        <Download className="w-4 h-4 ml-1" /> הורד גיבוי
                       </Button>
-                      <Button variant="outline" className="font-hebrew" onClick={async () => {
-                        try {
-                          const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download-csv' }) })
-                          if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.csv`; a.click(); URL.revokeObjectURL(url); toast({ title: "גיבוי CSV הורד בהצלחה" }) }
-                          else toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
-                        } catch { toast({ title: "שגיאה", variant: "destructive" }) }
-                      }}>
-                        <Download className="w-4 h-4 ml-1" /> CSV גיבוי
-                      </Button>
-                      <Button variant="outline" className="font-hebrew" disabled onClick={() => toast({ title: "נדרש חיבור Google בלשונית אינטגרציות" })}>
+                    </div>
+                    {/* Google Drive */}
+                    <div className="space-y-3 p-4 border rounded-lg">
+                      <h3 className="font-semibold text-right font-hebrew">Google Drive</h3>
+                      <p className="text-xs text-gray-600 text-right font-hebrew">גיבוי אוטומטי ל-Drive</p>
+                      <Button variant="outline" className="w-full font-hebrew text-sm" disabled onClick={() => toast({ title: "נדרש חיבור Google" })}>
                         <Download className="w-4 h-4 ml-1" /> Google Drive
                       </Button>
                     </div>
@@ -1759,17 +1755,12 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 p-4 border rounded-lg">
                       <h3 className="font-semibold text-right font-hebrew">ייצוא נתונים</h3>
-                      <p className="text-sm text-gray-600 text-right font-hebrew">
-                        יצא את נתוני המערכת בפורמט הרצוי
-                      </p>
-                      <Button
-                        onClick={() => setDataExportOpen(true)}
-                        className="w-full bg-blue-600 hover:bg-blue-700 font-hebrew"
-                      >
-                        יצא נתונים
+                      <p className="text-sm text-gray-600 text-right font-hebrew">יצא נתונים נבחרים בפורמט הרצוי</p>
+                      <Button onClick={() => setDataExportOpen(true)} className="w-full bg-blue-600 hover:bg-blue-700 font-hebrew">
+                        <Download className="w-4 h-4 ml-1" /> יצא נתונים
                       </Button>
                     </div>
-                    
+
                     <div className="space-y-4 p-4 border rounded-lg">
                       <h3 className="font-semibold text-right font-hebrew">יבוא נתונים</h3>
                       <p className="text-sm text-gray-600 text-right font-hebrew">
