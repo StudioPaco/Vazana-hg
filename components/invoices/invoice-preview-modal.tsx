@@ -26,6 +26,7 @@ interface InvoicePreviewModalProps {
   onClose: () => void
   selectedJobs: Job[]
   manualItems?: ManualItem[]
+  invoiceNumber?: string
   clientName: string
   summary: {
     subtotal: number
@@ -42,6 +43,7 @@ export function InvoicePreviewModal({
   onClose,
   selectedJobs,
   manualItems = [],
+  invoiceNumber = '',
   clientName,
   summary,
   notes,
@@ -73,7 +75,7 @@ export function InvoicePreviewModal({
         
         <div className="overflow-y-auto px-1 max-h-[calc(90vh-180px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           {/* Invoice Preview */}
-          <div className="bg-white border border-gray-200 p-8 rounded-lg shadow-sm">
+          <div id="invoice-preview-content" className="bg-white border border-gray-200 p-8 rounded-lg shadow-sm">
           {/* Header */}
           <div className="flex justify-between items-start mb-8">
             <div className="text-right">
@@ -205,24 +207,36 @@ export function InvoicePreviewModal({
         </div>
         
         {/* Action Buttons - Fixed positioning */}
-        <div className="sticky bottom-0 bg-white border-t pt-4 flex gap-4 justify-center mt-6 z-10">
-          <Button variant="outline" className="flex items-center gap-2" onClick={() => window.print()}>
+        <div className="sticky bottom-0 bg-white border-t pt-4 flex gap-4 justify-center mt-6 z-10 print:hidden">
+          <Button variant="outline" className="flex items-center gap-2" onClick={() => {
+            const invoiceEl = document.getElementById('invoice-preview-content')
+            if (!invoiceEl) return
+            const w = window.open('', '_blank')
+            if (!w) return
+            w.document.write(`<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8">
+              <title>חשבונית ${invoiceNumber}</title>
+              <style>@page{size:landscape;margin:15mm}body{font-family:Arial,sans-serif;padding:20px;direction:rtl}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}.bg-gray-50{background:#f9f9f9}</style>
+            </head><body>${invoiceEl.innerHTML}</body></html>`)
+            w.document.close()
+            w.print()
+          }}>
             <Printer className="h-4 w-4" />
             הדפס
           </Button>
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
-            // Generate printable HTML and trigger download
-            const content = document.querySelector('[data-slot="dialog-content"]')?.innerHTML || ''
-            const blob = new Blob([`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>חשבונית</title><style>body{font-family:Arial;padding:20px;direction:rtl}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}</style></head><body>${content}</body></html>`], { type: 'text/html' })
+            const invoiceEl = document.getElementById('invoice-preview-content')
+            if (!invoiceEl) return
+            const html = `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>חשבונית ${invoiceNumber}</title><style>body{font-family:Arial,sans-serif;padding:20px;direction:rtl}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}.bg-gray-50{background:#f9f9f9}</style></head><body>${invoiceEl.innerHTML}</body></html>`
+            const blob = new Blob([html], { type: 'text/html' })
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')
             a.href = url
-            a.download = 'invoice.html'
+            a.download = `${invoiceNumber || 'invoice'}.html`
             a.click()
             URL.revokeObjectURL(url)
           }}>
             <Download className="h-4 w-4" />
-            הורד PDF
+            הורד
           </Button>
           <Button onClick={onClose} className="bg-teal-600 hover:bg-teal-700">
             סגור

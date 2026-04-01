@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
     const document = await documentService.uploadDocument(file, entityType as any, entityId)
 
     return NextResponse.json(document)
-  } catch (error) {
-    console.error("Document upload error:", error)
-    return NextResponse.json({ error: "Failed to upload document" }, { status: 500 })
+  } catch (error: any) {
+    console.error("Document upload error:", error?.message || error)
+    return NextResponse.json({ error: error?.message || "Failed to upload document" }, { status: 500 })
   }
 }
 

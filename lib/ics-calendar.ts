@@ -96,10 +96,8 @@ function generateICSContent(job: JobCalendarData): string {
  */
 export function downloadJobICS(job: JobCalendarData): void {
   const icsContent = generateICSContent(job)
-  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" })
-  const url = URL.createObjectURL(blob)
-
-  // Open in default calendar app instead of downloading
-  window.open(url, '_blank')
-  setTimeout(() => URL.revokeObjectURL(url), 5000)
+  // Use data: URI to trigger calendar app (not save-as)
+  const encoded = encodeURIComponent(icsContent)
+  const dataUri = `data:text/calendar;charset=utf-8,${encoded}`
+  window.location.href = dataUri
 }

@@ -546,10 +546,13 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                     type="number"
                     value={formData.jobSpecificShiftRate ?? ""}
                     onChange={(e) => setFormData({ ...formData, jobSpecificShiftRate: e.target.value ? Number(e.target.value) : null })}
-                    placeholder={clientRates.length > 0 ? String(clientRates[0]?.rate || 800) : "800"}
+                    placeholder={(() => {
+                      const match = clientRates.find(r => r.work_type_id === formData.jobType)
+                      return match ? String(match.rate) : "800"
+                    })()}
                     className={`text-right w-32 h-9 ${formData.jobSpecificShiftRate ? '' : 'text-gray-400'}`}
                   />
-                  {clientRates.length > 0 ? (
+                  {clientRates.find(r => r.work_type_id === formData.jobType) ? (
                     <span className="text-xs text-green-600 font-hebrew">מוגדר</span>
                   ) : !formData.jobSpecificShiftRate ? (
                     <span className="text-xs text-amber-600 font-hebrew">חובה</span>

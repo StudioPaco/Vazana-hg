@@ -855,7 +855,7 @@ export default function NewInvoicePage() {
                   <div className="mt-6 flex gap-4 justify-start">
                     <Button
                       onClick={createInvoice}
-                      disabled={creating || jobs.filter(j => j.selected).length === 0}
+                      disabled={creating || (jobs.filter(j => j.selected).length === 0 && manualItems.filter(i => i.description && i.unit_price > 0).length === 0)}
                       className="bg-teal-600 hover:bg-teal-700 text-white px-8"
                     >
                       {creating ? "יוצר חשבונית..." : "צור חשבונית"}
@@ -906,6 +906,7 @@ export default function NewInvoicePage() {
         onClose={() => setShowPreview(false)}
         selectedJobs={jobs.filter(job => job.selected)}
         manualItems={manualItems.filter(i => i.description && i.unit_price > 0)}
+        invoiceNumber={invoiceNumber}
         clientName={clients.find(c => c.id === selectedClient)?.company_name || ""}
         summary={summary}
         notes={notes}

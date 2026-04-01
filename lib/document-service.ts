@@ -20,13 +20,22 @@ export interface Document {
 export class DocumentService {
   async uploadDocument(file: File, entityType: Document["entity_type"], entityId?: string): Promise<Document> {
     const supabase = getSupabase()
-    const filename = `${Date.now()}-${file.name}`
-    const filePath = `documents/${entityType}/${filename}`
+    // Sanitize filename — remove Hebrew chars that may cause issues
+    const safeName = file.name.replace(/[^\w.-]/g, '_')
+    const filename = `${Date.now()}-${safeName}`
+    const filePath = `${entityType}/${filename}`
+
+    // Convert File to Buffer for server-side upload
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
     // Upload file to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("documents")
-      .upload(filePath, file)
+      .upload(filePath, buffer, {
+        contentType: file.type || 'application/octet-stream',
+        upsert: false,
+      })
 
     if (uploadError) {
       throw new Error(`Upload failed: ${uploadError.message}`)
