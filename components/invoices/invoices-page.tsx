@@ -452,12 +452,19 @@ export default function InvoicesPage({
                         onClick={() => handleDownloadPDF(invoice.id, invoice.invoice_number)}
                         className="bg-transparent border-gray-300 h-8 px-3 text-xs"
                       >
-                        PDF
+                        הורד
                       </Button>
-                      <Button variant="outline" size="sm" asChild className="bg-transparent border-gray-300 h-8 px-3 text-xs">
-                        <Link href={`/invoices/${invoice.id}`}>
-                          צפייה
-                        </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Open print view in new window
+                          const w = window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')
+                          if (w) setTimeout(() => w.print(), 1000)
+                        }}
+                        className="bg-transparent border-gray-300 h-8 px-3 text-xs"
+                      >
+                        הדפס
                       </Button>
                     </div>
 

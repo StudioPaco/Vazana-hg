@@ -115,7 +115,7 @@ export default function NewInvoicePage() {
     setManualItems(prev => prev.filter((_, i) => i !== index))
   }
 
-  const manualTotal = manualItems.reduce((sum, item) => sum + (item.unit_price || 0), 0)
+  const manualTotal = manualItems.reduce((sum, item) => sum + ((item.unit_price || 0) * (item.quantity || 1)), 0)
 
   // Recalculate summary and persist when manual items change
   useEffect(() => {
@@ -315,7 +315,7 @@ export default function NewInvoicePage() {
     const selectedJobs = jobsList.filter(job => job.selected)
     const jobsSubtotal = selectedJobs.reduce((sum, job) => sum + (job.total_amount || 0), 0)
     const items = manualItemsList ?? manualItems
-    const manualSubtotal = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
+    const manualSubtotal = items.reduce((sum, item) => sum + ((item.unit_price || 0) * (item.quantity || 1)), 0)
     const subtotal = jobsSubtotal + manualSubtotal
     const tax_amount = subtotal * 0.18 // 18% VAT
     const total_amount = subtotal + tax_amount
@@ -329,33 +329,28 @@ export default function NewInvoicePage() {
   // Fetch older jobs that haven't been invoiced
   const fetchOlderJobs = async () => {
     if (!selectedClient || !selectedMonth) return
-    
+
     try {
-      let query = supabase
+      // Get all older jobs for this client
+      const { data: olderJobs, error } = await supabase
         .from('jobs')
         .select('id, job_number, client_name, client_id, work_type, job_date, site, city, total_amount, payment_status')
         .eq('client_id', selectedClient)
         .lt('job_date', `${selectedMonth}-01`)
         .order('job_date', { ascending: false })
-      
-      // Try to add invoice_id filter if column exists
-      try {
-        query = query.is('invoice_id', null) // Jobs that haven't been invoiced yet
-      } catch {
-        console.log('invoice_id column not found, fetching all older jobs')
-      }
-        
-      const { data, error } = await query
-      
+
       if (error) {
-        console.warn('Could not fetch older jobs:', error)
-        toast({
-          title: "השגיאה",
-          description: "לא ניתן לטעון עבודות ישנות - אולי אין נתונים",
-          variant: "destructive",
-        })
+        console.error('Could not fetch older jobs:', error)
+        toast({ title: "שגיאה בטעינת עבודות ישנות", variant: "destructive" })
         return
       }
+
+      // Filter out jobs that have already been invoiced (exist in invoice_line_items)
+      const { data: invoicedJobIds } = await supabase
+        .from('invoice_line_items')
+        .select('job_id')
+      const invoicedSet = new Set((invoicedJobIds || []).map((r: any) => r.job_id))
+      const data = (olderJobs || []).filter((j: any) => !invoicedSet.has(j.id))
       
       const olderJobsWithSelection = (data || []).map(job => ({ ...job, selected: false }))
       

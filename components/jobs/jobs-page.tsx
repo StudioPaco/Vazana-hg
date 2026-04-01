@@ -735,7 +735,7 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                             <p className="text-sm font-hebrew text-gray-700">{job.notes}</p>
                           </div>
                         )}
-                        <div className="mt-2 pt-1 border-t flex gap-2 justify-end">
+                        <div className="mt-3 pt-2 border-t flex gap-2 justify-end pb-0">
                           <Button
                             variant="outline"
                             size="sm"

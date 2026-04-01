@@ -333,20 +333,8 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
             const entityName = getEntityName(doc)
             return (
               <Card key={doc.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="flex items-center justify-between p-3">
-                  <div className="flex gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => window.open(`/api/documents/${doc.id}/download`, "_blank")}
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleDelete(doc.id)}>
-                      <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                    </Button>
-                  </div>
+                <CardContent className="flex items-center justify-between p-3" dir="rtl">
+                  <FileText className="h-5 w-5 text-blue-500 shrink-0" />
                   <div className="text-right flex-1 mx-3">
                     <h3 className="font-medium font-hebrew text-sm">{doc.filename}</h3>
                     <p className="text-xs text-gray-500 font-hebrew">
@@ -356,7 +344,14 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
                       {' · '}{new Date(doc.created_at).toLocaleDateString("he-IL")}
                     </p>
                   </div>
-                  <FileText className="h-6 w-6 text-blue-500 shrink-0" />
+                  <div className="flex gap-1 shrink-0">
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => window.open(`/api/documents/${doc.id}/download`, "_blank")}>
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => handleDelete(doc.id)}>
+                      <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )
