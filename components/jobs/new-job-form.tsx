@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon, RotateCcw, DollarSignIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { getNumberingConfig, formatJobNumber } from "@/lib/numbering"
 import DatabaseDropdown from "@/components/ui/database-dropdown"
 import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/hooks/use-job-form-data"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
@@ -185,46 +186,46 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
 
   useEffect(() => {
     const fetchJobNumber = async () => {
+      const config = await getNumberingConfig()
       try {
-        // Use API endpoint instead of direct Supabase query to avoid RLS issues
         const response = await fetch('/api/jobs')
-        
+
         if (!response.ok) {
           console.error("API error fetching jobs for numbering:", response.status)
-          setJobNumber("0001")
+          setJobNumber(formatJobNumber(1, config))
           return
         }
-        
+
         const result = await response.json()
         const allJobs = result.data || []
 
         if (allJobs.length === 0) {
-          setJobNumber("0001")
+          setJobNumber(formatJobNumber(1, config))
           return
         }
 
         // Filter out deleted jobs - only consider active jobs for numbering
         const activeJobs = allJobs.filter((job: any) => !job.is_deleted)
-        
+
         if (activeJobs.length === 0) {
-          setJobNumber("0001")
+          setJobNumber(formatJobNumber(1, config))
           return
         }
 
-        // Get the highest job number among ACTIVE jobs only
+        // Get the highest job number among ACTIVE jobs only (strip prefix to get numeric part)
         const highestActiveJobNumber = Math.max(
-          ...activeJobs.map((job: any) => Number.parseInt(job.job_number) || 0)
+          ...activeJobs.map((job: any) => {
+            const num = job.job_number?.replace(/\D/g, '')
+            return Number.parseInt(num) || 0
+          })
         )
 
-        // Always increment from the highest ACTIVE job number
         const nextNumber = highestActiveJobNumber + 1
-        const formattedNumber = nextNumber.toString().padStart(4, "0")
-        console.log("Generated job number:", formattedNumber, "from highest:", highestActiveJobNumber)
-        setJobNumber(formattedNumber)
+        setJobNumber(formatJobNumber(nextNumber, config))
 
       } catch (error) {
         console.error("Failed to fetch job number:", error)
-        setJobNumber("0001")
+        setJobNumber(formatJobNumber(1, config))
       }
     }
 

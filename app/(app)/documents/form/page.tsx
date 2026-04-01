@@ -9,6 +9,7 @@ import { Printer, ArrowRight, Save, FileText } from "lucide-react"
 import Link from "next/link"
 import PageLayout from "@/components/layout/page-layout"
 import { toast } from "@/hooks/use-toast"
+import { getNumberingConfig, formatFormNumber } from "@/lib/numbering"
 
 interface Job {
   id: string
@@ -63,14 +64,18 @@ export default function JobFormPage() {
       if (data.length > 0) {
         setSelectedJobId(data[0].id)
         fillFromJob(data[0])
-        // Generate next form number
+        // Generate next form number using numbering config
         const maxForm = forms.reduce((max: number, d: any) => {
-          const num = parseInt(d.filename?.replace('טופס-', '').replace('.json', '') || '0')
+          const num = parseInt(d.filename?.replace('טופס-', '').replace('.json', '').replace(/\D/g, '') || '0')
           return num > max ? num : max
         }, 0)
-        setFormNumber(String(maxForm + 1).padStart(4, '0'))
+        getNumberingConfig().then(config => {
+          setFormNumber(formatFormNumber(maxForm + 1, config))
+        })
       } else {
-        setFormNumber('0001')
+        getNumberingConfig().then(config => {
+          setFormNumber(formatFormNumber(1, config))
+        })
       }
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
@@ -127,9 +132,12 @@ export default function JobFormPage() {
       const res = await fetch('/api/documents', { method: 'POST', body: formData })
       if (!res.ok) throw new Error('Upload failed')
 
-      toast({ title: `טופס #FRM-${formNumber} נשמר ושויך לעבודה` })
+      toast({ title: `טופס #${formNumber} נשמר ושויך לעבודה` })
       // Increment form number
-      setFormNumber(String(parseInt(formNumber) + 1).padStart(4, '0'))
+      const numericPart = parseInt(formNumber.replace(/\D/g, '') || '1')
+      getNumberingConfig().then(config => {
+        setFormNumber(formatFormNumber(numericPart + 1, config))
+      })
     } catch (error) {
       console.error('Save form error:', error)
       toast({ title: "שגיאה בשמירת הטופס", variant: "destructive" })
@@ -181,7 +189,7 @@ export default function JobFormPage() {
       {/* Form Number — top right like job/invoice */}
       <div className="flex justify-end mb-2">
         <div className="text-sm text-gray-500 font-hebrew">
-          <span>מספר טופס: </span><span className="text-teal-600 font-semibold">FRM-{formNumber}</span>
+          <span>מספר טופס: </span><span className="text-teal-600 font-semibold">{formNumber}</span>
         </div>
       </div>
 

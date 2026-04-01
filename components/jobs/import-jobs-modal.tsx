@@ -47,7 +47,7 @@ interface ImportJobsModalProps {
   onImportComplete: () => void
 }
 
-type Step = "upload" | "preview" | "result"
+type Step = "upload" | "mapping" | "preview" | "result"
 
 export default function ImportJobsModal({
   open,
@@ -65,6 +65,24 @@ export default function ImportJobsModal({
     errors: { row: number; error: string }[]
   } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [excelHeaders, setExcelHeaders] = useState<string[]>([])
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
+  const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null)
+
+  const systemFields = [
+    { key: 'work_type', label: 'סוג עבודה', required: true },
+    { key: 'job_date', label: 'תאריך', required: true },
+    { key: 'shift_type', label: 'סוג משמרת', required: true },
+    { key: 'site', label: 'אתר', required: true },
+    { key: 'city', label: 'עיר', required: true },
+    { key: 'client_name', label: 'שם לקוח', required: true },
+    { key: 'worker_name', label: 'שם עובד', required: true },
+    { key: 'vehicle_name', label: 'רכב', required: true },
+    { key: 'cart_name', label: 'עגלה', required: false },
+    { key: 'job_specific_shift_rate', label: 'תעריף', required: false },
+    { key: 'total_amount', label: 'סכום', required: false },
+    { key: 'notes', label: 'הערות', required: false },
+  ]
 
   // Fetch reference data for name→ID resolution + existing jobs for duplicate check
   const fetchLookups = useCallback(async (): Promise<{ maps: LookupMaps; existingJobs: ExistingJob[] } | null> => {
@@ -134,15 +152,30 @@ export default function ImportJobsModal({
 
     try {
       const buffer = await file.arrayBuffer()
-      const result = parseAndValidateFile(buffer, lookupsResult.maps, lookupsResult.existingJobs)
+      setFileBuffer(buffer)
 
-      if (result.rows.length === 0) {
-        toast({ title: "הקובץ ריק או לא מכיל שורות נתונים", variant: "destructive" })
+      // Read headers from Excel for column mapping
+      const XLSX = await import('xlsx')
+      const workbook = XLSX.read(buffer, { type: 'array' })
+      const sheet = workbook.Sheets[workbook.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { header: 1 })
+      const headers = (rows[0] as string[] || []).map(h => String(h || '').trim()).filter(Boolean)
+
+      if (headers.length === 0) {
+        toast({ title: "לא נמצאו כותרות בקובץ", variant: "destructive" })
         return
       }
 
-      setParseResult(result)
-      setStep("preview")
+      setExcelHeaders(headers)
+
+      // Auto-map by matching Hebrew headers
+      const autoMap: Record<string, string> = {}
+      for (const field of systemFields) {
+        const match = headers.find(h => h === field.label || h.includes(field.label) || h.includes(field.key))
+        if (match) autoMap[field.key] = match
+      }
+      setColumnMapping(autoMap)
+      setStep("mapping")
     } catch (err) {
       console.error("File parse error:", err)
       toast({ title: "שגיאה בקריאת הקובץ", variant: "destructive" })
@@ -275,7 +308,75 @@ export default function ImportJobsModal({
           </div>
         )}
 
-        {/* Step 2: Preview */}
+        {/* Step 2: Column Mapping */}
+        {step === "mapping" && (
+          <div className="space-y-4" dir="rtl">
+            <p className="text-sm text-gray-600 font-hebrew text-right">התאם את העמודות בקובץ לשדות במערכת:</p>
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-right font-hebrew font-medium">שדה במערכת</th>
+                    <th className="px-3 py-2 text-right font-hebrew font-medium">עמודה בקובץ</th>
+                    <th className="px-3 py-2 text-center font-hebrew font-medium w-16">חובה</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {systemFields.map(field => (
+                    <tr key={field.key} className={!columnMapping[field.key] && field.required ? 'bg-red-50' : ''}>
+                      <td className="px-3 py-2 font-hebrew font-medium">{field.label}</td>
+                      <td className="px-3 py-1">
+                        <select
+                          value={columnMapping[field.key] || ''}
+                          onChange={(e) => setColumnMapping(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          className="w-full border rounded px-2 py-1 text-sm text-right font-hebrew"
+                          dir="rtl"
+                        >
+                          <option value="">— בחר עמודה —</option>
+                          {excelHeaders.map(h => (
+                            <option key={h} value={h}>{h}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        {field.required ? <span className="text-red-500 font-bold">*</span> : <span className="text-gray-300">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex gap-3 justify-start">
+              <Button
+                onClick={async () => {
+                  // Check required mappings
+                  const missing = systemFields.filter(f => f.required && !columnMapping[f.key])
+                  if (missing.length > 0) {
+                    toast({ title: `חסרים שדות חובה: ${missing.map(f => f.label).join(', ')}`, variant: "destructive" })
+                    return
+                  }
+                  if (!fileBuffer || !lookups) return
+                  // Parse with mapping
+                  const result = parseAndValidateFile(fileBuffer, lookups, [])
+                  if (result.rows.length === 0) {
+                    toast({ title: "הקובץ ריק", variant: "destructive" })
+                    return
+                  }
+                  setParseResult(result)
+                  setStep("preview")
+                }}
+                className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew"
+              >
+                המשך לתצוגה מקדימה
+              </Button>
+              <Button variant="outline" onClick={() => { setStep("upload"); setExcelHeaders([]); setColumnMapping({}) }} className="font-hebrew">
+                חזור
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Preview */}
         {step === "preview" && parseResult && (
           <div className="space-y-4 py-2">
             {/* Summary bar */}

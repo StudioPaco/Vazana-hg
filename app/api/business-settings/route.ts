@@ -41,6 +41,13 @@ export async function PUT(request: NextRequest) {
       bank_name: body.bank_name ?? null,
       bank_branch: body.bank_branch ?? null,
       bank_account_number: body.bank_account_number ?? null,
+      job_number_prefix: body.job_number_prefix ?? '',
+      job_number_digits: body.job_number_digits ?? 4,
+      invoice_number_prefix: body.invoice_number_prefix ?? 'INV',
+      invoice_number_digits: body.invoice_number_digits ?? 4,
+      invoice_number_include_year: body.invoice_number_include_year ?? true,
+      form_number_prefix: body.form_number_prefix ?? 'FRM',
+      form_number_digits: body.form_number_digits ?? 4,
       updated_at: new Date().toISOString(),
     }
 

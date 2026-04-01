@@ -11,6 +11,7 @@ import { ArrowRight, FileText, Calendar, User, Calculator, CheckCircle, RotateCc
 import Link from "next/link"
 // Sidebar handled by (app) layout
 import { createClient } from "@/lib/supabase/client"
+import { getNumberingConfig, formatInvoiceNumber } from "@/lib/numbering"
 import { useToast } from "@/hooks/use-toast"
 import DatabaseDropdown from "@/components/ui/database-dropdown"
 import PageLayout from "@/components/layout/page-layout"
@@ -241,19 +242,20 @@ export default function NewInvoicePage() {
       setWorkTypes((data || []).map((wt: any) => wt.name_he))
     })
 
-    // Generate next invoice number
+    // Generate next invoice number using numbering config
     const fetchInvoiceNumber = async () => {
+      const config = await getNumberingConfig()
       const { data } = await supabase
         .from('invoices')
         .select('invoice_number')
         .order('created_at', { ascending: false })
         .limit(1)
-      const year = new Date().getFullYear()
       const lastNum = data?.[0]?.invoice_number
-      // Extract sequential part after prefix
-      const lastSeq = lastNum ? parseInt(lastNum.replace(/\D/g, '').slice(-4)) || 0 : 0
+      // Extract sequential part (last N digits)
+      const digits = config.invoice_number_digits
+      const lastSeq = lastNum ? parseInt(lastNum.replace(/\D/g, '').slice(-digits)) || 0 : 0
       const seq = lastSeq + 1
-      setInvoiceNumber(`INV-${year}-${String(seq).padStart(4, '0')}`)
+      setInvoiceNumber(formatInvoiceNumber(seq, config))
     }
     fetchInvoiceNumber()
   }, [])

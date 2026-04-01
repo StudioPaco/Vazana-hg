@@ -1,61 +1,68 @@
 # Session Handoff
 
-> Generated: 2026-03-24
-> Git HEAD: 7f925be — `add Warp plans: V1 Beta test plan + Job Import plan`
-> Branch: main | Status: clean + new protocol files being added
+> Generated: 2026-04-02
+> Git HEAD: bcc2476
+> Branch: main
 
 ## Read These Files First
 
 1. `CLAUDE.md` — Project overview, architecture, conventions
-2. `.claude/GUIDELINES.md` — Safety rules for autonomous development
+2. `docs/PROGRESS.md` — Current feature completeness
 3. `docs/HANDOFF.md` — This file (current state + next steps)
-4. `docs/PROGRESS.md` — Feature completeness + ordered tasks
-5. `docs/BUILD_PHASES.md` — Phase roadmap
+4. `plans/hanny-uat-tests.md` — Hebrew test checklist for Hanny
+5. `plans/resilience-test-plan.md` — Code health + stress testing plan
 
 ## Current State
 
-### What Just Happened
-- Full codebase scan completed (all files, configs, API routes)
-- All 12 Warp plan documents read and synthesized
-- Live Supabase DB verified (all tables healthy, data matches expectations)
-- 10 known issues verified at code level (8 fixed, 2 remaining)
-- Ralph protocol adapted from Play project for session continuity
-- CLAUDE.md + GUIDELINES.md created
-- Protocol docs (this file + siblings) being created
+### What's Been Done (V1.0 + V1.1)
+- Full CRUD for all entities (jobs, clients, workers, vehicles, carts, invoices, documents)
+- Dashboard with role-based statistics
+- Calendar page with availability tracking + clash detection
+- Invoice system with manual items, preview modal, print, PDF
+- Document management with upload, preview, sub-filters
+- Worker/vehicle conflict check in new job form
+- File attachment badges on job/client/invoice rows
+- Activity logging (login, job creation)
+- Notifications + activity_log tables in DB
+- All Supabase security issues resolved
+- Comprehensive RTL layout fixes
+- Hebrew UAT tests written for Hanny
 
-### DB State (verified via direct SQL)
+### DB State
 | Table | Rows |
 |-------|------|
 | user_profiles | 3 (owner + 2 staff) |
-| clients | 4 |
-| jobs | 12 |
+| clients | 4+ |
+| jobs | 12+ |
 | workers | 5 |
 | vehicles | 4 |
 | carts | 3 |
-| work_types | 4 |
-| client_work_type_rates | 5 |
-| invoices | 0 |
+| work_types | 5 (including פיקוח) |
+| invoices | 3+ |
+| documents | varies |
+| notifications | 0 |
+| activity_log | growing |
 
-### Remaining Code Issues
-1. `components/carts/carts-page.tsx` — 5 English strings need Hebrew translation
-2. `components/jobs/new-job-form.tsx` (~line 314) — job insert uses direct Supabase instead of API (low priority)
+### Remaining Work (In Progress)
+1. Worker weekly shift availability table
+2. Job import column mapping UI improvements
+3. Deploy to Vercel for live testing
+4. Hanny UAT execution
+5. David UAT execution
 
-## Immediate Next Steps
-
-1. ~~Create CLAUDE.md~~ ✅
-2. ~~Create .claude/GUIDELINES.md~~ ✅
-3. ~~Create docs/ protocol files~~ ✅
-4. Verify build health (`pnpm dev`, `pnpm build`, `pnpm test`)
-5. Fix carts-page.tsx English → Hebrew
-6. Pre-testing verification (API routes, RLS, business settings)
-7. Execute V1 Beta test plan (26 tests)
-8. Prepare for David's testing
+### V1.2 Backlog
+- Google OAuth connection (needs deploy + credentials)
+- Email integration (Gmail/IMAP)
+- DB encryption for PII
+- Real audit trail expansion
+- Automated Google Drive backup scheduling
 
 ## Key Contacts
 - **Amit Korach** (amitkorach@gmail.com) — Owner, developer
 - **David Vazana** (david.vazana13@gmail.com) — Main user, staff role
-- **Hanny Korach** (hanny22258) — Staff role
+- **Hanny Korach** (hanny22258@gmail.com) — Staff role, tech-savvy tester
 
 ## Supabase
 - Project: `udxvtbwqmfwzghmubfdi`
-- MCP access: read allowed, writes need Amit's approval
+- Storage bucket: `documents` (private, RLS)
+- Security: all views dropped, RLS on all tables

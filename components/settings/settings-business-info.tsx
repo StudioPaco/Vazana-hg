@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Save, Briefcase, ArrowLeft, AlertTriangle, Loader2 } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Save, Briefcase, ArrowLeft, AlertTriangle, Loader2, Hash } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 // localStorage keys (kept as fallback cache)
@@ -28,6 +29,15 @@ export default function SettingsBusinessInfo() {
   const [bankName, setBankName] = useState("")
   const [bankBranch, setBankBranch] = useState("")
   const [bankAccountNumber, setBankAccountNumber] = useState("")
+
+  // Numbering format
+  const [jobNumberPrefix, setJobNumberPrefix] = useState("")
+  const [jobNumberDigits, setJobNumberDigits] = useState("4")
+  const [invoiceNumberPrefix, setInvoiceNumberPrefix] = useState("INV")
+  const [invoiceNumberDigits, setInvoiceNumberDigits] = useState("4")
+  const [invoiceNumberIncludeYear, setInvoiceNumberIncludeYear] = useState(true)
+  const [formNumberPrefix, setFormNumberPrefix] = useState("FRM")
+  const [formNumberDigits, setFormNumberDigits] = useState("4")
   
   const [isSaved, setIsSaved] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -53,6 +63,13 @@ export default function SettingsBusinessInfo() {
             setBankName(data.bank_name || "")
             setBankBranch(data.bank_branch || "")
             setBankAccountNumber(data.bank_account_number || "")
+            setJobNumberPrefix(data.job_number_prefix ?? "")
+            setJobNumberDigits(String(data.job_number_digits ?? 4))
+            setInvoiceNumberPrefix(data.invoice_number_prefix ?? "INV")
+            setInvoiceNumberDigits(String(data.invoice_number_digits ?? 4))
+            setInvoiceNumberIncludeYear(data.invoice_number_include_year ?? true)
+            setFormNumberPrefix(data.form_number_prefix ?? "FRM")
+            setFormNumberDigits(String(data.form_number_digits ?? 4))
             setIsLoading(false)
             return
           }
@@ -165,6 +182,13 @@ export default function SettingsBusinessInfo() {
         bank_name: bankName,
         bank_branch: bankBranch,
         bank_account_number: bankAccountNumber,
+        job_number_prefix: jobNumberPrefix,
+        job_number_digits: parseInt(jobNumberDigits) || 4,
+        invoice_number_prefix: invoiceNumberPrefix,
+        invoice_number_digits: parseInt(invoiceNumberDigits) || 4,
+        invoice_number_include_year: invoiceNumberIncludeYear,
+        form_number_prefix: formNumberPrefix,
+        form_number_digits: parseInt(formNumberDigits) || 4,
       }
 
       const res = await fetch("/api/business-settings", {
@@ -371,6 +395,132 @@ export default function SettingsBusinessInfo() {
                       dir={isHebrew ? "rtl" : "ltr"}
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Numbering Format Section */}
+              <div className="pt-6 border-t border-neutral-200">
+                <h3 className="text-lg font-semibold text-neutral-800 mb-1 flex items-center gap-2">
+                  <Hash className="w-5 h-5 text-teal-600" />
+                  {isHebrew ? "פורמט מספור" : "Numbering Format"}
+                </h3>
+                <p className="text-sm text-neutral-500 mb-4">
+                  {isHebrew ? "הגדר קידומת ומספר ספרות לכל סוג מסמך" : "Set prefix and digit count for each document type"}
+                </p>
+
+                {/* Job Numbering */}
+                <div className="mb-4">
+                  <Label className="font-medium text-neutral-700 block mb-2">
+                    {isHebrew ? "מספור עבודות" : "Job Numbering"}
+                  </Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-neutral-500">{isHebrew ? "קידומת" : "Prefix"}</Label>
+                      <Input
+                        value={jobNumberPrefix}
+                        onChange={(e) => setJobNumberPrefix(e.target.value)}
+                        placeholder={isHebrew ? "ריק = ללא קידומת" : "Empty = no prefix"}
+                        className="mt-1 border-neutral-300 focus:border-primary"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-neutral-500">{isHebrew ? "ספרות" : "Digits"}</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={jobNumberDigits}
+                        onChange={(e) => setJobNumberDigits(e.target.value)}
+                        className="mt-1 border-neutral-300 focus:border-primary"
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-neutral-400 mt-1" dir="ltr">
+                    {isHebrew ? "תצוגה לדוגמה: " : "Preview: "}
+                    {jobNumberPrefix ? `${jobNumberPrefix}-` : ""}{String(1).padStart(parseInt(jobNumberDigits) || 4, '0')}
+                  </p>
+                </div>
+
+                {/* Invoice Numbering */}
+                <div className="mb-4">
+                  <Label className="font-medium text-neutral-700 block mb-2">
+                    {isHebrew ? "מספור חשבוניות" : "Invoice Numbering"}
+                  </Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-neutral-500">{isHebrew ? "קידומת" : "Prefix"}</Label>
+                      <Input
+                        value={invoiceNumberPrefix}
+                        onChange={(e) => setInvoiceNumberPrefix(e.target.value)}
+                        placeholder="INV"
+                        className="mt-1 border-neutral-300 focus:border-primary"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-neutral-500">{isHebrew ? "ספרות" : "Digits"}</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={invoiceNumberDigits}
+                        onChange={(e) => setInvoiceNumberDigits(e.target.value)}
+                        className="mt-1 border-neutral-300 focus:border-primary"
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Checkbox
+                      id="invoiceIncludeYear"
+                      checked={invoiceNumberIncludeYear}
+                      onCheckedChange={(checked) => setInvoiceNumberIncludeYear(checked === true)}
+                    />
+                    <Label htmlFor="invoiceIncludeYear" className="text-sm text-neutral-600 cursor-pointer">
+                      {isHebrew ? "כלול שנה במספר חשבונית" : "Include year in invoice number"}
+                    </Label>
+                  </div>
+                  <p className="text-xs text-neutral-400 mt-1" dir="ltr">
+                    {isHebrew ? "תצוגה לדוגמה: " : "Preview: "}
+                    {[invoiceNumberPrefix, invoiceNumberIncludeYear ? String(new Date().getFullYear()) : null, String(1).padStart(parseInt(invoiceNumberDigits) || 4, '0')].filter(Boolean).join('-')}
+                  </p>
+                </div>
+
+                {/* Form Numbering */}
+                <div>
+                  <Label className="font-medium text-neutral-700 block mb-2">
+                    {isHebrew ? "מספור טפסים" : "Form Numbering"}
+                  </Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-neutral-500">{isHebrew ? "קידומת" : "Prefix"}</Label>
+                      <Input
+                        value={formNumberPrefix}
+                        onChange={(e) => setFormNumberPrefix(e.target.value)}
+                        placeholder="FRM"
+                        className="mt-1 border-neutral-300 focus:border-primary"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-neutral-500">{isHebrew ? "ספרות" : "Digits"}</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={formNumberDigits}
+                        onChange={(e) => setFormNumberDigits(e.target.value)}
+                        className="mt-1 border-neutral-300 focus:border-primary"
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-neutral-400 mt-1" dir="ltr">
+                    {isHebrew ? "תצוגה לדוגמה: " : "Preview: "}
+                    {formNumberPrefix ? `${formNumberPrefix}-` : ""}{String(1).padStart(parseInt(formNumberDigits) || 4, '0')}
+                  </p>
                 </div>
               </div>
 
