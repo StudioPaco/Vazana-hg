@@ -427,7 +427,9 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
                     </p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => window.open(`/api/documents/${doc.id}/download`, "_blank")} title="הורד">
+                    <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => {
+                      const a = document.createElement('a'); a.href = `/api/documents/${doc.id}/download`; a.download = doc.filename; document.body.appendChild(a); a.click(); document.body.removeChild(a)
+                    }} title="הורד">
                       <Download className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setPreviewDoc(doc)} title="תצוגה מקדימה">
@@ -453,7 +455,7 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
       {/* File Preview Modal */}
       {previewDoc && (
         <Dialog open={true} onOpenChange={() => setPreviewDoc(null)}>
-          <DialogContent className="w-[80vw] min-w-[48rem] max-w-[90vw] h-[80vh] min-h-[32rem] max-h-[90vh]" dir="rtl">
+          <DialogContent className="!max-w-[95vw] w-[95vw] h-[90vh] max-h-[90vh]" dir="rtl">
             <DialogHeader>
               <DialogTitle className="font-hebrew text-right">{previewDoc.filename}</DialogTitle>
             </DialogHeader>
@@ -469,14 +471,16 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
                   return <img src={`/api/documents/${previewDoc.id}/download`} alt={previewDoc.filename} className="max-w-full max-h-full object-contain rounded" />
                 }
                 if (isPdf) {
-                  return <iframe src={`/api/documents/${previewDoc.id}/download`} className="w-full h-[65vh] rounded border" title={previewDoc.filename} />
+                  return <iframe src={`/api/documents/${previewDoc.id}/download`} className="w-full h-[80vh] rounded border" title={previewDoc.filename} />
                 }
                 return (
                   <div className="text-center text-gray-500 font-hebrew py-12">
                     <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                     <p className="mb-2 font-medium">{previewDoc.filename}</p>
                     <p className="text-sm mb-4">תצוגה מקדימה לא זמינה לסוג קובץ זה</p>
-                    <Button variant="outline" className="font-hebrew" onClick={() => window.open(`/api/documents/${previewDoc.id}/download`, '_blank')}>
+                    <Button variant="outline" className="font-hebrew" onClick={() => {
+                      const a = document.createElement('a'); a.href = `/api/documents/${previewDoc.id}/download`; a.download = previewDoc.filename; document.body.appendChild(a); a.click(); document.body.removeChild(a)
+                    }}>
                       <Download className="w-4 h-4 ml-1" /> הורד קובץ
                     </Button>
                   </div>
