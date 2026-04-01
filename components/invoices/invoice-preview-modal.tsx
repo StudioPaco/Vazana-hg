@@ -106,42 +106,42 @@ export function InvoicePreviewModal({
           </div>
           
           {/* Items Table */}
-          <div className="mb-8">
+          <div className="mb-8" dir="rtl">
             <table className="w-full border border-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="border border-gray-200 p-3 text-right text-sm font-medium">סכום (₪)</th>
-                  <th className="border border-gray-200 p-3 text-right text-sm font-medium">אתר</th>
-                  <th className="border border-gray-200 p-3 text-right text-sm font-medium">סוג עבודה</th>
-                  <th className="border border-gray-200 p-3 text-right text-sm font-medium">תאריך</th>
                   <th className="border border-gray-200 p-3 text-right text-sm font-medium">מספר עבודה</th>
+                  <th className="border border-gray-200 p-3 text-right text-sm font-medium">תאריך</th>
+                  <th className="border border-gray-200 p-3 text-right text-sm font-medium">סוג עבודה</th>
+                  <th className="border border-gray-200 p-3 text-right text-sm font-medium">אתר</th>
+                  <th className="border border-gray-200 p-3 text-left text-sm font-medium">סכום (₪)</th>
                 </tr>
               </thead>
               <tbody>
                 {selectedJobs.map((job) => (
                   <tr key={job.id}>
-                    <td className="border border-gray-200 p-3 text-right font-medium">
-                      ₪{(job.total_amount || 0).toLocaleString()}
-                    </td>
-                    <td className="border border-gray-200 p-3 text-right">{job.site}, {job.city}</td>
-                    <td className="border border-gray-200 p-3 text-right">{job.work_type}</td>
+                    <td className="border border-gray-200 p-3 text-right">#{job.job_number}</td>
                     <td className="border border-gray-200 p-3 text-right">
                       {new Date(job.job_date).toLocaleDateString('he-IL')}
                     </td>
-                    <td className="border border-gray-200 p-3 text-right">#{job.job_number}</td>
+                    <td className="border border-gray-200 p-3 text-right">{job.work_type}</td>
+                    <td className="border border-gray-200 p-3 text-right">{job.site}, {job.city}</td>
+                    <td className="border border-gray-200 p-3 text-left font-medium">
+                      ₪{(job.total_amount || 0).toLocaleString()}
+                    </td>
                   </tr>
                 ))}
                 {manualItems.filter(i => i.description && i.unit_price > 0).map((item, i) => (
                   <tr key={`manual-${i}`} className="bg-amber-50/50">
-                    <td className="border border-gray-200 p-3 text-right font-medium">
-                      ₪{item.unit_price.toLocaleString()}
-                    </td>
-                    <td className="border border-gray-200 p-3 text-right text-gray-500">{item.site || '—'}</td>
-                    <td className="border border-gray-200 p-3 text-right">{item.work_type || 'ידני'}</td>
+                    <td className="border border-gray-200 p-3 text-right">{item.description}</td>
                     <td className="border border-gray-200 p-3 text-right text-gray-500">
                       {item.job_date ? new Date(item.job_date).toLocaleDateString('he-IL') : '—'}
                     </td>
-                    <td className="border border-gray-200 p-3 text-right">{item.description}</td>
+                    <td className="border border-gray-200 p-3 text-right">{item.work_type || 'ידני'}</td>
+                    <td className="border border-gray-200 p-3 text-right text-gray-500">{item.site || '—'}</td>
+                    <td className="border border-gray-200 p-3 text-left font-medium">
+                      ₪{item.unit_price.toLocaleString()}
+                    </td>
                   </tr>
                 ))}
               </tbody>

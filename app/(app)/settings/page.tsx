@@ -1750,29 +1750,22 @@ export default function SettingsPage() {
                       }}>
                         <Download className="w-4 h-4 ml-1" /> CSV גיבוי
                       </Button>
-                      <Button variant="outline" className="font-hebrew" onClick={async () => {
-                        try {
-                          const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download-xlsx' }) })
-                          if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-backup-${new Date().toISOString().split('T')[0]}.xlsx`; a.click(); URL.revokeObjectURL(url); toast({ title: "גיבוי XLSX הורד בהצלחה" }) }
-                          else toast({ title: "שגיאה בהורדת הגיבוי", variant: "destructive" })
-                        } catch { toast({ title: "שגיאה", variant: "destructive" }) }
-                      }}>
-                        <Download className="w-4 h-4 ml-1" /> XLSX גיבוי
+                      <Button variant="outline" className="font-hebrew" disabled onClick={() => toast({ title: "נדרש חיבור Google בלשונית אינטגרציות" })}>
+                        <Download className="w-4 h-4 ml-1" /> Google Drive
                       </Button>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 p-4 border rounded-lg">
-                      <h3 className="font-semibold text-right font-hebrew">יציאת נתונים</h3>
+                      <h3 className="font-semibold text-right font-hebrew">ייצוא נתונים</h3>
                       <p className="text-sm text-gray-600 text-right font-hebrew">
-                        יצא את כל נתוני המערכת לקובץ JSON
+                        יצא את נתוני המערכת בפורמט הרצוי
                       </p>
                       <Button
                         onClick={() => setDataExportOpen(true)}
                         className="w-full bg-blue-600 hover:bg-blue-700 font-hebrew"
                       >
-                        <Download className="ml-2 w-4 h-4" />
                         יצא נתונים
                       </Button>
                     </div>
@@ -1898,15 +1891,15 @@ export default function SettingsPage() {
               <Dialog open={dataExportOpen} onOpenChange={setDataExportOpen}>
                 <DialogContent className="max-w-lg" dir="rtl">
                   <DialogHeader>
-                    <DialogTitle className="text-right font-hebrew">יציאת נתונים</DialogTitle>
+                    <DialogTitle className="text-right font-hebrew">ייצוא נתונים</DialogTitle>
                     <DialogDescription className="text-right font-hebrew">
-                      יצא את נתוני המערכת לקובץ JSON
+                      בחר את הנתונים והפורמט הרצוי לייצוא
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-right font-hebrew">בחר נתונים ליצוא:</Label>
+                      <Label className="text-right font-hebrew font-medium">בחר נתונים:</Label>
                       <div className="space-y-2">
                         {[
                           { key: 'jobs', label: 'עבודות', checked: true },
@@ -1914,7 +1907,9 @@ export default function SettingsPage() {
                           { key: 'invoices', label: 'חשבוניות', checked: true },
                           { key: 'workers', label: 'עובדים', checked: true },
                           { key: 'vehicles', label: 'רכבים', checked: true },
-                          { key: 'business_settings', label: 'הגדרות עסק', checked: true }
+                          { key: 'carts', label: 'עגלות', checked: true },
+                          { key: 'work_types', label: 'סוגי עבודה', checked: true },
+                          { key: 'business_settings', label: 'הגדרות עסק', checked: false },
                         ].map(item => (
                           <div key={item.key} className="flex items-center justify-between">
                             <Switch defaultChecked={item.checked} />
@@ -1923,31 +1918,56 @@ export default function SettingsPage() {
                         ))}
                       </div>
                     </div>
-                    
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-sm text-blue-800 text-right font-hebrew">
-                        הנתונים יוצאו בפורמט JSON ויורדו אוטומטית למחשב שלך.
-                      </p>
+
+                    <div className="space-y-2">
+                      <Label className="text-right font-hebrew font-medium">בחר פורמט:</Label>
                     </div>
                   </div>
-                  
+
                   <DialogFooter className="flex gap-2 justify-start">
-                    <Button 
-                      onClick={() => {
-                        console.log('יציאת נתונים')
+                    <Button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download' }) })
+                          if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-export-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); toast({ title: "JSON הורד בהצלחה" }) }
+                          else toast({ title: "שגיאה", variant: "destructive" })
+                        } catch { toast({ title: "שגיאה", variant: "destructive" }) }
                         setDataExportOpen(false)
                       }}
                       className="bg-blue-600 hover:bg-blue-700 font-hebrew"
                     >
-                      <Download className="w-4 h-4 ml-2" />
-                      יצא עכשיו
+                      <Download className="w-4 h-4 ml-1" /> JSON
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setDataExportOpen(false)}
+                    <Button
+                      variant="outline"
                       className="font-hebrew"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download-xlsx' }) })
+                          if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-export-${new Date().toISOString().split('T')[0]}.xlsx`; a.click(); URL.revokeObjectURL(url); toast({ title: "XLSX הורד בהצלחה" }) }
+                          else toast({ title: "שגיאה", variant: "destructive" })
+                        } catch { toast({ title: "שגיאה", variant: "destructive" }) }
+                        setDataExportOpen(false)
+                      }}
                     >
-                      בטל
+                      <Download className="w-4 h-4 ml-1" /> XLSX
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="font-hebrew"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/backup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'download-csv' }) })
+                          if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `vazana-export-${new Date().toISOString().split('T')[0]}.csv`; a.click(); URL.revokeObjectURL(url); toast({ title: "CSV הורד בהצלחה" }) }
+                          else toast({ title: "שגיאה", variant: "destructive" })
+                        } catch { toast({ title: "שגיאה", variant: "destructive" }) }
+                        setDataExportOpen(false)
+                      }}
+                    >
+                      <Download className="w-4 h-4 ml-1" /> CSV
+                    </Button>
+                    <Button variant="ghost" onClick={() => setDataExportOpen(false)} className="font-hebrew">
+                      ביטול
                     </Button>
                   </DialogFooter>
                 </DialogContent>

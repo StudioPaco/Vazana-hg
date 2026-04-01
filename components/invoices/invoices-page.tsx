@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, FileText, Download, Eye, Edit, Calendar, DollarSign, Clock, CheckCircle, ChevronDown, ChevronUp, Briefcase } from "lucide-react"
+import { Plus, Search, FileText, Download, Eye, Edit, Calendar, DollarSign, Clock, CheckCircle, ChevronDown, ChevronUp, Briefcase, List, Grid3X3 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { StatsContainer } from "@/components/ui/stats-container"
@@ -73,6 +73,10 @@ export default function InvoicesPage({
   const [searchTerm, setSearchTerm] = useState(externalSearchTerm)
   const [statusFilter, setStatusFilter] = useState(externalStatusFilter)
   const [clientFilter, setClientFilter] = useState("all")
+  const [viewMode, setViewMode] = useState<'list' | 'table'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-viewMode') as any) || 'list'
+    return 'list'
+  })
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'number'>(() => {
     if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-sortBy') as any) || 'date'
     return 'date'
@@ -102,6 +106,8 @@ export default function InvoicesPage({
     localStorage.setItem('vazana-invoices-sortBy', sortBy)
     localStorage.setItem('vazana-invoices-sortDir', sortDir)
   }, [sortBy, sortDir])
+
+  useEffect(() => { localStorage.setItem('vazana-invoices-viewMode', viewMode) }, [viewMode])
 
   // Fetch all clients for the filter dropdown
   useEffect(() => {
@@ -361,6 +367,16 @@ export default function InvoicesPage({
             ))}
           </div>
         </div>
+        <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+          <Button variant="ghost" size="sm" onClick={() => setViewMode('list')}
+            className={`px-2 py-1 h-7 ${viewMode === 'list' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
+            <List className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setViewMode('table')}
+            className={`px-2 py-1 h-7 ${viewMode === 'table' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
+            <Grid3X3 className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Row 2: Filters + Search */}
@@ -435,7 +451,49 @@ export default function InvoicesPage({
               </div>
             </CardContent>
           </Card>
+        ) : viewMode === 'table' ? (
+          /* Table View */
+          <div className="bg-white border rounded-lg overflow-hidden">
+            <table className="w-full text-sm" dir="rtl">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">מספר</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">לקוח</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">תאריך</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">פרעון</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">סכום</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">סטטוס</th>
+                  <th className="px-4 py-3 text-right font-medium text-gray-600 font-hebrew">פעולות</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filteredInvoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium font-hebrew">{invoice.invoice_number}</td>
+                    <td className="px-4 py-3 font-hebrew">{invoice.clients?.company_name || 'לקוח לא ידוע'}</td>
+                    <td className="px-4 py-3 font-hebrew">{new Date(invoice.invoice_date).toLocaleDateString("he-IL")}</td>
+                    <td className="px-4 py-3 font-hebrew">{new Date(invoice.due_date).toLocaleDateString("he-IL")}</td>
+                    <td className="px-4 py-3 font-medium tabular-nums" dir="ltr">₪{Number(invoice.total_amount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3">
+                      <Badge className={`${getStatusColor(isOverdue(invoice.due_date, invoice.status) ? "overdue" : invoice.status)} text-xs`}>
+                        {getStatusInHebrew(isOverdue(invoice.due_date, invoice.status) ? "overdue" : invoice.status)}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew"
+                          onClick={() => handleDownloadPDF(invoice.id, invoice.invoice_number)}>הורד</Button>
+                        <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew"
+                          onClick={() => { const w = window.open(`/api/invoices/${invoice.id}/pdf`, '_blank'); if (w) setTimeout(() => w.print(), 1000) }}>הדפס</Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
+          /* List View */
           <div className="space-y-4">
             {filteredInvoices.map((invoice) => (
               <Card key={invoice.id} className="hover:shadow-lg transition-shadow">

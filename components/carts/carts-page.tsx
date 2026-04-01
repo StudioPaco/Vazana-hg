@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, ShoppingCart, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import CartEditModal from "@/components/carts/cart-edit-modal"
 
 interface Cart {
   id: string
   name: string
   details: string
+  license_plate?: string
 }
 
 interface CartsPageProps {
@@ -22,6 +24,8 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
   const [carts, setCarts] = useState<Cart[]>([])
   const [filteredCarts, setFilteredCarts] = useState<Cart[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [editingCart, setEditingCart] = useState<Cart | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -152,10 +156,10 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
 
                 <div className="flex space-x-2 pt-2">
                   <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
-                    <Link href={`/carts/${cart.id}/edit`}>
+                    <span onClick={() => { setEditingCart(cart); setEditModalOpen(true) }} className="cursor-pointer">
                       <Edit className="ml-2 h-4 w-4" />
                       עריכה
-                    </Link>
+                    </span>
                   </Button>
                   <Button
                     variant="outline"
@@ -171,6 +175,16 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
           ))}
         </div>
       )}
+
+      <CartEditModal
+        cart={editingCart}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onCartUpdated={(updatedCart) => {
+          setCarts(carts.map(c => c.id === updatedCart.id ? { ...c, ...updatedCart } : c))
+          setEditingCart(null)
+        }}
+      />
     </div>
   )
 }
