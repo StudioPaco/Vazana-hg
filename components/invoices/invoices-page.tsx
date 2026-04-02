@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Search, FileText, Download, Eye, Edit, Calendar, DollarSign, Clock, CheckCircle, ChevronDown, ChevronUp, Briefcase, List, Grid3X3 } from "lucide-react"
@@ -28,6 +30,7 @@ interface Invoice {
     company_name: string
     contact_person: string
     email: string
+    phone: string
   }
 }
 
@@ -196,6 +199,11 @@ export default function InvoicesPage({
   }, [searchTerm, statusFilter, clientFilter, sortBy, sortDir, dateRange, invoices])
 
   const [printInvoice, setPrintInvoice] = useState<Invoice | null>(null)
+  const [sendDialogInvoice, setSendDialogInvoice] = useState<Invoice | null>(null)
+  const [sendMethod, setSendMethod] = useState<'email' | 'whatsapp'>('email')
+  const [sendEmail, setSendEmail] = useState('')
+  const [sendPhone, setSendPhone] = useState('')
+  const [paidConfirmInvoice, setPaidConfirmInvoice] = useState<Invoice | null>(null)
   const [invoiceDocCounts, setInvoiceDocCounts] = useState<Record<string, number>>({})
 
   // Fetch document counts for invoices
@@ -209,6 +217,40 @@ export default function InvoicesPage({
 
   const handlePrintInvoice = (invoice: Invoice) => {
     setPrintInvoice(invoice)
+  }
+
+  const openSendDialog = (invoice: Invoice) => {
+    setSendDialogInvoice(invoice)
+    setSendMethod('email')
+    setSendEmail(invoice.clients?.email || '')
+    setSendPhone(invoice.clients?.phone || '')
+  }
+
+  const handleSendInvoice = async () => {
+    if (!sendDialogInvoice) return
+    // Mark as sent in DB
+    await updateInvoiceStatus(sendDialogInvoice.id, "sent")
+
+    if (sendMethod === 'whatsapp' && sendPhone) {
+      const message = encodeURIComponent(`שלום, מצורפת חשבונית מספר ${sendDialogInvoice.invoice_number} על סך ₪${Number(sendDialogInvoice.total_amount).toLocaleString()}`)
+      const phone = sendPhone.replace(/[^0-9]/g, '').replace(/^0/, '972')
+      window.open(`https://wa.me/${phone}?text=${message}`, '_blank')
+    } else if (sendMethod === 'email' && sendEmail) {
+      const subject = encodeURIComponent(`חשבונית ${sendDialogInvoice.invoice_number}`)
+      const body = encodeURIComponent(`שלום,\n\nמצורפת חשבונית מספר ${sendDialogInvoice.invoice_number} על סך ₪${Number(sendDialogInvoice.total_amount).toLocaleString()}.\n\nבברכה`)
+      window.open(`mailto:${sendEmail}?subject=${subject}&body=${body}`, '_blank')
+    }
+    setSendDialogInvoice(null)
+  }
+
+  const openPaidConfirm = (invoice: Invoice) => {
+    setPaidConfirmInvoice(invoice)
+  }
+
+  const handleConfirmPaid = async () => {
+    if (!paidConfirmInvoice) return
+    await updateInvoiceStatus(paidConfirmInvoice.id, "paid")
+    setPaidConfirmInvoice(null)
   }
 
   const updateInvoiceStatus = async (invoiceId: string, newStatus: string) => {
@@ -570,13 +612,13 @@ export default function InvoicesPage({
                         </Button>
                         {invoice.status === "draft" && (
                           <Button size="sm" className="h-7 px-2 text-xs font-hebrew bg-blue-500 hover:bg-blue-600 text-white"
-                            onClick={() => updateInvoiceStatus(invoice.id, "sent")}>
+                            onClick={() => openSendDialog(invoice)}>
                             שלח
                           </Button>
                         )}
                         {(invoice.status === "sent" || invoice.status === "draft") && (
                           <Button size="sm" className="h-7 px-2 text-xs font-hebrew bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => updateInvoiceStatus(invoice.id, "paid")}>
+                            onClick={() => openPaidConfirm(invoice)}>
                             שולם
                           </Button>
                         )}
@@ -624,11 +666,11 @@ export default function InvoicesPage({
                       </Button>
                       {invoice.status === "draft" && (
                         <Button size="sm" className="h-7 px-2 text-xs font-hebrew bg-blue-500 hover:bg-blue-600 text-white"
-                          onClick={() => updateInvoiceStatus(invoice.id, "sent")}>שלח</Button>
+                          onClick={() => openSendDialog(invoice)}>שלח</Button>
                       )}
                       {(invoice.status === "sent" || invoice.status === "draft") && (
                         <Button size="sm" className="h-7 px-2 text-xs font-hebrew bg-green-600 hover:bg-green-700 text-white"
-                          onClick={() => updateInvoiceStatus(invoice.id, "paid")}>שולם</Button>
+                          onClick={() => openPaidConfirm(invoice)}>שולם</Button>
                       )}
                       {invoice.status !== "cancelled" && invoice.status !== "paid" && (
                         <Button variant="ghost" size="sm" className="h-7 px-1 text-xs text-red-500 hover:text-red-700"
@@ -732,6 +774,105 @@ export default function InvoicesPage({
           onClose={() => setPrintInvoice(null)}
         />
       )}
+
+      {/* Send Invoice Dialog */}
+      <Dialog open={!!sendDialogInvoice} onOpenChange={() => setSendDialogInvoice(null)}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-hebrew text-right">שליחת חשבונית {sendDialogInvoice?.invoice_number}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="flex gap-2">
+              <Button
+                variant={sendMethod === 'email' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSendMethod('email')}
+                className="font-hebrew flex-1"
+              >
+                📧 אימייל
+              </Button>
+              <Button
+                variant={sendMethod === 'whatsapp' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSendMethod('whatsapp')}
+                className="font-hebrew flex-1"
+              >
+                💬 וואטסאפ
+              </Button>
+            </div>
+
+            {sendMethod === 'email' && (
+              <div className="space-y-2">
+                <Label className="font-hebrew text-right block">כתובת אימייל</Label>
+                <Input
+                  value={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.value)}
+                  placeholder="example@email.com"
+                  type="email"
+                  dir="ltr"
+                />
+              </div>
+            )}
+
+            {sendMethod === 'whatsapp' && (
+              <div className="space-y-2">
+                <Label className="font-hebrew text-right block">מספר טלפון</Label>
+                <Input
+                  value={sendPhone}
+                  onChange={(e) => setSendPhone(e.target.value)}
+                  placeholder="050-1234567"
+                  type="tel"
+                  dir="ltr"
+                />
+              </div>
+            )}
+
+            <div className="bg-gray-50 rounded-lg p-3 text-sm font-hebrew text-right">
+              <p className="text-gray-500">לקוח: <span className="text-gray-800">{sendDialogInvoice?.clients?.company_name}</span></p>
+              <p className="text-gray-500">סכום: <span className="text-gray-800">₪{Number(sendDialogInvoice?.total_amount || 0).toLocaleString()}</span></p>
+            </div>
+
+            <div className="flex gap-2 justify-start">
+              <Button
+                onClick={handleSendInvoice}
+                disabled={sendMethod === 'email' ? !sendEmail : !sendPhone}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-hebrew"
+              >
+                {sendMethod === 'email' ? 'שלח באימייל' : 'שלח בוואטסאפ'}
+              </Button>
+              <Button variant="outline" onClick={() => setSendDialogInvoice(null)} className="font-hebrew">
+                ביטול
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Paid Confirmation Dialog */}
+      <Dialog open={!!paidConfirmInvoice} onOpenChange={() => setPaidConfirmInvoice(null)}>
+        <DialogContent className="max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-hebrew text-right">אישור תשלום</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="font-hebrew text-right text-gray-700">
+              האם לסמן את חשבונית <span className="font-bold">{paidConfirmInvoice?.invoice_number}</span> כשולמה?
+            </p>
+            <div className="bg-gray-50 rounded-lg p-3 text-sm font-hebrew text-right">
+              <p className="text-gray-500">לקוח: <span className="text-gray-800">{paidConfirmInvoice?.clients?.company_name}</span></p>
+              <p className="text-gray-500">סכום: <span className="text-gray-800">₪{Number(paidConfirmInvoice?.total_amount || 0).toLocaleString()}</span></p>
+            </div>
+            <div className="flex gap-2 justify-start">
+              <Button onClick={handleConfirmPaid} className="bg-green-600 hover:bg-green-700 text-white font-hebrew">
+                אשר תשלום
+              </Button>
+              <Button variant="outline" onClick={() => setPaidConfirmInvoice(null)} className="font-hebrew">
+                ביטול
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

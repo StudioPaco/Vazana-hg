@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       .from("invoices")
       .select(`
         *,
-        clients:client_id(company_name, contact_person, email, address, city)
+        clients:client_id(company_name, contact_person, email, phone, address, city)
       `)
       .order("invoice_date", { ascending: false })
 

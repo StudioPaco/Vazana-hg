@@ -142,7 +142,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
     }
   }, [clientRates, formData.jobType])
 
-  // Check for worker/vehicle conflicts on same date
+  // Check for worker availability + worker/vehicle conflicts on same date
   useEffect(() => {
     const checkConflicts = async () => {
       if (!formData.date) { setConflictWarnings([]); return }
@@ -152,6 +152,20 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
       if (formData.employee) {
         const selectedWorker = employees.find((e: any) => e.id === formData.employee)
         if (selectedWorker) {
+          // Check weekly availability grid
+          const avail = selectedWorker.availability
+          if (avail && typeof avail === 'object') {
+            const jobDate = new Date(formData.date)
+            const dayIdx = jobDate.getDay() // 0=Sunday
+            const shiftKey = formData.shiftType === 'לילה' ? `לילה_${dayIdx}` : `יום_${dayIdx}`
+            if (avail[shiftKey] === false) {
+              const dayNames = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]
+              const shiftLabel = formData.shiftType || "יום"
+              warnings.push(`⚠️ ${selectedWorker.name} לא זמין ביום ${dayNames[dayIdx]} במשמרת ${shiftLabel}`)
+            }
+          }
+
+          // Check for existing job conflict
           const { data: conflicts } = await supabase
             .from('jobs')
             .select('job_number, client_name')
@@ -180,7 +194,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
       setConflictWarnings(warnings)
     }
     checkConflicts()
-  }, [formData.employee, formData.vehicle, formData.date])
+  }, [formData.employee, formData.vehicle, formData.date, formData.shiftType])
 
   useEffect(() => {
     const fetchJobNumber = async () => {

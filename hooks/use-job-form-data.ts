@@ -78,7 +78,7 @@ export function useWorkers() {
         setLoading(true)
         const { data, error } = await supabase
           .from("workers")
-          .select("id, name, phone_number")
+          .select("id, name, phone_number, availability")
           .order("name", { ascending: true })
 
         if (error) {
