@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const jobNumber = body.job_number || `${Date.now().toString().slice(-4)}`
 
     // Validate required fields
-    const requiredFields = ['work_type', 'job_date', 'shift_type', 'site', 'city', 'client_name', 'worker_name', 'worker_id', 'vehicle_name', 'vehicle_id']
+    const requiredFields = ['work_type', 'job_date', 'shift_type', 'site', 'city', 'client_name']
     const missingFields = requiredFields.filter(field => !body[field] || body[field] === '')
     
     if (missingFields.length > 0) {
