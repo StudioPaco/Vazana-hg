@@ -54,6 +54,10 @@ import { useTheme } from "@/lib/theme-context"
 import { useAuth } from "@/components/auth/auth-provider"
 import { useSearchParams, useRouter } from "next/navigation"
 import ResourceModal from "@/components/settings/resource-modal"
+import WorkersPage from "@/components/workers/workers-page"
+import VehiclesPage from "@/components/vehicles/vehicles-page"
+import CartsPage from "@/components/carts/carts-page"
+import WorkTypesPage from "@/components/work-types/work-types-page"
 import DataExportImport from "@/components/settings/data-export-import"
 import UserEditModal from "@/components/settings/user-edit-modal"
 
@@ -77,6 +81,29 @@ export default function SettingsPage() {
   const [editingUser, setEditingUser] = useState<any>(null)
   const [userEditModalOpen, setUserEditModalOpen] = useState(false)
   const [resourceModalType, setResourceModalType] = useState<"workers" | "vehicles" | "carts" | "job-types" | null>(null)
+  const [selectedResource, setSelectedResource] = useState<"workers" | "vehicles" | "carts" | "job-types" | null>(null)
+  const [resourceCounts, setResourceCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const supabase = (await import("@/lib/supabase/client")).createClient()
+        const tables = [
+          { key: "workers", table: "workers" },
+          { key: "vehicles", table: "vehicles" },
+          { key: "carts", table: "carts" },
+          { key: "job-types", table: "work_types" },
+        ]
+        const counts: Record<string, number> = {}
+        for (const t of tables) {
+          const { count } = await supabase.from(t.table).select("*", { count: "exact", head: true })
+          counts[t.key] = count ?? 0
+        }
+        setResourceCounts(counts)
+      } catch { /* ignore */ }
+    }
+    fetchCounts()
+  }, [selectedResource])
   const [dataExportImportOpen, setDataExportImportOpen] = useState(false)
   const [dataExportOpen, setDataExportOpen] = useState(false)
   const [dataImportOpen, setDataImportOpen] = useState(false)
@@ -1177,60 +1204,60 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col items-center gap-2 font-hebrew"
-                    onClick={() => setResourceModalType("workers")}
-                  >
-                    <Users className="w-8 h-8 text-blue-600" />
-                    <span>עובדים</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col items-center gap-2 font-hebrew"
-                    onClick={() => setResourceModalType("vehicles")}
-                  >
-                    <Car className="w-8 h-8 text-green-600" />
-                    <span>רכבים</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col items-center gap-2 font-hebrew"
-                    onClick={() => setResourceModalType("carts")}
-                  >
-                    <ShoppingCart className="w-8 h-8 text-purple-600" />
-                    <span>עגלות</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col items-center gap-2 font-hebrew"
-                    onClick={() => setResourceModalType("job-types")}
-                  >
-                    <Briefcase className="w-8 h-8 text-orange-600" />
-                    <span>סוגי עבודה</span>
-                  </Button>
+                  {([
+                    { key: "workers" as const, label: "עובדים", icon: Users, color: "text-blue-600" },
+                    { key: "vehicles" as const, label: "רכבים", icon: Car, color: "text-green-600" },
+                    { key: "carts" as const, label: "עגלות", icon: ShoppingCart, color: "text-purple-600" },
+                    { key: "job-types" as const, label: "סוגי עבודה", icon: Briefcase, color: "text-orange-600" },
+                  ]).map(({ key, label, icon: Icon, color }) => (
+                    <Button
+                      key={key}
+                      variant="outline"
+                      className={`h-24 flex flex-col items-center gap-2 font-hebrew relative ${
+                        selectedResource === key ? "border-teal-500 bg-teal-50 ring-1 ring-teal-300" : ""
+                      }`}
+                      onClick={() => setSelectedResource(selectedResource === key ? null : key)}
+                    >
+                      <Icon className={`w-8 h-8 ${color}`} />
+                      <span>{label}</span>
+                      {resourceCounts[key] !== undefined && (
+                        <Badge variant="secondary" className="absolute top-2 left-2 text-xs px-2 py-0.5 bg-gray-100 text-gray-700 font-bold">
+                          {resourceCounts[key]}
+                        </Badge>
+                      )}
+                    </Button>
+                  ))}
                 </CardContent>
               </Card>
-              
-              {/* Link to calendar page for availability management */}
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-500 font-hebrew mb-2">לניהול זמינות משאבים עבור ללוח הזמנים</p>
-                <Button variant="outline" className="font-hebrew" onClick={() => router.push('/calendar')}>
-                  <Calendar className="w-4 h-4 ml-2" />
-                  לוח זמנים
-                </Button>
-              </div>
-              
-              {/* Resource Modal */}
-              {resourceModalType && (
-                <ResourceModal
-                  type={resourceModalType}
-                  open={resourceModalType !== null}
-                  onOpenChange={() => setResourceModalType(null)}
-                />
+
+              {/* Inline resource list — shows below buttons when one is selected */}
+              {selectedResource === "workers" && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <WorkersPage showHeader={false} />
+                  </CardContent>
+                </Card>
+              )}
+              {selectedResource === "vehicles" && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <VehiclesPage showHeader={false} />
+                  </CardContent>
+                </Card>
+              )}
+              {selectedResource === "carts" && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <CartsPage showHeader={false} />
+                  </CardContent>
+                </Card>
+              )}
+              {selectedResource === "job-types" && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <WorkTypesPage />
+                  </CardContent>
+                </Card>
               )}
             </TabsContent>
 

@@ -516,33 +516,48 @@ function ResourcesSection() {
 
   return (
     <div className="space-y-6">
-      {/* Resource selector buttons — matching current resources page style */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit mr-auto" dir="rtl">
-        {resourceTypes.map((rt) => {
-          const cfg = RESOURCE_CONFIG[rt]
-          const isActive = selected === rt
-          return (
-            <Button
-              key={rt}
-              variant={isActive ? "default" : "ghost"}
-              onClick={() => setSelected(rt)}
-              className="text-sm font-hebrew gap-1.5"
-            >
-              {cfg.label}
-              <Badge
-                variant="secondary"
-                className={`text-[10px] px-1.5 py-0 min-w-[20px] ${
-                  isActive
-                    ? "bg-white/20 text-white"
-                    : "bg-gray-200 text-gray-600"
+      {/* Resource selector — EXACT match of Settings > ניהול משאבים tab */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
+            <Wrench className="w-5 h-5 text-teal-600" />
+            <span>ניהול משאבים</span>
+          </CardTitle>
+          <p className="text-sm text-gray-500 text-right font-hebrew">נהל עובדים, רכבים וציוד</p>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" dir="rtl">
+          {resourceTypes.map((rt) => {
+            const cfg = RESOURCE_CONFIG[rt]
+            const Icon = cfg.icon
+            const isActive = selected === rt
+            const iconColors: Record<ResourceType, string> = {
+              workers: "text-blue-600",
+              vehicles: "text-green-600",
+              carts: "text-purple-600",
+              work_types: "text-orange-600",
+            }
+            return (
+              <Button
+                key={rt}
+                variant="outline"
+                className={`h-24 flex flex-col items-center gap-2 font-hebrew relative ${
+                  isActive ? "border-teal-500 bg-teal-50 ring-1 ring-teal-300" : ""
                 }`}
+                onClick={() => setSelected(rt)}
               >
-                {counts[rt]}
-              </Badge>
-            </Button>
-          )
-        })}
-      </div>
+                <Icon className={`w-8 h-8 ${iconColors[rt]}`} />
+                <span>{cfg.label}</span>
+                <Badge
+                  variant="secondary"
+                  className="absolute top-2 left-2 text-xs px-2 py-0.5 bg-gray-100 text-gray-700 font-bold"
+                >
+                  {counts[rt]}
+                </Badge>
+              </Button>
+            )
+          })}
+        </CardContent>
+      </Card>
 
       {/* Add button */}
       <div className="flex justify-start" dir="rtl">
