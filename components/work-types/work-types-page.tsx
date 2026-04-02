@@ -24,6 +24,7 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
   const [formData, setFormData] = useState({
     name_he: "",
     name_en: "",
+    default_rate: "",
   })
 
   useEffect(() => {
@@ -59,8 +60,8 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name_he.trim() || !formData.name_en.trim()) {
-      toast({ title: "שם בעברית ובאנגלית הם שדות חובה", variant: "destructive" })
+    if (!formData.name_he.trim()) {
+      toast({ title: "שם בעברית הוא שדה חובה", variant: "destructive" })
       return
     }
 
@@ -68,15 +69,21 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
     try {
       const supabase = createClient()
 
+      const payload = {
+        name_he: formData.name_he,
+        name_en: formData.name_en || null,
+        default_rate: formData.default_rate ? Number(formData.default_rate) : null,
+      }
+
       if (editingItem) {
-        const { error } = await supabase.from("work_types").update(formData).eq("id", editingItem.id)
+        const { error } = await supabase.from("work_types").update(payload).eq("id", editingItem.id)
 
         if (error) {
           console.error("Error updating work type:", error)
           throw error
         }
       } else {
-        const { error } = await supabase.from("work_types").insert([formData])
+        const { error } = await supabase.from("work_types").insert([payload])
 
         if (error) {
           console.error("Error creating work type:", error)
@@ -86,7 +93,7 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
 
       setShowForm(false)
       setEditingItem(null)
-      setFormData({ name_he: "", name_en: "" })
+      setFormData({ name_he: "", name_en: "", default_rate: "" })
       loadWorkTypes()
     } catch (error) {
       console.error("Error saving work type:", error)
@@ -100,6 +107,7 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
     setFormData({
       name_he: item.name_he || "",
       name_en: item.name_en || "",
+      default_rate: item.default_rate?.toString() || "",
     })
     setShowForm(true)
   }
@@ -129,12 +137,12 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
 
   const openNewForm = () => {
     setEditingItem(null)
-    setFormData({ name_he: "", name_en: "" })
+    setFormData({ name_he: "", name_en: "", default_rate: "" })
     setShowForm(true)
   }
 
   return (
-    <div className={`${showHeader ? 'p-6' : ''} space-y-6`} dir="rtl">
+    <div className={`${showHeader ? 'p-6' : ''} space-y-4`} dir="rtl">
       {showHeader && (
         <div className="text-right">
           <h1 className="text-3xl font-bold text-gray-900">סוגי עבודה</h1>
@@ -142,9 +150,11 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
         </div>
       )}
 
-      <Button onClick={openNewForm} className="flex items-center gap-2 bg-[#FFCC00] hover:bg-[#E6B800] text-[#1A1A1A]">
-        <Plus className="w-4 h-4" /> הוסף סוג עבודה חדש
-      </Button>
+      {!showForm && (
+        <Button onClick={openNewForm} size="sm" className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-hebrew">
+          <Plus className="w-4 h-4" /> הוסף סוג עבודה
+        </Button>
+      )}
 
       {showForm && (
         <Card className="shadow-md border-gray-200">
@@ -172,7 +182,7 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
               </div>
               <div>
                 <label htmlFor="name_en" className="block text-sm font-medium text-[#1A1A1A] mb-1">
-                  שם באנגלית <span className="text-red-500">*</span>
+                  שם באנגלית
                 </label>
                 <Input
                   type="text"
@@ -181,7 +191,22 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
                   value={formData.name_en}
                   onChange={handleInputChange}
                   placeholder="Enter English name"
-                  required
+                  className="w-full border-gray-300 focus:border-[#00DAC0]"
+                />
+              </div>
+              <div>
+                <label htmlFor="default_rate" className="block text-sm font-medium text-[#1A1A1A] mb-1">
+                  תעריף ברירת מחדל (₪)
+                </label>
+                <Input
+                  type="number"
+                  name="default_rate"
+                  id="default_rate"
+                  value={formData.default_rate}
+                  onChange={handleInputChange}
+                  placeholder="לדוגמה: 800"
+                  step="10"
+                  min="0"
                   className="w-full border-gray-300 focus:border-[#00DAC0]"
                 />
               </div>
@@ -237,9 +262,9 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-100 text-gray-700">
-                <th className="text-start p-3 font-medium">שם בעברית</th>
-                <th className="text-start p-3 font-medium">שם באנגלית</th>
-                <th className="text-start p-3 font-medium w-24">פעולות</th>
+                <th className="text-start p-3 font-medium font-hebrew">שם</th>
+                <th className="text-start p-3 font-medium font-hebrew">תעריף ברירת מחדל</th>
+                <th className="text-start p-3 font-medium font-hebrew w-24">פעולות</th>
               </tr>
             </thead>
             <tbody>
@@ -248,8 +273,8 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
                   key={workType.id}
                   className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 1 ? 'bg-gray-50/50' : ''}`}
                 >
-                  <td className="p-3 font-medium text-[#1A1A1A]">{workType.name_he}</td>
-                  <td className="p-3 text-gray-600">{workType.name_en}</td>
+                  <td className="p-3 font-medium text-[#1A1A1A] font-hebrew">{workType.name_he}</td>
+                  <td className="p-3 text-gray-600">{workType.default_rate ? `₪${workType.default_rate}` : "—"}</td>
                   <td className="p-3">
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(workType)}>

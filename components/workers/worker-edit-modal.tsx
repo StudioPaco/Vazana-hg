@@ -76,6 +76,7 @@ export default function WorkerEditModal({ worker, open, onOpenChange, onWorkerUp
         address: formData.address,
         shift_rate: formData.shift_rate ? Number.parseFloat(formData.shift_rate) : null,
         payment_terms_days: Number.parseInt(formData.payment_terms_days),
+        availability: formData.availability,
         notes: formData.notes,
       }
 
