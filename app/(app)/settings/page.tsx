@@ -115,6 +115,8 @@ export default function SettingsPage() {
   const [dataImportOpen, setDataImportOpen] = useState(false)
   const [autoBackup, setAutoBackup] = useState(true)
   const [autoSaveForms, setAutoSaveForms] = useState(true)
+  const [googleConnection, setGoogleConnection] = useState<{ connected: boolean; email?: string; loading: boolean }>({ connected: false, loading: true })
+  const [googleDisconnecting, setGoogleDisconnecting] = useState(false)
   
   // Load auto-save setting from localStorage on mount
   useEffect(() => {
@@ -136,6 +138,75 @@ export default function SettingsPage() {
       }
     }
   }, [])
+
+  // Check Google connection status on mount
+  useEffect(() => {
+    const checkGoogle = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { setGoogleConnection({ connected: false, loading: false }); return }
+        const { data } = await (supabase.from("google_tokens") as any)
+          .select("google_email")
+          .eq("user_id", user.id)
+          .single()
+        if (data?.google_email) {
+          setGoogleConnection({ connected: true, email: data.google_email, loading: false })
+        } else {
+          setGoogleConnection({ connected: false, loading: false })
+        }
+      } catch {
+        setGoogleConnection({ connected: false, loading: false })
+      }
+    }
+    checkGoogle()
+  }, [])
+
+  // Handle Google OAuth redirect result (success/error toast)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const googleResult = params.get("google")
+    if (googleResult === "success") {
+      toast({ title: "חשבון Google חובר בהצלחה" })
+      // Re-check connection
+      setGoogleConnection(prev => ({ ...prev, loading: true }))
+      const supabase = createClient()
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user) return
+        ;(supabase.from("google_tokens") as any)
+          .select("google_email")
+          .eq("user_id", user.id)
+          .single()
+          .then(({ data }: { data: { google_email: string } | null }) => {
+            if (data?.google_email) {
+              setGoogleConnection({ connected: true, email: data.google_email, loading: false })
+            }
+          })
+      })
+      // Clean URL params
+      window.history.replaceState({}, "", window.location.pathname + "?tab=integrations")
+    } else if (googleResult === "error") {
+      toast({ title: "חיבור Google נכשל", variant: "destructive" })
+      window.history.replaceState({}, "", window.location.pathname + "?tab=integrations")
+    }
+  }, [])
+
+  const handleGoogleDisconnect = async () => {
+    setGoogleDisconnecting(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await (supabase.from("google_tokens") as any).delete().eq("user_id", user.id)
+      setGoogleConnection({ connected: false, loading: false })
+      toast({ title: "חשבון Google נותק" })
+    } catch {
+      toast({ title: "שגיאה בניתוק", variant: "destructive" })
+    } finally {
+      setGoogleDisconnecting(false)
+    }
+  }
+
   const [isWhatsAppSetupOpen, setIsWhatsAppSetupOpen] = useState(false)
   const [companyData, setCompanyData] = useState<{
     id?: string | null;
@@ -1567,21 +1638,44 @@ export default function SettingsPage() {
                   {/* Google Connection */}
                   <div className="space-y-4 p-4 border rounded-lg border-blue-200 bg-blue-50/30 mb-6">
                     <div className="flex items-center justify-between">
-                      <Badge variant="secondary" className="font-hebrew bg-blue-100 text-blue-800">Google</Badge>
+                      {googleConnection.loading ? (
+                        <Badge variant="secondary" className="font-hebrew bg-gray-100 text-gray-600">בודק...</Badge>
+                      ) : googleConnection.connected ? (
+                        <Badge variant="secondary" className="font-hebrew bg-green-100 text-green-800">מחובר</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="font-hebrew bg-blue-100 text-blue-800">Google</Badge>
+                      )}
                       <h3 className="font-semibold text-right font-hebrew">חיבור חשבון Google</h3>
                     </div>
                     <p className="text-sm text-gray-600 text-right font-hebrew">
                       חבר את חשבון Google שלך לסנכרון יומן, גיבוי Drive ודואר Gmail.
                     </p>
-                    <Button
-                      variant="outline"
-                      className="w-full font-hebrew bg-white border-blue-300 text-blue-700 hover:bg-blue-50"
-                      onClick={() => {
-                        toast({ title: "חיבור Google דורש הגדרת OAuth — פנה למנהל המערכת" })
-                      }}
-                    >
-                      התחבר לחשבון Google
-                    </Button>
+                    {googleConnection.connected ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="font-hebrew text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                            disabled={googleDisconnecting}
+                            onClick={handleGoogleDisconnect}
+                          >
+                            {googleDisconnecting ? "מנתק..." : "נתק"}
+                          </Button>
+                          <span className="text-sm font-hebrew text-green-800 font-medium" dir="ltr">{googleConnection.email}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full font-hebrew bg-white border-blue-300 text-blue-700 hover:bg-blue-50"
+                        onClick={() => {
+                          window.location.href = "/api/auth/google"
+                        }}
+                      >
+                        התחבר לחשבון Google
+                      </Button>
+                    )}
                   </div>
 
                   {/* Google Paths & Settings */}
