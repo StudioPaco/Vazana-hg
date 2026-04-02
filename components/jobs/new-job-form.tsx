@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,6 +29,7 @@ const SHIFT_TYPES = [
 
 export default function NewJobForm({ showHeader = true }: { showHeader?: boolean }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [jobNumber, setJobNumber] = useState("")
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true)
   const autoSave = new SimpleAutoSave('new-job-draft', 15)
@@ -243,6 +244,21 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
 
     fetchJobNumber()
   }, [])
+
+  // Pre-fill from URL params (from calendar click-to-add)
+  useEffect(() => {
+    const date = searchParams.get('date')
+    const worker = searchParams.get('worker')
+    const vehicle = searchParams.get('vehicle')
+    if (date || worker || vehicle) {
+      setFormData(prev => ({
+        ...prev,
+        ...(date ? { date } : {}),
+        ...(worker ? { employee: worker } : {}),
+        ...(vehicle ? { vehicle } : {}),
+      }))
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

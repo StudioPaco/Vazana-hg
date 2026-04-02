@@ -41,7 +41,7 @@ interface Job {
   notes: string
 }
 
-interface Worker { id: string; name: string }
+interface Worker { id: string; name: string; availability?: Record<string, boolean> | null }
 interface Vehicle { id: string; name: string; license_plate?: string }
 interface CartItem { id: string; name: string }
 
@@ -71,6 +71,7 @@ export default function CalendarPage() {
   const [weekOffset, setWeekOffset] = useState(0)
   const [showClashesOnly, setShowClashesOnly] = useState(false)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+  const [selectedCell, setSelectedCell] = useState<{ resourceId: string; resourceName: string; resourceType: string; date: string } | null>(null)
 
   const supabase = createClient()
 
@@ -278,6 +279,33 @@ export default function CalendarPage() {
       <tbody>${bodyRows}</tbody></table></body></html>`)
     w.document.close()
     w.print()
+  }
+
+  // Check worker's weekly recurring availability for a specific date
+  const isWorkerAvailableByGrid = (workerId: string, date: Date): boolean | null => {
+    const worker = workers.find(w => w.id === workerId)
+    if (!worker?.availability) return null // no grid data, treat as unknown
+    const dayIdx = date.getDay() // 0=Sunday
+    const dayKey = `יום_${dayIdx}`
+    const nightKey = `לילה_${dayIdx}`
+    const dayAvail = worker.availability[dayKey] !== false
+    const nightAvail = worker.availability[nightKey] !== false
+    return dayAvail || nightAvail
+  }
+
+  // Handle cell click: first click selects, second click navigates to new job
+  const handleCellClick = (resourceId: string, resourceName: string, resourceTypeStr: string, dateStr: string) => {
+    if (selectedCell && selectedCell.resourceId === resourceId && selectedCell.date === dateStr) {
+      // Second click — navigate to new job form pre-filled
+      const params = new URLSearchParams()
+      params.set('date', dateStr)
+      if (resourceTypeStr === 'worker') params.set('worker', resourceId)
+      if (resourceTypeStr === 'vehicle') params.set('vehicle', resourceId)
+      window.location.href = `/jobs/new?${params.toString()}`
+    } else {
+      // First click — select cell
+      setSelectedCell({ resourceId, resourceName, resourceType: resourceTypeStr, date: dateStr })
+    }
   }
 
   const isToday = (date: Date) => date.toDateString() === new Date().toDateString()
@@ -506,13 +534,18 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={`${wi}-${di}`}
-                    className={`border-b border-l min-h-[90px] p-1 ${
+                    className={`border-b border-l min-h-[90px] p-1 cursor-pointer hover:ring-1 hover:ring-teal-300 hover:ring-inset ${
                       dayHasClash && isCurrentMonth ? 'bg-red-50' :
                       !isCurrentMonth ? 'bg-gray-50/50 text-gray-300' :
                       showClashesOnly && !dayHasClash ? 'bg-gray-50/30 opacity-40' :
                       isTodayDate ? 'bg-teal-50' :
                       isSabbath ? 'bg-gray-50' : 'bg-white'
                     }`}
+                    onClick={() => {
+                      if (isCurrentMonth) {
+                        window.location.href = `/jobs/new?date=${dateStr}`
+                      }
+                    }}
                   >
                     <div className={`text-xs font-medium mb-0.5 ${isTodayDate ? 'text-teal-700 font-bold' : isCurrentMonth ? 'text-gray-700' : 'text-gray-300'}`}>
                       {date.getDate()}
@@ -584,20 +617,32 @@ export default function CalendarPage() {
                     const hasClash = cellJobs.length > 1
                     const avail = availabilityMap[`${resource.id}_${dateStr}`]
                     const isUnavailable = avail && !avail.is_available
+                    // Check worker recurring weekly availability
+                    const recurringUnavail = resource.type === 'worker' && isWorkerAvailableByGrid(resource.id, date) === false
                     const isSabbath = date.getDay() === 6
+                    const isCellSelected = selectedCell?.resourceId === resource.id && selectedCell?.date === dateStr
 
                     return (
                       <td key={i}
                         className={`px-0.5 py-0.5 align-top relative transition-colors ${
-                          hasClash ? "bg-red-50" : isUnavailable ? "bg-gray-200" : isToday(date) ? "bg-teal-50/30" : isSabbath ? "bg-gray-50" : ""
+                          isCellSelected ? "bg-teal-100 ring-2 ring-teal-500 ring-inset" :
+                          hasClash ? "bg-red-50" :
+                          isUnavailable ? "bg-gray-200" :
+                          recurringUnavail ? "bg-gray-100 bg-stripes" :
+                          isToday(date) ? "bg-teal-50/30" :
+                          isSabbath ? "bg-gray-50" : ""
                         }`}
                       >
-                        {/* Click area for availability toggle */}
+                        {/* Click area: first click = select, second = add job */}
                         <div
                           className={`min-h-[32px] cursor-pointer ${togglingCells.has(`${resource.id}_${dateStr}`) ? 'opacity-50 pointer-events-none' : ''}`}
                           onClick={(e) => {
                             if ((e.target as HTMLElement).closest('[data-job]')) return
-                            toggleAvailability(resource.id, dateStr, resource.type)
+                            if (cellJobs.length === 0 && !isUnavailable) {
+                              handleCellClick(resource.id, resource.name, resource.type, dateStr)
+                            } else {
+                              toggleAvailability(resource.id, dateStr, resource.type)
+                            }
                           }}
                         >
                           {togglingCells.has(`${resource.id}_${dateStr}`) && (
@@ -630,7 +675,13 @@ export default function CalendarPage() {
                           )}
                           {cellJobs.length === 0 && !isUnavailable && !togglingCells.has(`${resource.id}_${dateStr}`) && (
                             <div className="flex items-center justify-center h-8">
-                              <Check className="w-3 h-3 text-green-300" />
+                              {isCellSelected ? (
+                                <span className="text-[8px] text-teal-600 font-hebrew font-bold animate-pulse">+ הוסף עבודה</span>
+                              ) : recurringUnavail ? (
+                                <span className="text-[8px] text-gray-400 font-hebrew">לא זמין</span>
+                              ) : (
+                                <Check className="w-3 h-3 text-green-300" />
+                              )}
                             </div>
                           )}
                         </div>
@@ -660,7 +711,8 @@ export default function CalendarPage() {
         <div className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-green-400" /><span className="font-hebrew text-gray-600">זמין</span></div>
         <div className="flex items-center gap-1"><X className="w-3.5 h-3.5 text-gray-400" /><span className="font-hebrew text-gray-600">לא זמין</span></div>
         <div className="flex items-center gap-1"><div className="w-4 h-3 rounded bg-red-50 border border-red-300"></div><span className="font-hebrew text-gray-600">התנגשות</span></div>
-        <span className="font-hebrew text-gray-400">לחץ תא = שנה זמינות | לחץ עבודה = פרטים</span>
+        <div className="flex items-center gap-1"><div className="w-4 h-3 rounded bg-gray-100 border border-dashed border-gray-300"></div><span className="font-hebrew text-gray-600">לא זמין (שבועי)</span></div>
+        <span className="font-hebrew text-gray-400">לחץ תא ריק = בחר → לחץ שוב = הוסף עבודה | לחץ עבודה = פרטים</span>
       </div>
 
       {/* Job Details Popup */}
