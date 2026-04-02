@@ -516,35 +516,30 @@ function ResourcesSection() {
 
   return (
     <div className="space-y-6">
-      {/* Resource selector buttons */}
-      <div className="flex flex-wrap gap-3" dir="rtl">
+      {/* Resource selector buttons — matching current resources page style */}
+      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit mr-auto" dir="rtl">
         {resourceTypes.map((rt) => {
           const cfg = RESOURCE_CONFIG[rt]
-          const Icon = cfg.icon
           const isActive = selected === rt
           return (
-            <button
+            <Button
               key={rt}
+              variant={isActive ? "default" : "ghost"}
               onClick={() => setSelected(rt)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border font-hebrew text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-teal-600 text-white border-teal-700 shadow-md"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-teal-300 hover:bg-teal-50"
-              }`}
+              className="text-sm font-hebrew gap-1.5"
             >
-              <Icon className="w-4 h-4" />
-              <span>{cfg.label}</span>
+              {cfg.label}
               <Badge
                 variant="secondary"
-                className={`text-xs px-1.5 py-0 ${
+                className={`text-[10px] px-1.5 py-0 min-w-[20px] ${
                   isActive
-                    ? "bg-teal-500 text-white"
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-white/20 text-white"
+                    : "bg-gray-200 text-gray-600"
                 }`}
               >
                 {counts[rt]}
               </Badge>
-            </button>
+            </Button>
           )
         })}
       </div>
