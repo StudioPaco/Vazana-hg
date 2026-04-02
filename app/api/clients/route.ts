@@ -58,8 +58,6 @@ export async function POST(request: NextRequest) {
       created_by_id: user.id,
     }
 
-    console.log("Inserting client with data keys:", Object.keys(clientData))
-
     const { data: client, error } = await supabase.from("clients").insert([clientData]).select().single()
 
     if (error) {

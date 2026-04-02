@@ -162,7 +162,7 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
         const counts: Record<string, number> = {}
         if (Array.isArray(docs)) docs.forEach(d => { if (d.entity_id) counts[d.entity_id] = (counts[d.entity_id] || 0) + 1 })
         setJobDocCounts(counts)
-      }).catch(() => {})
+      }).catch((err) => console.error("Job doc counts fetch error:", err))
     }
 
     fetchJobs()

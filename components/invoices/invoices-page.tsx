@@ -116,7 +116,7 @@ export default function InvoicesPage({
     fetch("/api/clients").then(r => r.json()).then(result => {
       const names = (result.data || []).map((c: any) => c.company_name).sort()
       setAllClients(names)
-    }).catch(() => {})
+    }).catch((err) => console.error("Invoice data fetch error:", err))
   }, [])
 
   useEffect(() => {
@@ -204,7 +204,7 @@ export default function InvoicesPage({
       const counts: Record<string, number> = {}
       if (Array.isArray(docs)) docs.forEach(d => { if (d.entity_id) counts[d.entity_id] = (counts[d.entity_id] || 0) + 1 })
       setInvoiceDocCounts(counts)
-    }).catch(() => {})
+    }).catch((err) => console.error("Invoice data fetch error:", err))
   }, [])
 
   const handlePrintInvoice = (invoice: Invoice) => {
@@ -709,7 +709,7 @@ function PrintInvoiceModal({ invoice, onClose }: { invoice: any; onClose: () => 
         work_type: li.work_type || 'ידני',
         site: li.site_location || '',
       })))
-    }).catch(() => {}).finally(() => setLoading(false))
+    }).catch((err) => console.error("Invoice data fetch error:", err)).finally(() => setLoading(false))
   }, [invoice.id])
 
   if (loading) return null

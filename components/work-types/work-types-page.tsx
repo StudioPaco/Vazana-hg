@@ -29,7 +29,6 @@ export default function WorkTypesPage() {
   const loadWorkTypes = async () => {
     setIsLoading(true)
     try {
-      console.log("Loading work types...")
       const supabase = createClient()
       const { data, error } = await supabase.from("work_types").select("*").order("created_at", { ascending: false })
 
@@ -38,7 +37,6 @@ export default function WorkTypesPage() {
         toast({ title: `שגיאה בטעינת סוגי עבודה: ${error.message}`, variant: "destructive" })
         setWorkTypes([])
       } else {
-        console.log("Successfully loaded work types:", data)
         setWorkTypes(data || [])
       }
     } catch (error) {
@@ -64,27 +62,22 @@ export default function WorkTypesPage() {
 
     setIsSubmitting(true)
     try {
-      console.log("Submitting work type:", formData)
       const supabase = createClient()
 
       if (editingItem) {
-        console.log("Updating work type:", editingItem.id)
         const { error } = await supabase.from("work_types").update(formData).eq("id", editingItem.id)
 
         if (error) {
           console.error("Error updating work type:", error)
           throw error
         }
-        console.log("Work type updated successfully")
       } else {
-        console.log("Creating new work type")
         const { error } = await supabase.from("work_types").insert([formData])
 
         if (error) {
           console.error("Error creating work type:", error)
           throw error
         }
-        console.log("Work type created successfully")
       }
 
       setShowForm(false)
@@ -99,7 +92,6 @@ export default function WorkTypesPage() {
   }
 
   const handleEdit = (item: any) => {
-    console.log("Editing work type:", item)
     setEditingItem(item)
     setFormData({
       name_he: item.name_he || "",
@@ -111,7 +103,6 @@ export default function WorkTypesPage() {
   const handleDelete = async (itemId: string) => {
     if (window.confirm("האם אתה בטוח שברצונך למחוק סוג עבודה זה? פעולה זו אינה ניתנת לביטול.")) {
       try {
-        console.log("Deleting work type:", itemId)
         const supabase = createClient()
         const { error } = await supabase.from("work_types").delete().eq("id", itemId)
 
@@ -120,7 +111,6 @@ export default function WorkTypesPage() {
           throw error
         }
 
-        console.log("Work type deleted successfully")
         loadWorkTypes()
         if (editingItem && editingItem.id === itemId) {
           setShowForm(false)
@@ -134,7 +124,6 @@ export default function WorkTypesPage() {
   }
 
   const openNewForm = () => {
-    console.log("Opening new work type form")
     setEditingItem(null)
     setFormData({ name_he: "", name_en: "" })
     setShowForm(true)

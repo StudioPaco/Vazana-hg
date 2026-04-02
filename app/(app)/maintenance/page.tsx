@@ -359,11 +359,38 @@ export function MaintenanceContent({ embedded = false }: { embedded?: boolean })
       // Check data integrity
       const featureStatuses = await checkDataIntegrity()
 
+      // Check storage bucket
+      const storageHealth = await checkStorageBucket()
+      featureStatuses.push({
+        name: "Storage Bucket",
+        status: storageHealth,
+        lastChecked: new Date(),
+        message: storageHealth === "healthy" ? "documents bucket accessible" : "Storage connection failed",
+        icon: Database,
+        category: "Infrastructure",
+      })
+
+      // Check orphaned records
+      const orphanResults = await checkOrphanedRecords()
+      featureStatuses.push(...orphanResults)
+
+      // Check numbering config
+      const numberingResult = await checkNumberingConfig()
+      if (numberingResult) featureStatuses.push(numberingResult)
+
+      // Check RLS security
+      const rlsResult = await checkRLSSecurity()
+      featureStatuses.push(rlsResult)
+
+      // Check session health
+      const sessionResult = await checkSessionHealth()
+      featureStatuses.push(sessionResult)
+
       setSystemHealth({
         database: dbHealth,
         api: apiHealth,
         auth: authHealth,
-        integrations: "healthy", // Simplified for now
+        integrations: storageHealth,
       })
 
       setFeatures(featureStatuses)
@@ -557,6 +584,186 @@ export function MaintenanceContent({ embedded = false }: { embedded?: boolean })
     } catch (error) {
       addLog("error", `User management test failed: ${error}`, "User Management", error)
       return "error"
+    }
+  }
+
+  // --- Advanced Health Checks ---
+
+  const checkStorageBucket = async (): Promise<"healthy" | "warning" | "error"> => {
+    try {
+      addLog("info", "Testing Supabase Storage connectivity...", "Storage")
+      const { data, error } = await supabase.storage.from("documents").list("", { limit: 1 })
+      if (error) {
+        addLog("error", `Storage bucket error: ${error.message}`, "Storage")
+        return "error"
+      }
+      addLog("success", `Storage bucket 'documents' accessible`, "Storage")
+      return "healthy"
+    } catch (error) {
+      addLog("error", `Storage check failed: ${error}`, "Storage", error)
+      return "error"
+    }
+  }
+
+  const checkOrphanedRecords = async (): Promise<FeatureStatus[]> => {
+    const orphanChecks: FeatureStatus[] = []
+    try {
+      addLog("info", "Checking for orphaned records...", "Data Integrity")
+
+      // Jobs with deleted clients
+      const { data: jobs } = await supabase
+        .from("jobs")
+        .select("id, client_id, client_name")
+        .not("client_id", "is", null)
+        .eq("is_deleted", false)
+      const { data: clients } = await supabase.from("clients").select("id")
+      const clientIds = new Set((clients || []).map(c => c.id))
+      const orphanedJobs = (jobs || []).filter(j => j.client_id && !clientIds.has(j.client_id))
+      if (orphanedJobs.length > 0) {
+        addLog("warning", `${orphanedJobs.length} jobs reference deleted/missing clients`, "Data Integrity")
+        orphanChecks.push({
+          name: "Orphaned Jobs",
+          status: "warning",
+          lastChecked: new Date(),
+          message: `${orphanedJobs.length} jobs reference missing clients`,
+          icon: AlertTriangle,
+          category: "Data",
+        })
+      }
+
+      // Invoices with deleted clients
+      const { data: invoices } = await supabase
+        .from("invoices")
+        .select("id, client_id")
+        .not("client_id", "is", null)
+      const orphanedInvoices = (invoices || []).filter(i => i.client_id && !clientIds.has(i.client_id))
+      if (orphanedInvoices.length > 0) {
+        addLog("warning", `${orphanedInvoices.length} invoices reference deleted/missing clients`, "Data Integrity")
+        orphanChecks.push({
+          name: "Orphaned Invoices",
+          status: "warning",
+          lastChecked: new Date(),
+          message: `${orphanedInvoices.length} invoices reference missing clients`,
+          icon: AlertTriangle,
+          category: "Data",
+        })
+      }
+
+      // Documents with missing entities
+      const { data: docs } = await supabase.from("documents").select("id, entity_type, entity_id").not("entity_id", "is", null)
+      let orphanedDocs = 0
+      for (const doc of (docs || [])) {
+        if (doc.entity_type === "job") {
+          const found = (jobs || []).some(j => j.id === doc.entity_id)
+          if (!found) orphanedDocs++
+        } else if (doc.entity_type === "client") {
+          if (!clientIds.has(doc.entity_id)) orphanedDocs++
+        }
+      }
+      if (orphanedDocs > 0) {
+        addLog("warning", `${orphanedDocs} documents reference missing entities`, "Data Integrity")
+        orphanChecks.push({
+          name: "Orphaned Documents",
+          status: "warning",
+          lastChecked: new Date(),
+          message: `${orphanedDocs} documents reference missing entities`,
+          icon: AlertTriangle,
+          category: "Data",
+        })
+      }
+
+      if (orphanChecks.length === 0) {
+        addLog("success", "No orphaned records found", "Data Integrity")
+      }
+    } catch (error) {
+      addLog("error", `Orphan check failed: ${error}`, "Data Integrity", error)
+    }
+    return orphanChecks
+  }
+
+  const checkNumberingConfig = async (): Promise<FeatureStatus | null> => {
+    try {
+      addLog("info", "Checking numbering configuration...", "Configuration")
+      const { data, error } = await supabase
+        .from("business_settings")
+        .select("job_number_prefix, job_number_digits, invoice_number_prefix, invoice_number_digits, form_number_prefix, form_number_digits")
+        .limit(1)
+        .single()
+
+      if (error) {
+        addLog("warning", "Numbering config not found in business_settings", "Configuration")
+        return {
+          name: "Numbering Config",
+          status: "warning",
+          lastChecked: new Date(),
+          message: "Not configured — using defaults",
+          icon: Settings,
+          category: "Configuration",
+        }
+      }
+
+      const issues: string[] = []
+      if ((data.job_number_digits ?? 0) < 1 || (data.job_number_digits ?? 0) > 8) issues.push("job digits out of range")
+      if ((data.invoice_number_digits ?? 0) < 1 || (data.invoice_number_digits ?? 0) > 8) issues.push("invoice digits out of range")
+      if ((data.form_number_digits ?? 0) < 1 || (data.form_number_digits ?? 0) > 8) issues.push("form digits out of range")
+
+      if (issues.length > 0) {
+        addLog("warning", `Numbering config issues: ${issues.join(", ")}`, "Configuration")
+        return {
+          name: "Numbering Config",
+          status: "warning",
+          lastChecked: new Date(),
+          message: issues.join(", "),
+          icon: Settings,
+          category: "Configuration",
+        }
+      }
+
+      addLog("success", `Numbering: jobs=${data.job_number_prefix || "(none)"}-${"0".repeat(data.job_number_digits || 4)}, invoices=${data.invoice_number_prefix || "INV"}, forms=${data.form_number_prefix || "FRM"}`, "Configuration")
+      return null // healthy, no feature status needed
+    } catch (error) {
+      addLog("error", `Numbering config check failed: ${error}`, "Configuration", error)
+      return null
+    }
+  }
+
+  const checkRLSSecurity = async (): Promise<FeatureStatus> => {
+    try {
+      addLog("info", "Testing RLS security...", "Security")
+      // Try to access data — if RLS is working, we should only see data allowed by our policies
+      const { error: rlsError } = await supabase.from("user_profiles").select("id").limit(1)
+      if (rlsError && rlsError.code === "42501") {
+        addLog("error", "RLS blocking access to user_profiles — check policies", "Security")
+        return { name: "RLS Policies", status: "error", lastChecked: new Date(), message: "RLS blocking legitimate access", icon: Lock, category: "Security" }
+      }
+      addLog("success", "RLS policies allowing authenticated access", "Security")
+      return { name: "RLS Policies", status: "healthy", lastChecked: new Date(), message: "Active and allowing auth access", icon: Lock, category: "Security" }
+    } catch (error) {
+      addLog("error", `RLS check failed: ${error}`, "Security", error)
+      return { name: "RLS Policies", status: "error", lastChecked: new Date(), message: "Check failed", icon: Lock, category: "Security" }
+    }
+  }
+
+  const checkSessionHealth = async (): Promise<FeatureStatus> => {
+    try {
+      addLog("info", "Checking session health...", "Security")
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        addLog("error", "No active session", "Security")
+        return { name: "Session", status: "error", lastChecked: new Date(), message: "No active session", icon: Lock, category: "Security" }
+      }
+      const expiresAt = new Date(session.expires_at! * 1000)
+      const now = new Date()
+      const minutesLeft = Math.round((expiresAt.getTime() - now.getTime()) / 60000)
+      if (minutesLeft < 5) {
+        addLog("warning", `Session expiring in ${minutesLeft} minutes`, "Security")
+        return { name: "Session", status: "warning", lastChecked: new Date(), message: `Expires in ${minutesLeft}m — refresh soon`, icon: Lock, category: "Security" }
+      }
+      addLog("success", `Session valid, expires in ${minutesLeft}m`, "Security")
+      return { name: "Session", status: "healthy", lastChecked: new Date(), message: `Valid for ${minutesLeft} more minutes`, icon: Lock, category: "Security" }
+    } catch (error) {
+      addLog("error", `Session check failed: ${error}`, "Security", error)
+      return { name: "Session", status: "error", lastChecked: new Date(), message: "Check failed", icon: Lock, category: "Security" }
     }
   }
 

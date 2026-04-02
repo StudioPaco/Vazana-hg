@@ -98,7 +98,6 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
     if (savedData && savedData.formData && savedData.clientType) {
       setFormData(savedData.formData)
       setClientType(savedData.clientType)
-      console.log('Loaded auto-saved form data')
     }
   }, [])
   
@@ -377,8 +376,6 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
         // job_status will be auto-calculated by database trigger
       }
 
-      console.log("Submitting job data:", jobData)
-
       const { data, error } = await supabase.from("jobs").insert([jobData]).select()
 
       if (error) {
@@ -387,8 +384,6 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
         return
       }
 
-      console.log("Job created successfully:", data)
-      
       // Clear auto-save after successful job creation
       autoSave.clear()
 

@@ -121,8 +121,6 @@ export default function NewClientModal({ open, onOpenChange, onClientCreated }: 
         created_by_id: user.id,
       }
 
-      console.log("Inserting client directly via Supabase:", Object.keys(clientData))
-
       const { data: newClient, error } = await supabase
         .from("clients")
         .insert([clientData])

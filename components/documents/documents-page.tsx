@@ -65,10 +65,10 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
   useEffect(() => {
     fetch("/api/clients").then(r => r.json()).then(result => {
       setClients((result.data || []).sort((a: any, b: any) => a.company_name.localeCompare(b.company_name, 'he')))
-    }).catch(() => {})
+    }).catch((err) => console.error("Document page fetch error:", err))
     fetch("/api/jobs").then(r => r.json()).then(result => {
       setJobs((result.data || []).sort((a: any, b: any) => Number(b.job_number) - Number(a.job_number)))
-    }).catch(() => {})
+    }).catch((err) => console.error("Document page fetch error:", err))
     fetch("/api/invoices").then(r => r.json()).then(result => {
       setInvoices((result.data || []).map((inv: any) => ({
         id: inv.id,
@@ -78,7 +78,7 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
         notes: inv.notes || '',
         payment_terms: inv.payment_terms || '',
       })).slice(0, 10))
-    }).catch(() => {})
+    }).catch((err) => console.error("Document page fetch error:", err))
   }, [])
 
   const fetchDocuments = async () => {

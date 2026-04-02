@@ -37,8 +37,6 @@ export default function NewWorkerPage() {
     try {
       const supabase = createClient()
 
-      console.log("Creating worker with data:", formData)
-
       const { data, error } = await supabase
         .from("workers")
         .insert([
@@ -56,7 +54,6 @@ export default function NewWorkerPage() {
         return
       }
 
-      console.log("Worker created successfully:", data)
       toast({ title: "העובד נוצר בהצלחה!", variant: "success" })
       router.push("/settings/resources/workers")
     } catch (error) {

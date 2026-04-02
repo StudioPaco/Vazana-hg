@@ -138,7 +138,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
       const counts: Record<string, number> = {}
       if (Array.isArray(docs)) docs.forEach(d => { if (d.entity_id) counts[d.entity_id] = (counts[d.entity_id] || 0) + 1 })
       setClientDocCounts(counts)
-    }).catch(() => {})
+    }).catch((err) => console.error("Failed to load client data:", err))
   }, [])
 
   useEffect(() => {
