@@ -9,9 +9,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon, DollarSign } from "lucide-react"
+import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon, DollarSign, AlertTriangle } from "lucide-react"
 import DatabaseDropdown from "@/components/ui/database-dropdown"
 import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/hooks/use-job-form-data"
+import { useResourceAvailability } from "@/hooks/use-resource-availability"
+import ConflictConfirmationDialog from "@/components/jobs/conflict-confirmation-dialog"
+import { Badge } from "@/components/ui/badge"
 
 interface Job {
   id: string
@@ -95,6 +98,12 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
   const [editError, setEditError] = useState<string | null>(null)
   const [editSuccess, setEditSuccess] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [additionalWorkers, setAdditionalWorkers] = useState<{ id: string; name: string }[]>([])
+  const [additionalVehicles, setAdditionalVehicles] = useState<{ id: string; name: string }[]>([])
+  const [additionalCarts, setAdditionalCarts] = useState<{ id: string; name: string }[]>([])
+  const [showConflictDialog, setShowConflictDialog] = useState(false)
+  const [conflictConfirmed, setConflictConfirmed] = useState(false)
+  const [conflictWarnings, setConflictWarnings] = useState<string[]>([])
   const [formData, setFormData] = useState({
     jobType: "",
     date: "",
@@ -146,7 +155,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
       const workType = workTypes.find(wt => wt.name_he === job.work_type)
       const clientId = job.client_id || ""
       const jobTypeId = workType?.id || ""
-      
+
       setInitialClientId(clientId)
       setInitialJobType(jobTypeId)
       setFormData({
@@ -169,8 +178,51 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
       setValidationErrors({})
       setEditError(null)
       setEditSuccess(null)
+
+      // Fetch additional resources for this job
+      const fetchResources = async () => {
+        try {
+          const res = await fetch(`/api/jobs/${job.id}/resources`)
+          if (res.ok) {
+            const result = await res.json()
+            const resources = result.data || []
+            setAdditionalWorkers(resources.filter((r: any) => r.resource_type === 'worker').map((r: any) => ({ id: r.resource_id, name: r.resource_name })))
+            setAdditionalVehicles(resources.filter((r: any) => r.resource_type === 'vehicle').map((r: any) => ({ id: r.resource_id, name: r.resource_name })))
+            setAdditionalCarts(resources.filter((r: any) => r.resource_type === 'cart').map((r: any) => ({ id: r.resource_id, name: r.resource_name })))
+          }
+        } catch {
+          // silent — additional resources are non-critical
+        }
+      }
+      fetchResources()
+    } else {
+      // Reset additional resources when modal closes
+      setAdditionalWorkers([])
+      setAdditionalVehicles([])
+      setAdditionalCarts([])
+      setConflictConfirmed(false)
+      setConflictWarnings([])
     }
   }, [job, workTypes, open])
+
+  // Centralized availability checking via hook
+  const allSelectedWorkerIds = [formData.employee, ...additionalWorkers.map(w => w.id)].filter(Boolean)
+  const allSelectedVehicleIds = [formData.vehicle, ...additionalVehicles.map(v => v.id)].filter(Boolean)
+  const allSelectedCartIds = [formData.cart, ...additionalCarts.map(c => c.id)].filter(Boolean)
+  const availability = useResourceAvailability(
+    formData.date,
+    formData.shiftType,
+    employees,
+    vehicles,
+    allSelectedWorkerIds,
+    allSelectedVehicleIds,
+    allSelectedCartIds,
+  )
+
+  // Sync hook warnings to conflictWarnings state
+  useEffect(() => {
+    setConflictWarnings(availability.warnings)
+  }, [availability.warnings])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -205,6 +257,14 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
       setSaving(false)
       return
     }
+
+    // Check for conflicts — show confirmation dialog if not yet confirmed
+    if (conflictWarnings.length > 0 && !conflictConfirmed) {
+      setShowConflictDialog(true)
+      setSaving(false)
+      return
+    }
+    setConflictConfirmed(false) // reset for next submit
 
     try {
       const selectedEmployee = employees.find((emp) => emp.id === formData.employee)
@@ -252,7 +312,19 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
       }
 
       const result = await response.json()
-      
+
+      // Save additional resources
+      const allAdditional = [
+        ...additionalWorkers.map(w => ({ resource_type: 'worker', resource_id: w.id, resource_name: w.name })),
+        ...additionalVehicles.map(v => ({ resource_type: 'vehicle', resource_id: v.id, resource_name: v.name })),
+        ...additionalCarts.map(c => ({ resource_type: 'cart', resource_id: c.id, resource_name: c.name })),
+      ]
+      await fetch(`/api/jobs/${job.id}/resources`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resources: allAdditional }),
+      })
+
       // Calculate refreshed status based on new date
       const refreshedJobStatus = getJobStatus(formData.date)
       
@@ -283,6 +355,7 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
   const currentInvoiceStatus = getInvoiceStatus(currentJobStatus)
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden bg-white border-0 shadow-2xl">
         <DialogHeader className="text-right pb-4">
@@ -409,56 +482,114 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-right">
+                <div className="text-right space-y-2">
                   <Label htmlFor="employee" className="font-hebrew">
                     עובד <span className="text-red-500">*</span>
                   </Label>
                   <DatabaseDropdown
                     placeholder="בחר עובד"
-                    data={employees}
+                    data={employees.filter((e: any) => !additionalWorkers.some(w => w.id === e.id))}
                     displayField="name"
                     valueField="id"
                     value={formData.employee}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, employee: value }))}
                     loading={workersLoading}
-                    className={validationErrors.employee ? "border-red-500" : ""}
+                    warningItems={availability.unavailableWorkerIds}
+                    className={`${validationErrors.employee ? "border-red-500" : ""} ${formData.employee && availability.unavailableWorkerIds.has(formData.employee) ? "border-red-500" : ""}`}
                   />
+                  {additionalWorkers.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {additionalWorkers.map(w => (
+                        <Badge key={w.id} variant="secondary" className={`text-xs gap-1 font-hebrew ${availability.unavailableWorkerIds.has(w.id) ? 'bg-red-100 text-red-700 border-red-300' : ''}`}>
+                          {w.name}
+                          <button type="button" onClick={() => setAdditionalWorkers(prev => prev.filter(x => x.id !== w.id))} className="text-gray-500 hover:text-red-500 ml-0.5">&times;</button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {formData.employee && (
+                    <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                      const selected = employees.find((e: any) => e.id === formData.employee)
+                      if (!selected || additionalWorkers.some(w => w.id === selected.id)) return
+                      setAdditionalWorkers(prev => [...prev, { id: selected.id, name: selected.name }])
+                      setFormData(prev => ({ ...prev, employee: '' }))
+                    }}>+ הוסף עובד נוסף</button>
+                  )}
                   {validationErrors.employee && (
                     <p className="text-red-500 text-sm mt-1 font-hebrew">{validationErrors.employee}</p>
                   )}
                 </div>
 
-                <div className="text-right">
+                <div className="text-right space-y-2">
                   <Label htmlFor="vehicle" className="font-hebrew">
                     רכב <span className="text-red-500">*</span>
                   </Label>
                   <DatabaseDropdown
                     placeholder="בחר רכב"
-                    data={vehicles}
+                    data={vehicles.filter((v: any) => !additionalVehicles.some(x => x.id === v.id))}
                     displayField={(vehicle) => `${vehicle.license_plate} - ${vehicle.name}`}
                     valueField="id"
                     value={formData.vehicle}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle: value }))}
                     loading={vehiclesLoading}
-                    className={validationErrors.vehicle ? "border-red-500" : ""}
+                    warningItems={availability.unavailableVehicleIds}
+                    className={`${validationErrors.vehicle ? "border-red-500" : ""} ${formData.vehicle && availability.unavailableVehicleIds.has(formData.vehicle) ? "border-red-500" : ""}`}
                   />
+                  {additionalVehicles.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {additionalVehicles.map(v => (
+                        <Badge key={v.id} variant="secondary" className={`text-xs gap-1 font-hebrew ${availability.unavailableVehicleIds.has(v.id) ? 'bg-red-100 text-red-700 border-red-300' : ''}`}>
+                          {v.name}
+                          <button type="button" onClick={() => setAdditionalVehicles(prev => prev.filter(x => x.id !== v.id))} className="text-gray-500 hover:text-red-500 ml-0.5">&times;</button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {formData.vehicle && (
+                    <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                      const selected = vehicles.find((v: any) => v.id === formData.vehicle)
+                      if (!selected || additionalVehicles.some(x => x.id === selected.id)) return
+                      setAdditionalVehicles(prev => [...prev, { id: selected.id, name: `${selected.license_plate} - ${selected.name}` }])
+                      setFormData(prev => ({ ...prev, vehicle: '' }))
+                    }}>+ הוסף רכב נוסף</button>
+                  )}
                   {validationErrors.vehicle && (
                     <p className="text-red-500 text-sm mt-1 font-hebrew">{validationErrors.vehicle}</p>
                   )}
                 </div>
 
-                <div className="text-right">
+                <div className="text-right space-y-2">
                   <Label htmlFor="cart" className="font-hebrew">עגלה</Label>
                   <DatabaseDropdown
                     placeholder="בחר עגלה (אופציונלי)"
-                    data={carts}
+                    data={carts.filter((c: any) => !additionalCarts.some(x => x.id === c.id))}
                     displayField="name"
                     valueField="id"
                     value={formData.cart}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, cart: value }))}
                     loading={cartsLoading}
                     allowEmpty
+                    warningItems={availability.unavailableCartIds}
+                    className={`${formData.cart && availability.unavailableCartIds.has(formData.cart) ? "border-red-500" : ""}`}
                   />
+                  {additionalCarts.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {additionalCarts.map(c => (
+                        <Badge key={c.id} variant="secondary" className={`text-xs gap-1 font-hebrew ${availability.unavailableCartIds.has(c.id) ? 'bg-red-100 text-red-700 border-red-300' : ''}`}>
+                          {c.name}
+                          <button type="button" onClick={() => setAdditionalCarts(prev => prev.filter(x => x.id !== c.id))} className="text-gray-500 hover:text-red-500 ml-0.5">&times;</button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {formData.cart && (
+                    <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                      const selected = carts.find((c: any) => c.id === formData.cart)
+                      if (!selected || additionalCarts.some(x => x.id === selected.id)) return
+                      setAdditionalCarts(prev => [...prev, { id: selected.id, name: selected.name }])
+                      setFormData(prev => ({ ...prev, cart: '' }))
+                    }}>+ הוסף עגלה נוספת</button>
+                  )}
                 </div>
               </div>
             </div>
@@ -571,6 +702,20 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
           </form>
         </div>
         
+        {/* Conflict warnings banner */}
+        {conflictWarnings.length > 0 && (
+          <div className="bg-red-50 border-2 border-red-400 rounded-lg p-4 space-y-2 mx-1" dir="rtl">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <h4 className="text-base font-bold text-red-700 font-hebrew">התנגשויות זמינות</h4>
+            </div>
+            {conflictWarnings.map((w, i) => (
+              <p key={i} className="text-sm text-red-700 font-hebrew font-medium">{w}</p>
+            ))}
+            <p className="text-xs text-red-500 font-hebrew">ניתן להמשיך, אך תתבקש לאשר בשמירה</p>
+          </div>
+        )}
+
         {/* Action Buttons - Fixed at bottom */}
         <div className="flex gap-4 justify-end border-t pt-4 mt-4 bg-white sticky bottom-0 z-20">
           <Button
@@ -592,5 +737,20 @@ export default function EditJobModal({ job, open, onOpenChange, onJobUpdated }: 
         </div>
       </DialogContent>
     </Dialog>
+
+    <ConflictConfirmationDialog
+      open={showConflictDialog}
+      onOpenChange={setShowConflictDialog}
+      warnings={conflictWarnings}
+      onConfirm={() => {
+        setConflictConfirmed(true)
+        // Re-trigger submit via form
+        setTimeout(() => {
+          const form = document.getElementById('edit-job-form') as HTMLFormElement
+          if (form) form.requestSubmit()
+        }, 50)
+      }}
+    />
+    </>
   )
 }
