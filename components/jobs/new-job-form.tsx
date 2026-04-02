@@ -349,12 +349,58 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
         }
       }
 
-      // Check for conflicts — show confirmation dialog if not yet confirmed
-      if (conflictWarnings.length > 0 && !conflictConfirmed) {
-        setShowConflictDialog(true)
-        return
+      // Check for conflicts — do a fresh synchronous check before saving
+      if (!conflictConfirmed) {
+        const freshWarnings: string[] = []
+        const supabase = createClient()
+        const allWorkerIds = [formData.employee, ...additionalWorkers.map(w => w.id)].filter(Boolean)
+        const allVehicleIds = [formData.vehicle, ...additionalVehicles.map(v => v.id)].filter(Boolean)
+        const allCartIds = [formData.cart, ...additionalCarts.map(c => c.id)].filter(Boolean)
+
+        if (formData.date) {
+          // Check worker availability grid
+          for (const wid of allWorkerIds) {
+            const worker = employees.find((e: any) => e.id === wid)
+            if (worker?.availability) {
+              const dayIdx = new Date(formData.date).getDay()
+              const shiftKey = formData.shiftType === 'לילה' ? `לילה_${dayIdx}` : `יום_${dayIdx}`
+              if (worker.availability[shiftKey] === false) {
+                const dayNames = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]
+                freshWarnings.push(`⚠️ ${worker.name} לא זמין ביום ${dayNames[dayIdx]} במשמרת ${formData.shiftType || "יום"}`)
+              }
+            }
+          }
+
+          // Check existing job conflicts
+          for (const wid of allWorkerIds) {
+            const { data: conflicts } = await supabase.from('jobs').select('job_number, client_name').eq('worker_id', wid).eq('job_date', formData.date).eq('is_deleted', false)
+            if (conflicts && conflicts.length > 0) {
+              const worker = employees.find((e: any) => e.id === wid)
+              freshWarnings.push(`⚠️ ${worker?.name || 'עובד'} כבר משובץ (עבודה #${conflicts[0].job_number})`)
+            }
+          }
+          for (const vid of allVehicleIds) {
+            const { data: conflicts } = await supabase.from('jobs').select('job_number, client_name').eq('vehicle_id', vid).eq('job_date', formData.date).eq('is_deleted', false)
+            if (conflicts && conflicts.length > 0) {
+              const vehicle = vehicles.find((v: any) => v.id === vid)
+              freshWarnings.push(`⚠️ ${vehicle?.name || 'רכב'} כבר בשימוש (עבודה #${conflicts[0].job_number})`)
+            }
+          }
+          for (const cid of allCartIds) {
+            const { data: conflicts } = await supabase.from('jobs').select('job_number, client_name').eq('cart_id', cid).eq('job_date', formData.date).eq('is_deleted', false)
+            if (conflicts && conflicts.length > 0) {
+              freshWarnings.push(`⚠️ עגלה כבר בשימוש (עבודה #${conflicts[0].job_number})`)
+            }
+          }
+        }
+
+        if (freshWarnings.length > 0) {
+          setConflictWarnings(freshWarnings)
+          setShowConflictDialog(true)
+          return
+        }
       }
-      setConflictConfirmed(false) // reset for next submit
+      setConflictConfirmed(false)
 
       const jobData = {
         job_number: jobNumber,
