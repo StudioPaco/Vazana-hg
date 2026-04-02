@@ -16,6 +16,7 @@ import { StatsContainer } from "@/components/ui/stats-container"
 import StatusBadge from "@/components/ui/status-badge"
 import { InvoicePreviewModal } from "@/components/invoices/invoice-preview-modal"
 import { exportToXLSX, exportToCSV } from "@/lib/export-utils"
+import ImportInvoicesModal from "@/components/invoices/import-invoices-modal"
 
 interface Invoice {
   id: string
@@ -198,6 +199,7 @@ export default function InvoicesPage({
     setFilteredInvoices(filtered)
   }, [searchTerm, statusFilter, clientFilter, sortBy, sortDir, dateRange, invoices])
 
+  const [importModalOpen, setImportModalOpen] = useState(false)
   const [printInvoice, setPrintInvoice] = useState<Invoice | null>(null)
   const [sendDialogInvoice, setSendDialogInvoice] = useState<Invoice | null>(null)
   const [sendMethod, setSendMethod] = useState<'email' | 'whatsapp'>('email')
@@ -452,6 +454,9 @@ export default function InvoicesPage({
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="font-hebrew text-xs h-7">
+            <Download className="w-4 h-4 ml-1" /> ייבוא
+          </Button>
           <Button variant="outline" size="sm" onClick={() => {
             const headers = [
               { key: 'invoice_number', label: 'מספר חשבונית' },
@@ -863,6 +868,18 @@ export default function InvoicesPage({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Import Invoices Modal */}
+      <ImportInvoicesModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onImportComplete={() => {
+          // Re-fetch invoices after import
+          fetch("/api/invoices").then(r => r.json()).then(result => {
+            setInvoices(result.data || [])
+          }).catch((err) => console.error("Invoice data fetch error:", err))
+        }}
+      />
     </div>
   )
 }
