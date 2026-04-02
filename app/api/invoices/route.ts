@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { invoiceService } from "@/lib/invoice-service"
+import { logActivity } from "@/lib/activity-log"
 
 export async function GET(request: NextRequest) {
   try {
@@ -130,6 +131,8 @@ export async function POST(request: NextRequest) {
       notes,
     }
 
+    await logActivity(undefined, undefined, "invoice_created", "invoice", invoice.id, { invoice_number: invoiceNumber, client: client.company_name })
+
     return NextResponse.json({
       data: {
         invoice,
@@ -138,6 +141,49 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Invoice creation error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const body = await request.json()
+
+    if (!body.id) {
+      return NextResponse.json({ error: "Missing invoice id" }, { status: 400 })
+    }
+
+    const updateData: Record<string, unknown> = {}
+
+    if (body.status !== undefined) {
+      updateData.status = body.status
+      const today = new Date().toISOString().split("T")[0]
+      if (body.status === "sent") updateData.sent_date = today
+      if (body.status === "paid") updateData.paid_date = today
+    }
+    if (body.notes !== undefined) updateData.notes = body.notes
+    if (body.due_date !== undefined) updateData.due_date = body.due_date
+
+    const { data, error } = await supabase
+      .from("invoices")
+      .update(updateData)
+      .eq("id", body.id)
+      .select(`*, clients:client_id(company_name)`)
+      .single()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (body.status) {
+      await logActivity(undefined, undefined, `invoice_status_${body.status}`, "invoice", body.id, { status: body.status, invoice_number: data.invoice_number })
+    }
+
+    return NextResponse.json({ data })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error"
+    console.error("Invoice update error:", message)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { logActivity } from "@/lib/activity-log"
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,6 +70,8 @@ export async function POST(request: NextRequest) {
         code: error.code || 'UNKNOWN'
       }, { status: 500 })
     }
+
+    await logActivity(user?.id, user?.email, "client_created", "client", client.id, { company_name: client.company_name })
 
     return NextResponse.json({ data: client }, { status: 201 })
   } catch (error: unknown) {

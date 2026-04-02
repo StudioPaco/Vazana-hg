@@ -211,6 +211,30 @@ export default function InvoicesPage({
     setPrintInvoice(invoice)
   }
 
+  const updateInvoiceStatus = async (invoiceId: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/invoices", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: invoiceId, status: newStatus }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to update")
+      }
+      // Update local state
+      setInvoices(prev => prev.map(inv =>
+        inv.id === invoiceId ? { ...inv, status: newStatus } : inv
+      ))
+      const statusLabels: Record<string, string> = { sent: "נשלח", paid: "שולם", cancelled: "בוטל", draft: "טיוטה" }
+      toast({ title: `סטטוס חשבונית עודכן: ${statusLabels[newStatus] || newStatus}`, variant: "success" })
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error"
+      console.error("Failed to update invoice status:", message)
+      toast({ title: "שגיאה בעדכון סטטוס", variant: "destructive" })
+    }
+  }
+
   const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
     try {
       const response = await fetch(`/api/invoices/${invoiceId}/pdf`)
@@ -539,8 +563,30 @@ export default function InvoicesPage({
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew"
-                        onClick={() => handlePrintInvoice(invoice)}>תצוגה</Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" className="h-7 px-2 text-xs font-hebrew"
+                          onClick={() => handlePrintInvoice(invoice)}>
+                          <Eye className="w-3 h-3 ml-1" />תצוגה
+                        </Button>
+                        {invoice.status === "draft" && (
+                          <Button size="sm" className="h-7 px-2 text-xs font-hebrew bg-blue-500 hover:bg-blue-600 text-white"
+                            onClick={() => updateInvoiceStatus(invoice.id, "sent")}>
+                            שלח
+                          </Button>
+                        )}
+                        {(invoice.status === "sent" || invoice.status === "draft") && (
+                          <Button size="sm" className="h-7 px-2 text-xs font-hebrew bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => updateInvoiceStatus(invoice.id, "paid")}>
+                            שולם
+                          </Button>
+                        )}
+                        {invoice.status !== "cancelled" && invoice.status !== "paid" && (
+                          <Button variant="ghost" size="sm" className="h-7 px-1 text-xs text-red-500 hover:text-red-700"
+                            onClick={() => updateInvoiceStatus(invoice.id, "cancelled")}>
+                            ביטול
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -570,16 +616,24 @@ export default function InvoicesPage({
                       </Badge>
                     </div>
 
-                    {/* Preview button */}
-                    <div className="absolute top-0 left-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePrintInvoice(invoice)}
-                        className="bg-transparent border-gray-300 h-8 px-3 text-xs font-hebrew"
-                      >
-                        תצוגה
+                    {/* Action buttons */}
+                    <div className="absolute top-0 left-0 flex items-center gap-1">
+                      <Button variant="outline" size="sm" onClick={() => handlePrintInvoice(invoice)}
+                        className="bg-transparent border-gray-300 h-7 px-2 text-xs font-hebrew">
+                        <Eye className="w-3 h-3 ml-1" />תצוגה
                       </Button>
+                      {invoice.status === "draft" && (
+                        <Button size="sm" className="h-7 px-2 text-xs font-hebrew bg-blue-500 hover:bg-blue-600 text-white"
+                          onClick={() => updateInvoiceStatus(invoice.id, "sent")}>שלח</Button>
+                      )}
+                      {(invoice.status === "sent" || invoice.status === "draft") && (
+                        <Button size="sm" className="h-7 px-2 text-xs font-hebrew bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => updateInvoiceStatus(invoice.id, "paid")}>שולם</Button>
+                      )}
+                      {invoice.status !== "cancelled" && invoice.status !== "paid" && (
+                        <Button variant="ghost" size="sm" className="h-7 px-1 text-xs text-red-500 hover:text-red-700"
+                          onClick={() => updateInvoiceStatus(invoice.id, "cancelled")}>ביטול</Button>
+                      )}
                     </div>
 
                     {/* Spacer to ensure content doesn't overlap */}
