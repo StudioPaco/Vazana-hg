@@ -129,7 +129,7 @@ export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
         </>
       )}
 
-      {/* Vehicles Grid */}
+      {/* Vehicles Table */}
       {filteredVehicles.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
@@ -143,53 +143,36 @@ export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVehicles.map((vehicle) => (
-            <Card key={vehicle.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Truck className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{vehicle.name}</CardTitle>
-                    <CardDescription className="font-mono">{vehicle.license_plate}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {vehicle.details && (
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">פרטים:</p>
-                    <p className="text-sm text-gray-700">{vehicle.details}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 bg-transparent"
-                    onClick={() => {
-                      setEditingVehicle(vehicle)
-                      setEditModalOpen(true)
-                    }}
-                  >
-                    <Edit className="ml-2 h-4 w-4" />
-                    ערוך
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteVehicle(vehicle.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-2 text-right font-hebrew font-medium text-gray-600">שם</th>
+                <th className="px-4 py-2 text-right font-hebrew font-medium text-gray-600">לוחית רישוי</th>
+                <th className="px-4 py-2 text-right font-hebrew font-medium text-gray-600 hidden md:table-cell">פרטים</th>
+                <th className="px-4 py-2 text-center font-hebrew font-medium text-gray-600 w-20">פעולות</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filteredVehicles.map((vehicle, idx) => (
+                <tr key={vehicle.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                  <td className="px-4 py-2 font-hebrew font-medium">{vehicle.name}</td>
+                  <td className="px-4 py-2 font-mono text-gray-600">{vehicle.license_plate}</td>
+                  <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{vehicle.details || "—"}</td>
+                  <td className="px-4 py-2 text-center">
+                    <div className="flex gap-1 justify-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingVehicle(vehicle); setEditModalOpen(true) }}>
+                        <Edit className="w-3.5 h-3.5 text-gray-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteVehicle(vehicle.id)}>
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
       <VehicleEditModal

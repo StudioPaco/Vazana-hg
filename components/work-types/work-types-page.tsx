@@ -11,7 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "@/hooks/use-toast"
 
-export default function WorkTypesPage() {
+interface WorkTypesPageProps {
+  showHeader?: boolean
+}
+
+export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps) {
   const [workTypes, setWorkTypes] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -30,7 +34,7 @@ export default function WorkTypesPage() {
     setIsLoading(true)
     try {
       const supabase = createClient()
-      const { data, error } = await supabase.from("work_types").select("*").order("created_at", { ascending: false })
+      const { data, error } = await supabase.from("work_types").select("*").order("created_date", { ascending: false })
 
       if (error) {
         console.error("Error loading work types:", error)
@@ -130,11 +134,13 @@ export default function WorkTypesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6" dir="rtl">
-      <div className="text-right">
-        <h1 className="text-3xl font-bold text-gray-900">סוגי עבודה</h1>
-        <p className="text-gray-600">ניהול סוגי העבודות הזמינות במערכת</p>
-      </div>
+    <div className={`${showHeader ? 'p-6' : ''} space-y-6`} dir="rtl">
+      {showHeader && (
+        <div className="text-right">
+          <h1 className="text-3xl font-bold text-gray-900">סוגי עבודה</h1>
+          <p className="text-gray-600">ניהול סוגי העבודות הזמינות במערכת</p>
+        </div>
+      )}
 
       <Button onClick={openNewForm} className="flex items-center gap-2 bg-[#FFCC00] hover:bg-[#E6B800] text-[#1A1A1A]">
         <Plus className="w-4 h-4" /> הוסף סוג עבודה חדש
@@ -221,32 +227,43 @@ export default function WorkTypesPage() {
       {!isLoading && workTypes.length === 0 && !showForm ? (
         <Card className="mt-4 border-dashed border-gray-300">
           <CardContent className="p-6 text-center text-gray-500">
-            <p>לא נמצאו סוגי עבודה. לחץ על 'הוסף חדש' כדי להתחיל.</p>
+            <p>לא נמצאו סוגי עבודה. לחץ על &apos;הוסף חדש&apos; כדי להתחיל.</p>
           </CardContent>
         </Card>
       ) : null}
 
       {workTypes.length > 0 && (
-        <div className="space-y-3 mt-4">
-          {workTypes.map((workType) => (
-            <Card
-              key={workType.id}
-              className="p-4 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow border-gray-200"
-            >
-              <div>
-                <p className="font-medium text-[#1A1A1A]">{workType.name_he}</p>
-                <p className="text-xs text-gray-500">שם באנגלית: {workType.name_en}</p>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(workType)}>
-                  <Edit2 className="w-4 h-4 text-gray-600 hover:text-[#1A1A1A]" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(workType.id)}>
-                  <Trash2 className="w-4 h-4 text-red-500 hover:text-red-700" />
-                </Button>
-              </div>
-            </Card>
-          ))}
+        <div className="overflow-x-auto mt-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-100 text-gray-700">
+                <th className="text-start p-3 font-medium">שם בעברית</th>
+                <th className="text-start p-3 font-medium">שם באנגלית</th>
+                <th className="text-start p-3 font-medium w-24">פעולות</th>
+              </tr>
+            </thead>
+            <tbody>
+              {workTypes.map((workType, index) => (
+                <tr
+                  key={workType.id}
+                  className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 1 ? 'bg-gray-50/50' : ''}`}
+                >
+                  <td className="p-3 font-medium text-[#1A1A1A]">{workType.name_he}</td>
+                  <td className="p-3 text-gray-600">{workType.name_en}</td>
+                  <td className="p-3">
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(workType)}>
+                        <Edit2 className="w-4 h-4 text-gray-600 hover:text-[#1A1A1A]" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(workType.id)}>
+                        <Trash2 className="w-4 h-4 text-red-500 hover:text-red-700" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

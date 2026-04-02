@@ -119,7 +119,7 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
         </>
       )}
 
-      {/* Carts Grid */}
+      {/* Carts Table */}
       {filteredCarts.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
@@ -133,46 +133,36 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCarts.map((cart) => (
-            <Card key={cart.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <ShoppingCart className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{cart.name}</CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {cart.details && (
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">פרטים:</p>
-                    <p className="text-sm text-gray-700">{cart.details}</p>
-                  </div>
-                )}
-
-                <div className="flex space-x-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
-                    <span onClick={() => { setEditingCart(cart); setEditModalOpen(true) }} className="cursor-pointer">
-                      <Edit className="ml-2 h-4 w-4" />
-                      עריכה
-                    </span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteCart(cart.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-2 text-right font-hebrew font-medium text-gray-600">שם</th>
+                <th className="px-4 py-2 text-right font-hebrew font-medium text-gray-600">לוחית רישוי</th>
+                <th className="px-4 py-2 text-right font-hebrew font-medium text-gray-600 hidden md:table-cell">פרטים</th>
+                <th className="px-4 py-2 text-center font-hebrew font-medium text-gray-600 w-20">פעולות</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filteredCarts.map((cart, idx) => (
+                <tr key={cart.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                  <td className="px-4 py-2 font-hebrew font-medium">{cart.name}</td>
+                  <td className="px-4 py-2 font-mono text-gray-600">{cart.license_plate || "—"}</td>
+                  <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{cart.details || "—"}</td>
+                  <td className="px-4 py-2 text-center">
+                    <div className="flex gap-1 justify-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingCart(cart); setEditModalOpen(true) }}>
+                        <Edit className="w-3.5 h-3.5 text-gray-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCart(cart.id)}>
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

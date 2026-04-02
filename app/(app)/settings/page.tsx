@@ -1231,31 +1231,40 @@ export default function SettingsPage() {
               </Card>
 
               {/* Inline resource list — shows below buttons when one is selected */}
-              {selectedResource === "workers" && (
+              {selectedResource && (
                 <Card>
-                  <CardContent className="pt-6">
-                    <WorkersPage showHeader={false} />
-                  </CardContent>
-                </Card>
-              )}
-              {selectedResource === "vehicles" && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <VehiclesPage showHeader={false} />
-                  </CardContent>
-                </Card>
-              )}
-              {selectedResource === "carts" && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <CartsPage showHeader={false} />
-                  </CardContent>
-                </Card>
-              )}
-              {selectedResource === "job-types" && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <WorkTypesPage />
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between" dir="rtl">
+                      <CardTitle className="font-hebrew text-lg">
+                        {selectedResource === "workers" && "עובדים"}
+                        {selectedResource === "vehicles" && "כלי רכב"}
+                        {selectedResource === "carts" && "עגלות"}
+                        {selectedResource === "job-types" && "סוגי עבודה"}
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        {selectedResource === "workers" && (
+                          <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew" onClick={() => router.push('/settings/resources/workers/new')}>
+                            <Plus className="w-4 h-4 ml-1" /> הוסף עובד
+                          </Button>
+                        )}
+                        {selectedResource === "vehicles" && (
+                          <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew" onClick={() => router.push('/settings/resources/vehicles/new')}>
+                            <Plus className="w-4 h-4 ml-1" /> הוסף רכב
+                          </Button>
+                        )}
+                        {selectedResource === "carts" && (
+                          <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-hebrew" onClick={() => router.push('/settings/resources/shopping-carts/new')}>
+                            <Plus className="w-4 h-4 ml-1" /> הוסף עגלה
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    {selectedResource === "workers" && <WorkersPage showHeader={false} />}
+                    {selectedResource === "vehicles" && <VehiclesPage showHeader={false} />}
+                    {selectedResource === "carts" && <CartsPage showHeader={false} />}
+                    {selectedResource === "job-types" && <WorkTypesPage showHeader={false} />}
                   </CardContent>
                 </Card>
               )}
