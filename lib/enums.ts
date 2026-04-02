@@ -1,26 +1,10 @@
 /**
- * Shared enum constants used across the application.
- * Single source of truth for status values, shift types, etc.
+ * Shared constants that NEVER change (structural, code-level).
+ * For configurable statuses (payment, invoice, client) use lib/status-options.ts
+ * which reads from the status_options DB table.
  */
 
-// --- Payment Statuses ---
-export const PAYMENT_STATUS = {
-  PENDING: "ממתין לתשלום",
-  PAID: "שולם",
-  OVERDUE: "מאוחר",
-  NOT_APPLICABLE: "לא רלוונטי",
-} as const
-
-export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS]
-
-export const PAYMENT_STATUS_OPTIONS: PaymentStatus[] = [
-  PAYMENT_STATUS.PENDING,
-  PAYMENT_STATUS.PAID,
-  PAYMENT_STATUS.OVERDUE,
-  PAYMENT_STATUS.NOT_APPLICABLE,
-]
-
-// --- Shift Types ---
+// --- Shift Types (structural — tied to scheduling logic) ---
 export const SHIFT_TYPE = {
   DAY: "יום",
   NIGHT: "לילה",
@@ -35,7 +19,7 @@ export const SHIFT_TYPE_OPTIONS: ShiftType[] = [
   SHIFT_TYPE.DOUBLE,
 ]
 
-// --- Job Statuses (calculated from date) ---
+// --- Job Statuses (calculated from date — not user-configurable) ---
 export const JOB_STATUS = {
   COMPLETED: "הושלם",
   IN_PROGRESS: "בתהליך",
@@ -44,17 +28,7 @@ export const JOB_STATUS = {
 
 export type JobStatus = (typeof JOB_STATUS)[keyof typeof JOB_STATUS]
 
-// --- Invoice Statuses ---
-export const INVOICE_STATUS = {
-  DRAFT: "טיוטה",
-  SENT: "נשלח",
-  PAID: "שולם",
-  CANCELLED: "בוטל",
-} as const
-
-export type InvoiceStatus = (typeof INVOICE_STATUS)[keyof typeof INVOICE_STATUS]
-
-// --- User Roles ---
+// --- User Roles (structural — tied to auth logic) ---
 export const USER_ROLE = {
   OWNER: "owner",
   ADMIN: "admin",
@@ -63,7 +37,7 @@ export const USER_ROLE = {
 
 export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE]
 
-// --- Payment Methods ---
+// --- Payment Methods (structural — tied to payment terms calculation) ---
 export const PAYMENT_METHOD: Record<string, string> = {
   "1": "מיידי",
   "2": "שוטף +15",
