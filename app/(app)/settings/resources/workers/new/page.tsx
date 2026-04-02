@@ -44,6 +44,14 @@ export default function NewWorkerPage() {
             ...formData,
             shift_rate: formData.shift_rate ? Number.parseFloat(formData.shift_rate) : null,
             payment_terms_days: Number.parseInt(formData.payment_terms_days),
+            availability: (() => {
+              const full: Record<string, boolean> = {}
+              for (let d = 0; d < 7; d++) {
+                full[`יום_${d}`] = formData.availability?.[`יום_${d}`] !== false
+                full[`לילה_${d}`] = formData.availability?.[`לילה_${d}`] !== false
+              }
+              return full
+            })(),
           },
         ])
         .select()

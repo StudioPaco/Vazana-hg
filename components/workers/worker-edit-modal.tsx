@@ -76,7 +76,15 @@ export default function WorkerEditModal({ worker, open, onOpenChange, onWorkerUp
         address: formData.address,
         shift_rate: formData.shift_rate ? Number.parseFloat(formData.shift_rate) : null,
         payment_terms_days: Number.parseInt(formData.payment_terms_days),
-        availability: formData.availability,
+        availability: (() => {
+          // Ensure all 14 keys exist (7 days × 2 shifts), default to true
+          const full: Record<string, boolean> = {}
+          for (let d = 0; d < 7; d++) {
+            full[`יום_${d}`] = formData.availability?.[`יום_${d}`] !== false
+            full[`לילה_${d}`] = formData.availability?.[`לילה_${d}`] !== false
+          }
+          return full
+        })(),
         notes: formData.notes,
       }
 
