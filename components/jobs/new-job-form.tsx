@@ -153,6 +153,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
   // Centralized availability checking via hook
   const allSelectedWorkerIds = [formData.employee, ...additionalWorkers.map(w => w.id)].filter(Boolean)
   const allSelectedVehicleIds = [formData.vehicle, ...additionalVehicles.map(v => v.id)].filter(Boolean)
+  const allSelectedCartIds = [formData.cart, ...additionalCarts.map(c => c.id)].filter(Boolean)
   const availability = useResourceAvailability(
     formData.date,
     formData.shiftType,
@@ -160,6 +161,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
     vehicles,
     allSelectedWorkerIds,
     allSelectedVehicleIds,
+    allSelectedCartIds,
   )
 
   // Sync hook warnings to conflictWarnings state
@@ -833,7 +835,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 עובד *
               </Label>
               <DatabaseDropdown
-                data={employees}
+                data={employees.filter((e: any) => !additionalWorkers.some(w => w.id === e.id))}
                 displayField="name"
                 valueField="id"
                 value={formData.employee}
@@ -841,24 +843,26 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 placeholder="בחר עובד"
                 loading={workersLoading}
                 warningItems={availability.unavailableWorkerIds}
-                className={`w-full ${validationErrors.employee ? "border-red-500" : ""}`}
+                className={`w-full ${validationErrors.employee ? "border-red-500" : ""} ${formData.employee && availability.unavailableWorkerIds.has(formData.employee) ? "border-red-500" : ""}`}
               />
               {additionalWorkers.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {additionalWorkers.map(w => (
-                    <Badge key={w.id} variant="secondary" className="text-xs gap-1 font-hebrew">
+                    <Badge key={w.id} variant="secondary" className={`text-xs gap-1 font-hebrew ${availability.unavailableWorkerIds.has(w.id) ? 'bg-red-100 text-red-700 border-red-300' : ''}`}>
                       {w.name}
                       <button type="button" onClick={() => setAdditionalWorkers(prev => prev.filter(x => x.id !== w.id))} className="text-gray-500 hover:text-red-500 ml-0.5">×</button>
                     </Badge>
                   ))}
                 </div>
               )}
-              <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
-                const unused = employees.filter((e: any) => e.id !== formData.employee && !additionalWorkers.some(w => w.id === e.id))
-                if (unused.length === 0) return
-                const next = unused[0]
-                setAdditionalWorkers(prev => [...prev, { id: next.id, name: next.name }])
-              }}>+ הוסף עובד</button>
+              {formData.employee && (
+                <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                  const selected = employees.find((e: any) => e.id === formData.employee)
+                  if (!selected || additionalWorkers.some(w => w.id === selected.id)) return
+                  setAdditionalWorkers(prev => [...prev, { id: selected.id, name: selected.name }])
+                  setFormData(prev => ({ ...prev, employee: '' }))
+                }}>+ הוסף עובד נוסף</button>
+              )}
               {validationErrors.employee && (
                 <p className="text-red-500 text-sm text-right">{validationErrors.employee}</p>
               )}
@@ -868,7 +872,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 רכב *
               </Label>
               <DatabaseDropdown
-                data={vehicles}
+                data={vehicles.filter((v: any) => !additionalVehicles.some(x => x.id === v.id))}
                 displayField={(vehicle) => `${vehicle.license_plate} - ${vehicle.name}`}
                 valueField="id"
                 value={formData.vehicle}
@@ -876,24 +880,26 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 placeholder="בחר רכב"
                 loading={vehiclesLoading}
                 warningItems={availability.unavailableVehicleIds}
-                className={`w-full ${validationErrors.vehicle ? "border-red-500" : ""}`}
+                className={`w-full ${validationErrors.vehicle ? "border-red-500" : ""} ${formData.vehicle && availability.unavailableVehicleIds.has(formData.vehicle) ? "border-red-500" : ""}`}
               />
               {additionalVehicles.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {additionalVehicles.map(v => (
-                    <Badge key={v.id} variant="secondary" className="text-xs gap-1 font-hebrew">
+                    <Badge key={v.id} variant="secondary" className={`text-xs gap-1 font-hebrew ${availability.unavailableVehicleIds.has(v.id) ? 'bg-red-100 text-red-700 border-red-300' : ''}`}>
                       {v.name}
                       <button type="button" onClick={() => setAdditionalVehicles(prev => prev.filter(x => x.id !== v.id))} className="text-gray-500 hover:text-red-500 ml-0.5">×</button>
                     </Badge>
                   ))}
                 </div>
               )}
-              <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
-                const unused = vehicles.filter((v: any) => v.id !== formData.vehicle && !additionalVehicles.some(x => x.id === v.id))
-                if (unused.length === 0) return
-                const next = unused[0]
-                setAdditionalVehicles(prev => [...prev, { id: next.id, name: next.name }])
-              }}>+ הוסף רכב</button>
+              {formData.vehicle && (
+                <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                  const selected = vehicles.find((v: any) => v.id === formData.vehicle)
+                  if (!selected || additionalVehicles.some(x => x.id === selected.id)) return
+                  setAdditionalVehicles(prev => [...prev, { id: selected.id, name: `${selected.license_plate} - ${selected.name}` }])
+                  setFormData(prev => ({ ...prev, vehicle: '' }))
+                }}>+ הוסף רכב נוסף</button>
+              )}
               {validationErrors.vehicle && (
                 <p className="text-red-500 text-sm text-right">{validationErrors.vehicle}</p>
               )}
@@ -903,7 +909,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 עגלה
               </Label>
               <DatabaseDropdown
-                data={carts}
+                data={carts.filter((c: any) => !additionalCarts.some(x => x.id === c.id))}
                 displayField="name"
                 valueField="id"
                 value={formData.cart}
@@ -911,24 +917,27 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 placeholder="בחר עגלה (אופציונלי)"
                 loading={cartsLoading}
                 allowEmpty
-                className="w-full"
+                warningItems={availability.unavailableCartIds}
+                className={`w-full ${formData.cart && availability.unavailableCartIds.has(formData.cart) ? "border-red-500" : ""}`}
               />
               {additionalCarts.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {additionalCarts.map(c => (
-                    <Badge key={c.id} variant="secondary" className="text-xs gap-1 font-hebrew">
+                    <Badge key={c.id} variant="secondary" className={`text-xs gap-1 font-hebrew ${availability.unavailableCartIds.has(c.id) ? 'bg-red-100 text-red-700 border-red-300' : ''}`}>
                       {c.name}
                       <button type="button" onClick={() => setAdditionalCarts(prev => prev.filter(x => x.id !== c.id))} className="text-gray-500 hover:text-red-500 ml-0.5">×</button>
                     </Badge>
                   ))}
                 </div>
               )}
-              <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
-                const unused = carts.filter((c: any) => c.id !== formData.cart && !additionalCarts.some(x => x.id === c.id))
-                if (unused.length === 0) return
-                const next = unused[0]
-                setAdditionalCarts(prev => [...prev, { id: next.id, name: next.name }])
-              }}>+ הוסף עגלה</button>
+              {formData.cart && (
+                <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                  const selected = carts.find((c: any) => c.id === formData.cart)
+                  if (!selected || additionalCarts.some(x => x.id === selected.id)) return
+                  setAdditionalCarts(prev => [...prev, { id: selected.id, name: selected.name }])
+                  setFormData(prev => ({ ...prev, cart: '' }))
+                }}>+ הוסף עגלה נוספת</button>
+              )}
             </div>
           </CardContent>
         </Card>
