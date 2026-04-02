@@ -49,7 +49,9 @@
       "Bash(ls \"D:/DEV/Vazana-hg/app/\\(app\\)/sandbox/\")",
       "Bash(node -e \":*)",
       "Bash(ls D:/DEV/Vazana-hg/app/\\\\\\(app\\\\\\)/settings/resources/job-types/new/)",
-      "Bash(wc -l D:/DEV/Vazana-hg/app/\\\\\\(app\\\\\\)/calendar/page.tsx)"
+      "Bash(wc -l D:/DEV/Vazana-hg/app/\\\\\\(app\\\\\\)/calendar/page.tsx)",
+      "Bash(ls \"D:/DEV/Vazana-hg/lib/google\"*)",
+      "Bash(ls \"D:/DEV/Vazana-hg/lib/gmail\"*)"
     ]
   }
 }
