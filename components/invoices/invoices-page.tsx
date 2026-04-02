@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, FileText, Download, Eye, Edit, Calendar, DollarSign, Clock, CheckCircle, ChevronDown, ChevronUp, Briefcase, List, Grid3X3 } from "lucide-react"
+import { Plus, Search, FileText, Download, Upload, Eye, Edit, Calendar, DollarSign, Clock, CheckCircle, ChevronDown, ChevronUp, Briefcase, List, Grid3X3 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { StatsContainer } from "@/components/ui/stats-container"
@@ -451,17 +451,7 @@ export default function InvoicesPage({
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
-          <Button variant="ghost" size="sm" onClick={() => setViewMode('list')}
-            className={`px-2 py-1 h-7 ${viewMode === 'list' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
-            <List className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setViewMode('table')}
-            className={`px-2 py-1 h-7 ${viewMode === 'table' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={() => {
             const headers = [
               { key: 'invoice_number', label: 'מספר חשבונית' },
@@ -473,7 +463,7 @@ export default function InvoicesPage({
             ]
             exportToXLSX(filteredInvoices, headers, 'חשבוניות')
           }} className="font-hebrew text-xs h-7">
-            <Download className="w-4 h-4 ml-1" /> Excel
+            <Upload className="w-4 h-4 ml-1" /> Excel
           </Button>
           <Button variant="outline" size="sm" onClick={() => {
             const headers = [
@@ -486,8 +476,18 @@ export default function InvoicesPage({
             ]
             exportToCSV(filteredInvoices, headers, 'חשבוניות')
           }} className="font-hebrew text-xs h-7">
-            <Download className="w-4 h-4 ml-1" /> CSV
+            <Upload className="w-4 h-4 ml-1" /> CSV
           </Button>
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <Button variant="ghost" size="sm" onClick={() => setViewMode('list')}
+              className={`px-2 py-1 h-7 ${viewMode === 'list' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
+              <List className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setViewMode('table')}
+              className={`px-2 py-1 h-7 ${viewMode === 'table' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
+              <Grid3X3 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -379,43 +379,26 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
           </div>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setViewMode('list')}
-            className={`px-2 py-1 transition-colors ${
-              viewMode === 'list'
-                ? 'bg-teal-500 text-white hover:bg-teal-600'
-                : 'text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <List className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setViewMode('table')}
-            className={`px-2 py-1 transition-colors ${
-              viewMode === 'table'
-                ? 'bg-teal-500 text-white hover:bg-teal-600'
-                : 'text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="font-hebrew text-xs">
-            <Upload className="w-4 h-4 ml-1" /> ייבוא
+            <Download className="w-4 h-4 ml-1" /> ייבוא
           </Button>
           <Button variant="outline" size="sm" onClick={handleExportXLSX} className="font-hebrew text-xs">
-            <Download className="w-4 h-4 ml-1" /> Excel
+            <Upload className="w-4 h-4 ml-1" /> Excel
           </Button>
           <Button variant="outline" size="sm" onClick={handleExportCSV} className="font-hebrew text-xs">
-            <Download className="w-4 h-4 ml-1" /> CSV
+            <Upload className="w-4 h-4 ml-1" /> CSV
           </Button>
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <Button variant="ghost" size="sm" onClick={() => setViewMode('list')}
+              className={`px-2 py-1 ${viewMode === 'list' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
+              <List className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setViewMode('table')}
+              className={`px-2 py-1 ${viewMode === 'table' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
+              <Grid3X3 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
