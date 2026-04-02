@@ -258,30 +258,27 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
       ) : null}
 
       {workTypes.length > 0 && (
-        <div className="overflow-x-auto mt-4">
+        <div className="border rounded-lg overflow-hidden">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100 text-gray-700">
-                <th className="text-start p-3 font-medium font-hebrew">שם</th>
-                <th className="text-start p-3 font-medium font-hebrew">תעריף ברירת מחדל</th>
-                <th className="text-start p-3 font-medium font-hebrew w-24">פעולות</th>
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-2 text-right font-hebrew font-medium text-gray-600">שם</th>
+                <th className="px-4 py-2 text-right font-hebrew font-medium text-gray-600">תעריף ברירת מחדל</th>
+                <th className="px-4 py-2 text-center font-hebrew font-medium text-gray-600 w-20">פעולות</th>
               </tr>
             </thead>
-            <tbody>
-              {workTypes.map((workType, index) => (
-                <tr
-                  key={workType.id}
-                  className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 1 ? 'bg-gray-50/50' : ''}`}
-                >
-                  <td className="p-3 font-medium text-[#1A1A1A] font-hebrew">{workType.name_he}</td>
-                  <td className="p-3 text-gray-600">{workType.default_rate ? `₪${workType.default_rate}` : "—"}</td>
-                  <td className="p-3">
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(workType)}>
-                        <Edit2 className="w-4 h-4 text-gray-600 hover:text-[#1A1A1A]" />
+            <tbody className="divide-y">
+              {workTypes.map((workType, idx) => (
+                <tr key={workType.id} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                  <td className="px-4 py-2 font-hebrew font-medium">{workType.name_he}</td>
+                  <td className="px-4 py-2 text-gray-600">{workType.default_rate ? `₪${workType.default_rate}` : "—"}</td>
+                  <td className="px-4 py-2 text-center">
+                    <div className="flex gap-1 justify-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(workType)}>
+                        <Edit2 className="w-3.5 h-3.5 text-gray-600" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(workType.id)}>
-                        <Trash2 className="w-4 h-4 text-red-500 hover:text-red-700" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(workType.id)}>
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
                       </Button>
                     </div>
                   </td>
