@@ -67,11 +67,15 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true)
   const initialType = (searchParams.get('type') as ResourceType) || "workers"
   const [resourceType, setResourceType] = useState<ResourceType>(initialType)
-  const [viewScope, setViewScope] = useState<ViewScope>("week")
+  const [viewScope, setViewScope] = useState<ViewScope>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-cal-viewScope') as ViewScope) || 'month'
+    return 'month'
+  })
   const [weekOffset, setWeekOffset] = useState(0)
   const [showClashesOnly, setShowClashesOnly] = useState(false)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [selectedCell, setSelectedCell] = useState<{ resourceId: string; resourceName: string; resourceType: string; date: string } | null>(null)
+  const [selectedMonthDate, setSelectedMonthDate] = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -311,10 +315,30 @@ export default function CalendarPage() {
   const isToday = (date: Date) => date.toDateString() === new Date().toDateString()
   const formatDate = (d: Date) => d.toLocaleDateString("he-IL", { day: "numeric", month: "short" })
 
-  const getShiftColor = (shiftType: string) => {
-    if (shiftType === "יום" || shiftType === "day") return "bg-amber-100 text-amber-800 border-amber-300"
-    if (shiftType === "לילה" || shiftType === "night") return "bg-indigo-100 text-indigo-800 border-indigo-300"
-    return "bg-purple-100 text-purple-800 border-purple-300"
+  // Client colors — consistent hash-based color per client name
+  const CLIENT_COLORS = [
+    "bg-blue-100 text-blue-800 border-blue-300",
+    "bg-emerald-100 text-emerald-800 border-emerald-300",
+    "bg-orange-100 text-orange-800 border-orange-300",
+    "bg-pink-100 text-pink-800 border-pink-300",
+    "bg-violet-100 text-violet-800 border-violet-300",
+    "bg-cyan-100 text-cyan-800 border-cyan-300",
+    "bg-rose-100 text-rose-800 border-rose-300",
+    "bg-lime-100 text-lime-800 border-lime-300",
+    "bg-amber-100 text-amber-800 border-amber-300",
+    "bg-teal-100 text-teal-800 border-teal-300",
+  ]
+
+  const getClientColor = (clientName: string) => {
+    let hash = 0
+    for (let i = 0; i < clientName.length; i++) hash = ((hash << 5) - hash) + clientName.charCodeAt(i)
+    return CLIENT_COLORS[Math.abs(hash) % CLIENT_COLORS.length]
+  }
+
+  const getShiftIcon = (shiftType: string) => {
+    if (shiftType === "יום" || shiftType === "day") return "☀️"
+    if (shiftType === "לילה" || shiftType === "night") return "🌙"
+    return "⏰" // double/כפול
   }
 
   const getTypeIcon = (type: string) => {
@@ -479,7 +503,7 @@ export default function CalendarPage() {
           <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
             {([["week", "שבוע"], ["month", "חודש"]] as const).map(([val, label]) => (
               <Button key={val} variant="ghost" size="sm"
-                onClick={() => setViewScope(val)}
+                onClick={() => { setViewScope(val); localStorage.setItem('vazana-cal-viewScope', val) }}
                 className={`font-hebrew text-xs px-2 py-1 h-7 ${viewScope === val ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
               >{label}</Button>
             ))}
@@ -535,15 +559,20 @@ export default function CalendarPage() {
                   <div
                     key={`${wi}-${di}`}
                     className={`border-b border-l min-h-[90px] p-1 cursor-pointer hover:ring-1 hover:ring-teal-300 hover:ring-inset ${
+                      selectedMonthDate === dateStr && isCurrentMonth ? 'bg-teal-100 ring-2 ring-teal-500 ring-inset' :
                       dayHasClash && isCurrentMonth ? 'bg-red-50' :
                       !isCurrentMonth ? 'bg-gray-50/50 text-gray-300' :
                       showClashesOnly && !dayHasClash ? 'bg-gray-50/30 opacity-40' :
                       isTodayDate ? 'bg-teal-50' :
                       isSabbath ? 'bg-gray-50' : 'bg-white'
                     }`}
-                    onClick={() => {
-                      if (isCurrentMonth) {
+                    onClick={(e) => {
+                      if (!isCurrentMonth) return
+                      if ((e.target as HTMLElement).closest('[data-job]')) return
+                      if (selectedMonthDate === dateStr) {
                         window.location.href = `/jobs/new?date=${dateStr}`
+                      } else {
+                        setSelectedMonthDate(dateStr)
                       }
                     }}
                   >
@@ -555,11 +584,12 @@ export default function CalendarPage() {
                         {dayJobs.slice(0, 3).map(job => (
                           <div
                             key={job.id}
-                            className={`rounded px-1 py-0.5 text-[9px] border cursor-pointer hover:ring-1 hover:ring-teal-400 ${getShiftColor(job.shift_type)}`}
-                            onClick={() => setSelectedJob(job)}
+                            className={`rounded px-1 py-0.5 text-[9px] border cursor-pointer hover:ring-1 hover:ring-teal-400 ${getClientColor(job.client_name)}`}
+                            data-job
+                            onClick={(e) => { e.stopPropagation(); setSelectedJob(job) }}
                             title={`#${job.job_number} — ${job.client_name}\n${job.worker_name || ''} · ${job.site}`}
                           >
-                            <div className="font-medium truncate">{job.client_name}</div>
+                            <div className="font-medium truncate">{getShiftIcon(job.shift_type)} {job.client_name}</div>
                             <div className="opacity-75 truncate">{job.worker_name || job.site}</div>
                           </div>
                         ))}
@@ -567,6 +597,9 @@ export default function CalendarPage() {
                           <div className="text-[9px] text-gray-400 text-center">+{dayJobs.length - 3} עוד</div>
                         )}
                       </div>
+                    )}
+                    {isCurrentMonth && selectedMonthDate === dateStr && dayJobs.length === 0 && (
+                      <div className="text-[9px] text-teal-600 font-hebrew font-bold text-center animate-pulse mt-2">+ הוסף עבודה</div>
                     )}
                   </div>
                 )
@@ -664,10 +697,10 @@ export default function CalendarPage() {
                             <div className="space-y-0.5">
                               {cellJobs.map((job) => (
                                 <div key={job.id} data-job
-                                  className={`rounded px-1 py-0.5 text-[10px] border cursor-pointer hover:ring-2 hover:ring-teal-400 ${getShiftColor(job.shift_type)} ${hasClash ? 'ring-1 ring-red-400' : ''}`}
+                                  className={`rounded px-1 py-0.5 text-[10px] border cursor-pointer hover:ring-2 hover:ring-teal-400 ${getClientColor(job.client_name)} ${hasClash ? 'ring-1 ring-red-400' : ''}`}
                                   onClick={() => setSelectedJob(job)}
                                 >
-                                  <div className="font-medium truncate">{job.client_name}</div>
+                                  <div className="font-medium truncate">{getShiftIcon(job.shift_type)} {job.client_name}</div>
                                   <div className="opacity-75 truncate">{job.site}</div>
                                 </div>
                               ))}
@@ -698,16 +731,11 @@ export default function CalendarPage() {
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 mt-3 justify-center text-[10px]" dir="rtl">
-        {[
-          ["bg-amber-100 border-amber-300", "יום"],
-          ["bg-indigo-100 border-indigo-300", "לילה"],
-          ["bg-purple-100 border-purple-300", "כפול"],
-        ].map(([cls, label]) => (
-          <div key={label} className="flex items-center gap-1">
-            <div className={`w-4 h-3 rounded border ${cls}`}></div>
-            <span className="font-hebrew text-gray-600">{label}</span>
-          </div>
-        ))}
+        <div className="flex items-center gap-1"><span>☀️</span><span className="font-hebrew text-gray-600">יום</span></div>
+        <div className="flex items-center gap-1"><span>🌙</span><span className="font-hebrew text-gray-600">לילה</span></div>
+        <div className="flex items-center gap-1"><span>⏰</span><span className="font-hebrew text-gray-600">כפול</span></div>
+        <span className="font-hebrew text-gray-400 mx-1">|</span>
+        <span className="font-hebrew text-gray-400">צבע = לקוח</span>
         <div className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-green-400" /><span className="font-hebrew text-gray-600">זמין</span></div>
         <div className="flex items-center gap-1"><X className="w-3.5 h-3.5 text-gray-400" /><span className="font-hebrew text-gray-600">לא זמין</span></div>
         <div className="flex items-center gap-1"><div className="w-4 h-3 rounded bg-red-50 border border-red-300"></div><span className="font-hebrew text-gray-600">התנגשות</span></div>
@@ -727,7 +755,7 @@ export default function CalendarPage() {
                 <div><span className="text-gray-500">לקוח:</span> <span className="font-medium">{selectedJob.client_name}</span></div>
                 <div><span className="text-gray-500">תאריך:</span> <span className="font-medium">{new Date(selectedJob.job_date).toLocaleDateString('he-IL')}</span></div>
                 <div><span className="text-gray-500">סוג:</span> <span className="font-medium">{selectedJob.work_type}</span></div>
-                <div><span className="text-gray-500">משמרת:</span> <Badge className={`${getShiftColor(selectedJob.shift_type)} text-xs`}>{selectedJob.shift_type}</Badge></div>
+                <div><span className="text-gray-500">משמרת:</span> <span className="text-sm">{getShiftIcon(selectedJob.shift_type)} {selectedJob.shift_type}</span></div>
                 <div><span className="text-gray-500">אתר:</span> <span className="font-medium">{selectedJob.site}</span></div>
                 <div><span className="text-gray-500">עיר:</span> <span className="font-medium">{selectedJob.city}</span></div>
                 <div><span className="text-gray-500">עובד:</span> <span className="font-medium">{selectedJob.worker_name || '—'}</span></div>
