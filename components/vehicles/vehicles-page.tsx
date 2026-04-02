@@ -19,19 +19,21 @@ interface Vehicle {
 
 interface VehiclesPageProps {
   showHeader?: boolean
+  viewMode?: 'grid' | 'table'
 }
 
-export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
+export default function VehiclesPage({ showHeader = true, viewMode: externalViewMode }: VehiclesPageProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
+  const [internalViewMode, setInternalViewMode] = useState<'grid' | 'table'>(() => {
     if (typeof window !== 'undefined') return (localStorage.getItem('vazana-vehicles-viewMode') as 'grid' | 'table') || 'table'
     return 'table'
   })
+  const viewMode = externalViewMode || internalViewMode
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -133,15 +135,16 @@ export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
         </>
       )}
 
-      {/* View toggle */}
-      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
-        <button onClick={() => { setViewMode('table'); localStorage.setItem('vazana-vehicles-viewMode', 'table') }} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="טבלה">
-          <Table2 className="w-4 h-4" />
-        </button>
-        <button onClick={() => { setViewMode('grid'); localStorage.setItem('vazana-vehicles-viewMode', 'grid') }} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="כרטיסים">
-          <LayoutGrid className="w-4 h-4" />
-        </button>
-      </div>
+      {!externalViewMode && (
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+          <button onClick={() => { setInternalViewMode('table'); localStorage.setItem('vazana-vehicles-viewMode', 'table') }} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="טבלה">
+            <Table2 className="w-4 h-4" />
+          </button>
+          <button onClick={() => { setInternalViewMode('grid'); localStorage.setItem('vazana-vehicles-viewMode', 'grid') }} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="כרטיסים">
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Vehicles */}
       {filteredVehicles.length === 0 ? (

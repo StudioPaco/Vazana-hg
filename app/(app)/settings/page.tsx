@@ -46,6 +46,8 @@ import {
   Activity,
   RefreshCw,
   RotateCcw,
+  Table2,
+  LayoutGrid,
 } from "lucide-react"
 import PageLayout from "@/components/layout/page-layout"
 import Link from "next/link"
@@ -82,6 +84,10 @@ export default function SettingsPage() {
   const [userEditModalOpen, setUserEditModalOpen] = useState(false)
   const [resourceModalType, setResourceModalType] = useState<"workers" | "vehicles" | "carts" | "job-types" | null>(null)
   const [selectedResource, setSelectedResource] = useState<"workers" | "vehicles" | "carts" | "job-types" | null>(null)
+  const [resourceViewMode, setResourceViewMode] = useState<'grid' | 'table'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-resources-viewMode') as 'grid' | 'table') || 'table'
+    return 'table'
+  })
   const [resourceCounts, setResourceCounts] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -1195,13 +1201,33 @@ export default function SettingsPage() {
             <TabsContent value="resources" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-hebrew" dir="rtl">
-                    <Briefcase className="w-5 h-5 text-vazana-teal" />
-                    <span>ניהול משאבים</span>
-                  </CardTitle>
-                  <CardDescription className="text-right font-hebrew">
-                    נהל עובדים, רכבים וציוד
-                  </CardDescription>
+                  <div className="flex items-center justify-between" dir="rtl">
+                    <div>
+                      <CardTitle className="flex items-center gap-2 font-hebrew">
+                        <Briefcase className="w-5 h-5 text-vazana-teal" />
+                        <span>ניהול משאבים</span>
+                      </CardTitle>
+                      <CardDescription className="text-right font-hebrew mt-1">
+                        נהל עובדים, רכבים וציוד
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                      <button
+                        onClick={() => { setResourceViewMode('table'); localStorage.setItem('vazana-resources-viewMode', 'table') }}
+                        className={`p-1.5 rounded ${resourceViewMode === 'table' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        title="תצוגת טבלה"
+                      >
+                        <Table2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => { setResourceViewMode('grid'); localStorage.setItem('vazana-resources-viewMode', 'grid') }}
+                        className={`p-1.5 rounded ${resourceViewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        title="תצוגת כרטיסים"
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {([
@@ -1266,9 +1292,9 @@ export default function SettingsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-2">
-                    {selectedResource === "workers" && <WorkersPage showHeader={false} />}
-                    {selectedResource === "vehicles" && <VehiclesPage showHeader={false} />}
-                    {selectedResource === "carts" && <CartsPage showHeader={false} />}
+                    {selectedResource === "workers" && <WorkersPage showHeader={false} viewMode={resourceViewMode} />}
+                    {selectedResource === "vehicles" && <VehiclesPage showHeader={false} viewMode={resourceViewMode} />}
+                    {selectedResource === "carts" && <CartsPage showHeader={false} viewMode={resourceViewMode} />}
                     {selectedResource === "job-types" && <WorkTypesPage showHeader={false} />}
                   </CardContent>
                 </Card>

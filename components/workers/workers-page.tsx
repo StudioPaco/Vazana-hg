@@ -24,19 +24,21 @@ interface Worker {
 
 interface WorkersPageProps {
   showHeader?: boolean
+  viewMode?: 'grid' | 'table'
 }
 
-export default function WorkersPage({ showHeader = true }: WorkersPageProps) {
+export default function WorkersPage({ showHeader = true, viewMode: externalViewMode }: WorkersPageProps) {
   const [workers, setWorkers] = useState<Worker[]>([])
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [editingWorker, setEditingWorker] = useState<Worker | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
+  const [internalViewMode, setInternalViewMode] = useState<'grid' | 'table'>(() => {
     if (typeof window !== 'undefined') return (localStorage.getItem('vazana-workers-viewMode') as 'grid' | 'table') || 'table'
     return 'table'
   })
+  const viewMode = externalViewMode || internalViewMode
 
   useEffect(() => {
     const fetchWorkers = async () => {
@@ -153,23 +155,17 @@ export default function WorkersPage({ showHeader = true }: WorkersPageProps) {
         </>
       )}
 
-      {/* View toggle */}
-      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
-        <button
-          onClick={() => { setViewMode('table'); localStorage.setItem('vazana-workers-viewMode', 'table') }}
-          className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          title="תצוגת טבלה"
-        >
-          <Table2 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => { setViewMode('grid'); localStorage.setItem('vazana-workers-viewMode', 'grid') }}
-          className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          title="תצוגת כרטיסים"
-        >
-          <LayoutGrid className="w-4 h-4" />
-        </button>
-      </div>
+      {/* View toggle — only show if not controlled externally */}
+      {!externalViewMode && (
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+          <button onClick={() => { setInternalViewMode('table'); localStorage.setItem('vazana-workers-viewMode', 'table') }} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="טבלה">
+            <Table2 className="w-4 h-4" />
+          </button>
+          <button onClick={() => { setInternalViewMode('grid'); localStorage.setItem('vazana-workers-viewMode', 'grid') }} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="כרטיסים">
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Workers */}
       {filteredWorkers.length === 0 ? (
