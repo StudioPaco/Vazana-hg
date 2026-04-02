@@ -60,7 +60,7 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
   const [sortBy, setSortBy] = useState<'name' | 'date'>('name')
   const [clientDocCounts, setClientDocCounts] = useState<Record<string, number>>({})
   const [viewMode, setViewMode] = useState<'list' | 'table'>(() => {
-    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-clients-viewMode') as any) || 'list'
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-clients-viewMode') as 'list' | 'table') || 'list'
     return 'list'
   })
   const [loading, setLoading] = useState(true)

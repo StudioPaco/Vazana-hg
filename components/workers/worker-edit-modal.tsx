@@ -20,7 +20,7 @@ interface Worker {
   address: string
   shift_rate: number
   payment_terms_days: number
-  availability: any
+  availability: Record<string, boolean> | null
   notes: string
 }
 
@@ -38,7 +38,7 @@ export default function WorkerEditModal({ worker, open, onOpenChange, onWorkerUp
     phone_number: "",
     address: "",
     shift_rate: "",
-    availability: {} as any,
+    availability: {} as Record<string, boolean>,
     payment_terms_days: "30",
     notes: "",
   })
@@ -50,7 +50,7 @@ export default function WorkerEditModal({ worker, open, onOpenChange, onWorkerUp
         phone_number: worker.phone_number || "",
         address: worker.address || "",
         shift_rate: worker.shift_rate?.toString() || "",
-        availability: typeof worker.availability === "object" && worker.availability ? worker.availability : {},
+        availability: typeof worker.availability === "object" && worker.availability ? worker.availability as Record<string, boolean> : {},
         payment_terms_days: worker.payment_terms_days?.toString() || "30",
         notes: worker.notes || "",
       })
@@ -191,14 +191,14 @@ export default function WorkerEditModal({ worker, open, onOpenChange, onWorkerUp
                       <td className="px-2 py-1 text-right font-hebrew font-medium text-gray-700">{shift}</td>
                       {[0,1,2,3,4,5,6].map(dayIdx => {
                         const key = `${shift}_${dayIdx}`
-                        const weekAvail = typeof formData.availability === 'object' && formData.availability !== null ? formData.availability : {}
-                        const isOn = (weekAvail as any)[key] !== false
+                        const weekAvail: Record<string, boolean> = typeof formData.availability === 'object' && formData.availability !== null ? formData.availability : {}
+                        const isOn = weekAvail[key] !== false
                         return (
                           <td key={dayIdx} className="px-1 py-1 text-center">
                             <button
                               type="button"
                               onClick={() => {
-                                const current = typeof formData.availability === 'object' && formData.availability !== null ? { ...formData.availability as any } : {}
+                                const current: Record<string, boolean> = typeof formData.availability === 'object' && formData.availability !== null ? { ...formData.availability } : {}
                                 current[key] = !isOn
                                 setFormData({ ...formData, availability: current })
                               }}

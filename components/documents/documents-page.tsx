@@ -30,11 +30,11 @@ export function DocumentsPage({ showHeader = true }: DocumentsPageProps) {
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>(() => {
-    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-docs-sortBy') as any) || 'date'
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-docs-sortBy') as 'date' | 'name' | 'size') || 'date'
     return 'date'
   })
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => {
-    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-docs-sortDir') as any) || 'desc'
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-docs-sortDir') as 'asc' | 'desc') || 'desc'
     return 'desc'
   })
 

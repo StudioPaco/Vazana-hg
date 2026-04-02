@@ -18,7 +18,7 @@ interface Worker {
   address: string
   shift_rate: number
   payment_terms_days: number
-  availability: any
+  availability: Record<string, boolean> | null
   notes: string
 }
 
@@ -89,7 +89,7 @@ export default function WorkersPage({ showHeader = true }: WorkersPageProps) {
     }
   }
 
-  const getAvailabilityBadges = (availability: any) => {
+  const getAvailabilityBadges = (availability: Record<string, boolean> | null) => {
     if (!availability || typeof availability !== 'object') return []
 
     const dayNames = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]

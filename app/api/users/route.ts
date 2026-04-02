@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import crypto from "node:crypto"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     const admin = createAdminClient()
     const { data: authUser, error: signUpError } = await admin.auth.admin.createUser({
       email,
-      password: "TempPassword123!", // User will need to reset
+      password: crypto.randomBytes(16).toString('base64url'), // Secure random — user will need to reset
       email_confirm: true,
     })
 

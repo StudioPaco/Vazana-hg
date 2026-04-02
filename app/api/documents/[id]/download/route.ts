@@ -38,8 +38,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         "Content-Length": String(fileBuffer.byteLength),
       },
     })
-  } catch (error: any) {
-    console.error("Download error:", error?.message || error)
-    return NextResponse.json({ error: error?.message || "Download failed" }, { status: 500 })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error"
+    console.error("Download error:", message)
+    return NextResponse.json({ error: message || "Download failed" }, { status: 500 })
   }
 }

@@ -17,7 +17,6 @@ import DatabaseDropdown from "@/components/ui/database-dropdown"
 import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/hooks/use-job-form-data"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import { SimpleAutoSave } from "@/lib/simple-auto-save"
-import { customConfirm } from "@/lib/custom-alert"
 import { toast } from "@/hooks/use-toast"
 import { downloadJobICS } from "@/lib/ics-calendar"
 
@@ -915,7 +914,7 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
             type="button" 
             variant="outline" 
             onClick={() => {
-              if (customConfirm('האם אתה בטוח שברצונך לאפס את כל הטיוטה השמורה? פעולה זו בלתי הפיכה.')) {
+              if (confirm('האם אתה בטוח שברצונך לאפס את כל הטיוטה השמורה? פעולה זו בלתי הפיכה.')) {
                 autoSave.clear()
                 // Reset all form fields to initial state
                 setFormData({

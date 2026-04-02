@@ -6,7 +6,21 @@ import path from 'path'
 export async function POST() {
   try {
     const supabase = await createClient()
-    
+
+    // Auth check — only owner role can run migrations
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (!profile || profile.role !== 'owner') {
+      return NextResponse.json({ error: 'Forbidden — owner role required' }, { status: 403 })
+    }
+
     // Read the migration SQL file
     const migrationPath = path.join(process.cwd(), 'migrations', '001-multi-user-support.sql')
     const migrationSQL = fs.readFileSync(migrationPath, 'utf8')

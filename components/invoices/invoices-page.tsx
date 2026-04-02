@@ -76,15 +76,15 @@ export default function InvoicesPage({
   const [statusFilter, setStatusFilter] = useState(externalStatusFilter)
   const [clientFilter, setClientFilter] = useState("all")
   const [viewMode, setViewMode] = useState<'list' | 'table'>(() => {
-    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-viewMode') as any) || 'list'
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-viewMode') as 'list' | 'table') || 'list'
     return 'list'
   })
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'number'>(() => {
-    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-sortBy') as any) || 'date'
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-sortBy') as 'date' | 'amount' | 'number') || 'date'
     return 'date'
   })
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => {
-    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-sortDir') as any) || 'desc'
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-invoices-sortDir') as 'asc' | 'desc') || 'desc'
     return 'desc'
   })
   const [dateRange, setDateRange] = useState<'all' | 'this_month' | 'last_month'>('all')

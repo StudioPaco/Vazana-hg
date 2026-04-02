@@ -1,6 +1,7 @@
 // Entity classes for Vazana Studio business management system
 import { createClient } from "@/lib/supabase/client"
 
+// TODO: generate Supabase types to remove `as any` casts on supabase.from() calls
 // Lazy-initialize supabase client to avoid issues during SSR/build
 let _supabase: ReturnType<typeof createClient> | null = null
 function getSupabase() {
@@ -39,7 +40,7 @@ interface WorkerData {
   name: string
   phone?: string
   email?: string
-  availability?: Record<string, any>
+  availability?: Record<string, boolean>
 }
 
 interface VehicleData {

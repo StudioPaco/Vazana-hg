@@ -71,10 +71,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ data: client }, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Internal error creating client:", error)
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 },
     )
   }

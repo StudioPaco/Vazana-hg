@@ -79,10 +79,10 @@ export async function GET() {
     }
 
     return NextResponse.json({ diagnostics })
-  } catch (error: any) {
+  } catch (error: unknown) {
     diagnostics.crash = {
-      message: error.message,
-      stack: error.stack?.split("\n").slice(0, 3),
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack?.split("\n").slice(0, 3) : undefined,
     }
     return NextResponse.json({ diagnostics })
   }

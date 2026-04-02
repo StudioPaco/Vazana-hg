@@ -45,12 +45,12 @@ export async function GET() {
           .select("id, username, role, is_active")
 
         result.all_profiles = allProfiles || { error: allError?.message }
-      } catch (adminErr: any) {
-        result.admin_error = adminErr.message
+      } catch (adminErr: unknown) {
+        result.admin_error = adminErr instanceof Error ? adminErr.message : "Unknown error"
       }
     }
-  } catch (error: any) {
-    result.error = error.message
+  } catch (error: unknown) {
+    result.error = error instanceof Error ? error.message : "Unknown error"
   }
 
   return NextResponse.json(result, { status: 200 })

@@ -7,8 +7,8 @@ import { ThemeProvider as CustomThemeProvider } from "@/lib/theme-context"
 import { LanguageProvider } from "@/lib/language-context"
 import { LoadingProvider } from "@/components/layout/loading-overlay"
 import AppWrapper from "@/components/layout/app-wrapper"
-import GlobalAlertProvider from "@/components/layout/global-alert-provider"
 import AuthProvider from "@/components/auth/auth-provider"
+import { ErrorBoundary } from "@/components/layout/error-boundary"
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
@@ -39,12 +39,12 @@ export default function RootLayout({
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
               <LoadingProvider>
                 <SidebarProvider>
-                  <GlobalAlertProvider>
+                  <ErrorBoundary>
                     <AuthProvider>
                       <AppWrapper>{children}</AppWrapper>
                       <Toaster />
                     </AuthProvider>
-                  </GlobalAlertProvider>
+                  </ErrorBoundary>
                 </SidebarProvider>
               </LoadingProvider>
             </ThemeProvider>

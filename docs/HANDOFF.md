@@ -44,18 +44,36 @@
 | activity_log | growing |
 
 ### Remaining Work (In Progress)
-1. Worker weekly shift availability table
-2. Job import column mapping UI improvements
-3. Deploy to Vercel for live testing
-4. Hanny UAT execution
-5. David UAT execution
+1. Deploy to Vercel for live testing
+2. Hanny UAT execution
+3. David UAT execution
+4. Sandbox review → adopt unified modal/list patterns
+
+### Completed Since Last Handoff
+- Worker weekly shift availability grid (edit modal + new form)
+- Job import column mapping UI
+- Client import with column mapping + duplicate detection
+- XLSX/CSV export for jobs, clients, invoices
+- Centralized numbering format system (DB-driven prefixes/digits)
+- DB-driven configurable status options (payment, invoice, client)
+- Security headers (X-Frame-Options, CSP, etc.)
+- Maintenance health checks (storage, orphans, RLS, session, numbering)
+- Document download forces save-as (not open in browser)
+- Dead code cleanup, console.log cleanup, empty catch fixes
+- ErrorBoundary component, localStorage wrapper
 
 ### V1.2 Backlog
 - Google OAuth connection (needs deploy + credentials)
 - Email integration (Gmail/IMAP)
-- DB encryption for PII
-- Real audit trail expansion
 - Automated Google Drive backup scheduling
+
+### V1.3 Focused Task: DB Encryption
+- **Scope**: PII fields in clients (email, phone, address) and workers (phone, address)
+- **Approach**: PostgreSQL pgcrypto + pgp_sym_encrypt/decrypt with env-var secret
+- **Steps**: Enable pgcrypto → create encrypt/decrypt SQL functions → modify /api/clients and /api/workers routes → one-time migration to encrypt existing data
+- **Effort**: ~3-4 hours focused task
+- **Risk**: Search/filter on encrypted columns won't work directly — handle in app layer
+- **Prerequisite**: All V1.1 features stable and tested
 
 ## Key Contacts
 - **Amit Korach** (amitkorach@gmail.com) — Owner, developer
