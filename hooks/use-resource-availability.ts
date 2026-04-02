@@ -4,9 +4,10 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 
 interface AvailabilityResult {
-  unavailableWorkerIds: Set<string>
+  unavailableWorkerIds: Set<string>    // booked on that date (conflict)
   unavailableVehicleIds: Set<string>
   unavailableCartIds: Set<string>
+  weeklyOffWorkerIds: Set<string>      // weekly schedule says "doesn't work"
   warnings: string[]
   busyDates: string[]
 }
@@ -28,19 +29,21 @@ export function useResourceAvailability(
     unavailableWorkerIds: new Set(),
     unavailableVehicleIds: new Set(),
     unavailableCartIds: new Set(),
+    weeklyOffWorkerIds: new Set(),
     warnings: [],
     busyDates: [],
   })
 
   useEffect(() => {
     const check = async () => {
-      const unavailableWorkers = new Set<string>()
+      const unavailableWorkers = new Set<string>()  // conflict (booked)
       const unavailableVehicles = new Set<string>()
       const unavailableCarts = new Set<string>()
+      const weeklyOff = new Set<string>()           // weekly schedule says off
       const warnings: string[] = []
 
       if (!date && selectedWorkerIds.length === 0 && selectedVehicleIds.length === 0 && selectedCartIds.length === 0) {
-        setResult({ unavailableWorkerIds: new Set(), unavailableVehicleIds: new Set(), unavailableCartIds: new Set(), warnings: [], busyDates: [] })
+        setResult({ unavailableWorkerIds: new Set(), unavailableVehicleIds: new Set(), unavailableCartIds: new Set(), weeklyOffWorkerIds: new Set(), warnings: [], busyDates: [] })
         return
       }
 
@@ -59,10 +62,10 @@ export function useResourceAvailability(
 
           const shiftKey = shift === 'לילה' ? nightKey : dayKey
           if (worker.availability[shiftKey] === false) {
-            unavailableWorkers.add(worker.id)
+            weeklyOff.add(worker.id)
             if (selectedWorkerIds.includes(worker.id)) {
               const dayNames = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]
-              warnings.push(`⚠️ ${worker.name} לא זמין ביום ${dayNames[dayIdx]} במשמרת ${shift}`)
+              warnings.push(`⚠️ ${worker.name} לא עובד ביום ${dayNames[dayIdx]} במשמרת ${shift}`)
             }
           }
         }
@@ -153,7 +156,7 @@ export function useResourceAvailability(
         }
       }
 
-      setResult({ unavailableWorkerIds: unavailableWorkers, unavailableVehicleIds: unavailableVehicles, unavailableCartIds: unavailableCarts, warnings, busyDates })
+      setResult({ unavailableWorkerIds: unavailableWorkers, unavailableVehicleIds: unavailableVehicles, unavailableCartIds: unavailableCarts, weeklyOffWorkerIds: weeklyOff, warnings, busyDates })
     }
 
     const timeout = setTimeout(check, 300) // debounce

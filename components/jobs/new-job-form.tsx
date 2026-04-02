@@ -889,12 +889,13 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 placeholder="בחר עובד"
                 loading={workersLoading}
                 warningItems={availability.unavailableWorkerIds}
-                className={`w-full ${validationErrors.employee ? "border-red-500" : ""} ${formData.employee && availability.unavailableWorkerIds.has(formData.employee) ? "border-red-500" : ""}`}
+                grayedItems={availability.weeklyOffWorkerIds}
+                className={`w-full ${validationErrors.employee ? "border-red-500" : ""} ${formData.employee && availability.unavailableWorkerIds.has(formData.employee) ? "border-red-500" : formData.employee && availability.weeklyOffWorkerIds.has(formData.employee) ? "border-gray-400 bg-gray-50" : ""}`}
               />
               {additionalWorkers.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {additionalWorkers.map(w => (
-                    <Badge key={w.id} variant="secondary" className={`text-xs gap-1 font-hebrew ${availability.unavailableWorkerIds.has(w.id) ? 'bg-red-100 text-red-700 border-red-300' : ''}`}>
+                    <Badge key={w.id} variant="secondary" className={`text-xs gap-1 font-hebrew ${availability.unavailableWorkerIds.has(w.id) ? 'bg-red-100 text-red-700 border-red-300' : availability.weeklyOffWorkerIds.has(w.id) ? 'bg-gray-200 text-gray-500' : ''}`}>
                       {w.name}
                       <button type="button" onClick={() => setAdditionalWorkers(prev => prev.filter(x => x.id !== w.id))} className="text-gray-500 hover:text-red-500 ml-0.5">×</button>
                     </Badge>

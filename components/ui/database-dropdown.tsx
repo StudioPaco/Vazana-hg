@@ -43,7 +43,8 @@ interface DatabaseDropdownProps {
     ascending?: boolean
   }
   customDisplayFormat?: (item: DataItem) => string // Custom formatting function
-  warningItems?: Set<string> // IDs to show in red (unavailable resources)
+  warningItems?: Set<string> // IDs to show in red (booked/conflict)
+  grayedItems?: Set<string>  // IDs to show grayed out (weekly schedule off)
 }
 
 export default function DatabaseDropdown({
@@ -70,6 +71,7 @@ export default function DatabaseDropdown({
   disabled = false,
   required = false,
   warningItems,
+  grayedItems,
 }: DatabaseDropdownProps) {
   const [items, setItems] = useState<DataItem[]>([])
   const [loading, setLoading] = useState(!data) // Don't load if data is provided
@@ -218,15 +220,17 @@ export default function DatabaseDropdown({
           </SelectItem>
         )}
         {items.map((item) => {
-          const isWarning = warningItems?.has(getItemValue(item))
+          const val = getItemValue(item)
+          const isWarning = warningItems?.has(val)
+          const isGrayed = grayedItems?.has(val)
+          let cls = 'text-right'
+          let suffix = ''
+          if (isWarning && isGrayed) { cls = 'text-right text-red-600 bg-gray-100 font-medium'; suffix = ' (לא עובד + תפוס)' }
+          else if (isGrayed) { cls = 'text-right text-gray-400 bg-gray-50'; suffix = ' (לא עובד)' }
+          else if (isWarning) { cls = 'text-right text-red-600 font-medium'; suffix = ' (לא זמין)' }
           return (
-            <SelectItem
-              key={getItemValue(item)}
-              value={getItemValue(item)}
-              className={`text-right ${isWarning ? 'text-red-600 font-medium' : ''}`}
-              dir="rtl"
-            >
-              {getItemLabel(item)}{isWarning ? ' (לא זמין)' : ''}
+            <SelectItem key={val} value={val} className={cls} dir="rtl">
+              {getItemLabel(item)}{suffix}
             </SelectItem>
           )
         })}
