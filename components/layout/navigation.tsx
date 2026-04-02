@@ -76,7 +76,7 @@ export default function Navigation({ user: propUser }: NavigationProps) {
             <div className="flex items-center space-x-2">
               <Building2 className="h-8 w-8 text-vazana-dark" />
               <div className="text-center">
-                <h1 className="text-lg font-bold text-vazana-dark">Vazana Studio</h1>
+                <h1 className="text-lg font-bold text-vazana-dark">Vazana</h1>
                 <p className="text-xs text-vazana-dark opacity-80">וזאנה אבטחת כבישים</p>
               </div>
             </div>

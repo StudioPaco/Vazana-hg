@@ -1,4 +1,4 @@
-# Vazana Studio — Autonomous Development Guidelines
+# Vazana — Autonomous Development Guidelines
 
 > These rules govern AI-assisted autonomous development.
 > They protect the codebase, user data, and project integrity.

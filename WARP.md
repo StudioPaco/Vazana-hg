@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-Vazana Studio is a Hebrew/English bilingual business management system built with Next.js 15, TypeScript, and Supabase. The application manages clients, jobs, workers, vehicles, carts, invoices, and documents for a construction/maintenance business.
+Vazana is a Hebrew/English bilingual business management system built with Next.js 15, TypeScript, and Supabase. The application manages clients, jobs, workers, vehicles, carts, invoices, and documents for a construction/maintenance business.
 
 This is a Next.js project managed locally with pnpm.
 
@@ -50,7 +50,7 @@ This is a Next.js project managed locally with pnpm.
 
 ### Technology Stack
 - **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS v4 with custom Vazana Studio brand colors
+- **Styling**: Tailwind CSS v4 with custom Vazana brand colors
 - **UI Components**: Radix UI primitives with shadcn/ui patterns
 - **Database**: Supabase (client-side integration)
 - **Forms**: React Hook Form with Zod validation

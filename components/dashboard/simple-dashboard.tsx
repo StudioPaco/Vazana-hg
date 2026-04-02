@@ -21,7 +21,7 @@ export default function SimpleDashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">ברוכים הבאים לוזאנה סטודיו</h1>
+            <h1 className="text-3xl font-bold text-vazana-dark font-hebrew">ברוכים הבאים לוזאנה</h1>
             <p className="text-vazana-dark/70 mt-2">מערכת ניהול עסקי מתקדמת</p>
           </div>
           <div className="flex items-center gap-4">

@@ -1,4 +1,4 @@
-# Vazana Studio — Build Phases
+# Vazana — Build Phases
 
 > Tracks overall project progress through development phases.
 

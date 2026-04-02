@@ -1,4 +1,4 @@
-// Utility functions for Vazana Studio
+// Utility functions for Vazana
 
 // Create page URLs for navigation
 export function createPageUrl(pageName: string, params?: Record<string, string>): string {

@@ -22,7 +22,7 @@ export class EmailService {
 
   constructor() {
     this.apiKey = process.env.RESEND_API_KEY || ""
-    this.fromEmail = process.env.FROM_EMAIL || "noreply@vazana-studio.com"
+    this.fromEmail = process.env.FROM_EMAIL || "noreply@vazana.co.il"
   }
 
   async sendEmail({ to, subject, html, from }: EmailOptions) {

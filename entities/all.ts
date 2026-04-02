@@ -1,4 +1,4 @@
-// Entity classes for Vazana Studio business management system
+// Entity classes for Vazana business management system
 import { createClient } from "@/lib/supabase/client"
 
 // TODO: generate Supabase types to remove `as any` casts on supabase.from() calls

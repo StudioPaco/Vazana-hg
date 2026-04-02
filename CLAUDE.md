@@ -1,11 +1,11 @@
-# Vazana Studio — Claude Code Guide
+# Vazana — Claude Code Guide
 
 > This file provides guidance to Claude Code when working with this repository.
 > For safety rules see `.claude/GUIDELINES.md`. For session continuity see `docs/HANDOFF.md`.
 
 ## Project Overview
 
-**Vazana Studio** (וזאנה סטודיו) is a Hebrew/English bilingual business management system for a road safety services company. It manages clients, jobs, workers, vehicles, carts, invoices, documents, and users.
+**Vazana** (וזאנה) is a Hebrew/English bilingual business management system for a road safety services company. It manages clients, jobs, workers, vehicles, carts, invoices, documents, and users.
 
 - **Site**: https://vazana.vercel.app
 - **Supabase Project**: `udxvtbwqmfwzghmubfdi`

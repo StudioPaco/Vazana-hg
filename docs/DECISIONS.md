@@ -1,4 +1,4 @@
-# Vazana Studio — Decision Log
+# Vazana — Decision Log
 
 > Architectural decisions with context. Immutable — add new, don't delete old.
 

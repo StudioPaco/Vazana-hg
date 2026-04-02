@@ -1,4 +1,4 @@
-# Vazana Studio — Database Schema Reference
+# Vazana — Database Schema Reference
 
 > Supabase PostgreSQL. Project: `udxvtbwqmfwzghmubfdi`
 > All tables have RLS enabled. 12 migrations applied.

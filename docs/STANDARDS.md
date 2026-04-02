@@ -1,4 +1,4 @@
-# Vazana Studio — Development Standards
+# Vazana — Development Standards
 
 > Enforced coding patterns. Follow these when writing any new code.
 

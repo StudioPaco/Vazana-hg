@@ -1,4 +1,4 @@
-# Vazana Studio — Feature Registry
+# Vazana — Feature Registry
 
 > File-level audit of every feature domain. Updated: 2026-03-24
 
