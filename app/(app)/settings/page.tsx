@@ -1257,6 +1257,11 @@ export default function SettingsPage() {
                             <Plus className="w-4 h-4 ml-1" /> הוסף עגלה
                           </Button>
                         )}
+                        {selectedResource === "job-types" && (
+                          <Button size="sm" className="bg-[#FFCC00] hover:bg-[#E6B800] text-[#1A1A1A] font-hebrew" onClick={() => router.push('/settings/resources/job-types/new')}>
+                            <Plus className="w-4 h-4 ml-1" /> הוסף סוג עבודה
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardHeader>

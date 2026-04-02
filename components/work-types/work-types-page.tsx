@@ -150,8 +150,8 @@ export default function WorkTypesPage({ showHeader = true }: WorkTypesPageProps)
         </div>
       )}
 
-      {!showForm && (
-        <Button onClick={openNewForm} size="sm" className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-hebrew">
+      {showHeader && !showForm && (
+        <Button onClick={openNewForm} size="sm" className="flex items-center gap-2 bg-[#FFCC00] hover:bg-[#E6B800] text-[#1A1A1A] font-hebrew">
           <Plus className="w-4 h-4" /> הוסף סוג עבודה
         </Button>
       )}
