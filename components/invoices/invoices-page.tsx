@@ -435,44 +435,6 @@ export default function InvoicesPage({
               חשבונית חדשה
             </Link>
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const headers = [
-                { key: 'invoice_number', label: 'מספר חשבונית' },
-                { key: 'client_name', label: 'לקוח' },
-                { key: 'issue_date', label: 'תאריך הנפקה' },
-                { key: 'total_amount', label: 'סכום' },
-                { key: 'status', label: 'סטטוס' },
-                { key: 'notes', label: 'הערות' },
-              ]
-              exportToXLSX(filteredInvoices, headers, 'חשבוניות')
-            }}
-            className="font-hebrew text-xs h-9"
-          >
-            <Download className="w-4 h-4 ml-1" />
-            Excel
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const headers = [
-                { key: 'invoice_number', label: 'מספר חשבונית' },
-                { key: 'client_name', label: 'לקוח' },
-                { key: 'issue_date', label: 'תאריך הנפקה' },
-                { key: 'total_amount', label: 'סכום' },
-                { key: 'status', label: 'סטטוס' },
-                { key: 'notes', label: 'הערות' },
-              ]
-              exportToCSV(filteredInvoices, headers, 'חשבוניות')
-            }}
-            className="font-hebrew text-xs h-9"
-          >
-            <Download className="w-4 h-4 ml-1" />
-            CSV
-          </Button>
           <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
             {([["date", "תאריך"], ["amount", "סכום"], ["number", "מספר"]] as const).map(([key, label]) => (
               <Button
@@ -497,6 +459,34 @@ export default function InvoicesPage({
           <Button variant="ghost" size="sm" onClick={() => setViewMode('table')}
             className={`px-2 py-1 h-7 ${viewMode === 'table' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}>
             <Grid3X3 className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => {
+            const headers = [
+              { key: 'invoice_number', label: 'מספר חשבונית' },
+              { key: 'client_name', label: 'לקוח' },
+              { key: 'issue_date', label: 'תאריך הנפקה' },
+              { key: 'total_amount', label: 'סכום' },
+              { key: 'status', label: 'סטטוס' },
+              { key: 'notes', label: 'הערות' },
+            ]
+            exportToXLSX(filteredInvoices, headers, 'חשבוניות')
+          }} className="font-hebrew text-xs h-7">
+            <Download className="w-4 h-4 ml-1" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => {
+            const headers = [
+              { key: 'invoice_number', label: 'מספר חשבונית' },
+              { key: 'client_name', label: 'לקוח' },
+              { key: 'issue_date', label: 'תאריך הנפקה' },
+              { key: 'total_amount', label: 'סכום' },
+              { key: 'status', label: 'סטטוס' },
+              { key: 'notes', label: 'הערות' },
+            ]
+            exportToCSV(filteredInvoices, headers, 'חשבוניות')
+          }} className="font-hebrew text-xs h-7">
+            <Download className="w-4 h-4 ml-1" /> CSV
           </Button>
         </div>
       </div>

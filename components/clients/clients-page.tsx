@@ -350,34 +350,6 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
             לקוח חדש
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setImportModalOpen(true)}
-            className="font-hebrew text-xs"
-          >
-            <Upload className="w-4 h-4 ml-1" />
-            ייבוא
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportXLSX}
-            className="font-hebrew text-xs"
-          >
-            <Download className="w-4 h-4 ml-1" />
-            Excel
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCSV}
-            className="font-hebrew text-xs"
-          >
-            <Download className="w-4 h-4 ml-1" />
-            CSV
-          </Button>
-
           {/* Sorting Toggle */}
           <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
             <Button
@@ -432,6 +404,17 @@ export default function ClientsPage({ showHeader = true, searchTerm: externalSea
             }`}
           >
             <Grid3X3 className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="font-hebrew text-xs">
+            <Upload className="w-4 h-4 ml-1" /> ייבוא
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportXLSX} className="font-hebrew text-xs">
+            <Download className="w-4 h-4 ml-1" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportCSV} className="font-hebrew text-xs">
+            <Download className="w-4 h-4 ml-1" /> CSV
           </Button>
         </div>
       </div>

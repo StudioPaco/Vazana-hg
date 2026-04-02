@@ -394,33 +394,6 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
                 עבודה חדשה
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setImportModalOpen(true)}
-              className="font-hebrew"
-            >
-              <Upload className="w-4 h-4 ml-2" />
-              ייבוא
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => exportToXLSX(filteredJobs, jobExportHeaders, 'עבודות')}
-              className="font-hebrew text-xs"
-            >
-              <Download className="w-4 h-4 ml-1" />
-              Excel
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => exportToCSV(filteredJobs, jobExportHeaders, 'עבודות')}
-              className="font-hebrew text-xs"
-            >
-              <Download className="w-4 h-4 ml-1" />
-              CSV
-            </Button>
 
             {/* Sorting Toggle */}
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
@@ -482,6 +455,17 @@ export default function JobsPage({ showHeader = true, onStatsCalculated }: JobsP
               className={`px-2 py-1 ${preferences?.jobs_view_mode === 'table' ? 'bg-teal-500 text-white hover:bg-teal-600' : 'text-gray-700 hover:bg-gray-200'}`}
             >
               <Grid3X3 className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="font-hebrew text-xs">
+              <Upload className="w-4 h-4 ml-1" /> ייבוא
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportToXLSX(filteredJobs, jobExportHeaders, 'עבודות')} className="font-hebrew text-xs">
+              <Download className="w-4 h-4 ml-1" /> Excel
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredJobs, jobExportHeaders, 'עבודות')} className="font-hebrew text-xs">
+              <Download className="w-4 h-4 ml-1" /> CSV
             </Button>
           </div>
         </div>
