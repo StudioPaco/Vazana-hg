@@ -64,6 +64,7 @@ export default function CalendarPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [carts, setCarts] = useState<CartItem[]>([])
   const [availability, setAvailability] = useState<Availability[]>([])
+  const [jobExtraResources, setJobExtraResources] = useState<{ job_id: string; resource_type: string; resource_id: string; resource_name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const initialType = (searchParams.get('type') as ResourceType) || "workers"
   const [resourceType, setResourceType] = useState<ResourceType>(initialType)
@@ -94,11 +95,17 @@ export default function CalendarPage() {
       fetch("/api/vehicles").then(r => r.json()),
       supabase.from("carts").select("*").order("name"),
       fetchAvailability(),
-    ]).then(([jobsRes, workersRes, vehiclesRes, cartsRes]) => {
-      setJobs(jobsRes.data || [])
+    ]).then(async ([jobsRes, workersRes, vehiclesRes, cartsRes]) => {
+      const allJobs = jobsRes.data || []
+      setJobs(allJobs)
       setWorkers(workersRes.data || workersRes || [])
       setVehicles(vehiclesRes.data || vehiclesRes || [])
       setCarts(cartsRes.data || [])
+      // Load additional resources for calendar multi-resource display
+      try {
+        const { data: extras } = await supabase.from('job_resources').select('job_id, resource_type, resource_id, resource_name')
+        setJobExtraResources(extras || [])
+      } catch { /* ignore */ }
     }).catch(err => {
       console.error("Failed to load calendar data:", err)
     }).finally(() => setLoading(false))
@@ -156,17 +163,28 @@ export default function CalendarPage() {
 
   const buildJobMap = useCallback((type: "workers" | "vehicles" | "carts") => {
     const map: Record<string, Record<string, Job[]>> = {}
+    const resType = type === "workers" ? "worker" : type === "vehicles" ? "vehicle" : "cart"
     for (const job of jobs) {
       const dateStr = job.job_date?.split("T")[0]
       if (!dateStr) continue
       if (!map[dateStr]) map[dateStr] = {}
+      // Primary resource
       const name = type === "workers" ? job.worker_name : type === "vehicles" ? job.vehicle_name : job.cart_name
-      if (!name) continue
-      if (!map[dateStr][name]) map[dateStr][name] = []
-      map[dateStr][name].push(job)
+      if (name) {
+        if (!map[dateStr][name]) map[dateStr][name] = []
+        map[dateStr][name].push(job)
+      }
+      // Additional resources from junction table
+      const extras = jobExtraResources.filter(r => r.job_id === job.id && r.resource_type === resType)
+      for (const extra of extras) {
+        if (!map[dateStr][extra.resource_name]) map[dateStr][extra.resource_name] = []
+        if (!map[dateStr][extra.resource_name].some(j => j.id === job.id)) {
+          map[dateStr][extra.resource_name].push(job)
+        }
+      }
     }
     return map
-  }, [jobs])
+  }, [jobs, jobExtraResources])
 
   const jobsByDateResource = useMemo(() => buildJobMap(resourceType === "cross" ? "workers" : resourceType), [buildJobMap, resourceType])
   const jobsByDateVehicle = useMemo(() => resourceType === "cross" ? buildJobMap("vehicles") : {}, [buildJobMap, resourceType])
