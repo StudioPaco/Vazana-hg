@@ -10,12 +10,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon, RotateCcw, DollarSignIcon } from "lucide-react"
+import { CalendarIcon, ClipboardIcon, SettingsIcon, UsersIcon, RotateCcw, DollarSignIcon, AlertTriangle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { getNumberingConfig, formatJobNumber } from "@/lib/numbering"
 import DatabaseDropdown from "@/components/ui/database-dropdown"
 import { useClients, useWorkTypes, useWorkers, useVehicles, useCarts } from "@/hooks/use-job-form-data"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
+import { useResourceAvailability } from "@/hooks/use-resource-availability"
+import ConflictConfirmationDialog from "@/components/jobs/conflict-confirmation-dialog"
+import { Badge } from "@/components/ui/badge"
 import { SimpleAutoSave } from "@/lib/simple-auto-save"
 import { toast } from "@/hooks/use-toast"
 import { downloadJobICS } from "@/lib/ics-calendar"
@@ -42,6 +45,10 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
   const [clientType, setClientType] = useState<"new" | "existing">("existing")
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [conflictWarnings, setConflictWarnings] = useState<string[]>([])
+  const [additionalWorkers, setAdditionalWorkers] = useState<{ id: string; name: string }[]>([])
+  const [additionalVehicles, setAdditionalVehicles] = useState<{ id: string; name: string }[]>([])
+  const [additionalCarts, setAdditionalCarts] = useState<{ id: string; name: string }[]>([])
+  const [showConflictDialog, setShowConflictDialog] = useState(false)
   const [clientRates, setClientRates] = useState<{ work_type_id: string; rate: number }[]>([])
   const [newClientRates, setNewClientRates] = useState<{ id: string; work_type_id: string; rate: number }[]>([])
   const [formData, setFormData] = useState({
@@ -143,59 +150,22 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
     }
   }, [clientRates, formData.jobType])
 
-  // Check for worker availability + worker/vehicle conflicts on same date
+  // Centralized availability checking via hook
+  const allSelectedWorkerIds = [formData.employee, ...additionalWorkers.map(w => w.id)].filter(Boolean)
+  const allSelectedVehicleIds = [formData.vehicle, ...additionalVehicles.map(v => v.id)].filter(Boolean)
+  const availability = useResourceAvailability(
+    formData.date,
+    formData.shiftType,
+    employees,
+    vehicles,
+    allSelectedWorkerIds,
+    allSelectedVehicleIds,
+  )
+
+  // Sync hook warnings to conflictWarnings state
   useEffect(() => {
-    const checkConflicts = async () => {
-      if (!formData.date) { setConflictWarnings([]); return }
-      const warnings: string[] = []
-      const supabase = createClient()
-
-      if (formData.employee) {
-        const selectedWorker = employees.find((e: any) => e.id === formData.employee)
-        if (selectedWorker) {
-          // Check weekly availability grid
-          const avail = selectedWorker.availability
-          if (avail && typeof avail === 'object') {
-            const jobDate = new Date(formData.date)
-            const dayIdx = jobDate.getDay() // 0=Sunday
-            const shiftKey = formData.shiftType === 'לילה' ? `לילה_${dayIdx}` : `יום_${dayIdx}`
-            if (avail[shiftKey] === false) {
-              const dayNames = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"]
-              const shiftLabel = formData.shiftType || "יום"
-              warnings.push(`⚠️ ${selectedWorker.name} לא זמין ביום ${dayNames[dayIdx]} במשמרת ${shiftLabel}`)
-            }
-          }
-
-          // Check for existing job conflict
-          const { data: conflicts } = await supabase
-            .from('jobs')
-            .select('job_number, client_name')
-            .eq('worker_id', formData.employee)
-            .eq('job_date', formData.date)
-          if (conflicts && conflicts.length > 0) {
-            warnings.push(`⚠️ ${selectedWorker.name} כבר משובץ בתאריך זה (עבודה #${conflicts[0].job_number} - ${conflicts[0].client_name})`)
-          }
-        }
-      }
-
-      if (formData.vehicle) {
-        const selectedVehicle = vehicles.find((v: any) => v.id === formData.vehicle)
-        if (selectedVehicle) {
-          const { data: conflicts } = await supabase
-            .from('jobs')
-            .select('job_number, client_name')
-            .eq('vehicle_id', formData.vehicle)
-            .eq('job_date', formData.date)
-          if (conflicts && conflicts.length > 0) {
-            warnings.push(`⚠️ ${selectedVehicle.name} כבר בשימוש בתאריך זה (עבודה #${conflicts[0].job_number} - ${conflicts[0].client_name})`)
-          }
-        }
-      }
-
-      setConflictWarnings(warnings)
-    }
-    checkConflicts()
-  }, [formData.employee, formData.vehicle, formData.date, formData.shiftType])
+    setConflictWarnings(availability.warnings)
+  }, [availability.warnings])
 
   useEffect(() => {
     const fetchJobNumber = async () => {
@@ -259,6 +229,8 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
       }))
     }
   }, [searchParams])
+
+  const [conflictConfirmed, setConflictConfirmed] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -375,6 +347,13 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
         }
       }
 
+      // Check for conflicts — show confirmation dialog if not yet confirmed
+      if (conflictWarnings.length > 0 && !conflictConfirmed) {
+        setShowConflictDialog(true)
+        return
+      }
+      setConflictConfirmed(false) // reset for next submit
+
       const jobData = {
         job_number: jobNumber,
         work_type: selectedWorkType ? selectedWorkType.name_he : "",
@@ -411,6 +390,23 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
         console.error("Error creating job:", error)
         toast({ title: `שגיאה ביצירת העבודה: ${error.message}`, variant: "destructive" })
         return
+      }
+
+      // Save additional resources
+      const jobId = data?.[0]?.id
+      if (jobId) {
+        const allAdditional = [
+          ...additionalWorkers.map(w => ({ resource_type: 'worker', resource_id: w.id, resource_name: w.name })),
+          ...additionalVehicles.map(v => ({ resource_type: 'vehicle', resource_id: v.id, resource_name: v.name })),
+          ...additionalCarts.map(c => ({ resource_type: 'cart', resource_id: c.id, resource_name: c.name })),
+        ]
+        if (allAdditional.length > 0) {
+          await fetch(`/api/jobs/${jobId}/resources`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resources: allAdditional }),
+          })
+        }
       }
 
       // Clear auto-save after successful job creation
@@ -506,6 +502,9 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 dir="rtl"
               />
               {validationErrors.date && <p className="text-red-500 text-sm text-right">{validationErrors.date}</p>}
+              {availability.busyDates.length > 0 && !formData.date && (
+                <p className="text-xs text-red-500 font-hebrew text-right">תאריכים תפוסים: {availability.busyDates.join(", ")}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="location" className="text-right block">
@@ -841,8 +840,25 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 onValueChange={(value) => setFormData({ ...formData, employee: value })}
                 placeholder="בחר עובד"
                 loading={workersLoading}
+                warningItems={availability.unavailableWorkerIds}
                 className={`w-full ${validationErrors.employee ? "border-red-500" : ""}`}
               />
+              {additionalWorkers.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {additionalWorkers.map(w => (
+                    <Badge key={w.id} variant="secondary" className="text-xs gap-1 font-hebrew">
+                      {w.name}
+                      <button type="button" onClick={() => setAdditionalWorkers(prev => prev.filter(x => x.id !== w.id))} className="text-gray-500 hover:text-red-500 ml-0.5">×</button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                const unused = employees.filter((e: any) => e.id !== formData.employee && !additionalWorkers.some(w => w.id === e.id))
+                if (unused.length === 0) return
+                const next = unused[0]
+                setAdditionalWorkers(prev => [...prev, { id: next.id, name: next.name }])
+              }}>+ הוסף עובד</button>
               {validationErrors.employee && (
                 <p className="text-red-500 text-sm text-right">{validationErrors.employee}</p>
               )}
@@ -859,8 +875,25 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 onValueChange={(value) => setFormData({ ...formData, vehicle: value })}
                 placeholder="בחר רכב"
                 loading={vehiclesLoading}
+                warningItems={availability.unavailableVehicleIds}
                 className={`w-full ${validationErrors.vehicle ? "border-red-500" : ""}`}
               />
+              {additionalVehicles.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {additionalVehicles.map(v => (
+                    <Badge key={v.id} variant="secondary" className="text-xs gap-1 font-hebrew">
+                      {v.name}
+                      <button type="button" onClick={() => setAdditionalVehicles(prev => prev.filter(x => x.id !== v.id))} className="text-gray-500 hover:text-red-500 ml-0.5">×</button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                const unused = vehicles.filter((v: any) => v.id !== formData.vehicle && !additionalVehicles.some(x => x.id === v.id))
+                if (unused.length === 0) return
+                const next = unused[0]
+                setAdditionalVehicles(prev => [...prev, { id: next.id, name: next.name }])
+              }}>+ הוסף רכב</button>
               {validationErrors.vehicle && (
                 <p className="text-red-500 text-sm text-right">{validationErrors.vehicle}</p>
               )}
@@ -880,6 +913,22 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
                 allowEmpty
                 className="w-full"
               />
+              {additionalCarts.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {additionalCarts.map(c => (
+                    <Badge key={c.id} variant="secondary" className="text-xs gap-1 font-hebrew">
+                      {c.name}
+                      <button type="button" onClick={() => setAdditionalCarts(prev => prev.filter(x => x.id !== c.id))} className="text-gray-500 hover:text-red-500 ml-0.5">×</button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <button type="button" className="text-xs text-teal-600 hover:text-teal-700 font-hebrew" onClick={() => {
+                const unused = carts.filter((c: any) => c.id !== formData.cart && !additionalCarts.some(x => x.id === c.id))
+                if (unused.length === 0) return
+                const next = unused[0]
+                setAdditionalCarts(prev => [...prev, { id: next.id, name: next.name }])
+              }}>+ הוסף עגלה</button>
             </div>
           </CardContent>
         </Card>
@@ -928,11 +977,15 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
         </Card>
 
         {conflictWarnings.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1" dir="rtl">
+          <div className="bg-red-50 border-2 border-red-400 rounded-lg p-4 space-y-2" dir="rtl">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <h4 className="text-base font-bold text-red-700 font-hebrew">התנגשויות זמינות</h4>
+            </div>
             {conflictWarnings.map((w, i) => (
-              <p key={i} className="text-sm text-amber-800 font-hebrew">{w}</p>
+              <p key={i} className="text-sm text-red-700 font-hebrew font-medium">{w}</p>
             ))}
-            <p className="text-xs text-amber-600 font-hebrew">ניתן להמשיך, אך שים לב להתנגשות</p>
+            <p className="text-xs text-red-500 font-hebrew">ניתן להמשיך, אך תתבקש לאשר בשמירה</p>
           </div>
         )}
 
@@ -990,6 +1043,20 @@ export default function NewJobForm({ showHeader = true }: { showHeader?: boolean
           </Button>
         </div>
       </form>
+
+      <ConflictConfirmationDialog
+        open={showConflictDialog}
+        onOpenChange={setShowConflictDialog}
+        warnings={conflictWarnings}
+        onConfirm={() => {
+          setConflictConfirmed(true)
+          // Re-trigger submit via form
+          setTimeout(() => {
+            const form = document.querySelector('form')
+            if (form) form.requestSubmit()
+          }, 50)
+        }}
+      />
     </div>
   )
 }
