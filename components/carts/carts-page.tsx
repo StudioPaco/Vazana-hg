@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, ShoppingCart, Edit, Trash2 } from "lucide-react"
+import { Plus, Search, ShoppingCart, Edit, Trash2, LayoutGrid, Table2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import CartEditModal from "@/components/carts/cart-edit-modal"
@@ -26,6 +26,10 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [editingCart, setEditingCart] = useState<Cart | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-carts-viewMode') as 'grid' | 'table') || 'table'
+    return 'table'
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -119,7 +123,17 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
         </>
       )}
 
-      {/* Carts Table */}
+      {/* View toggle */}
+      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+        <button onClick={() => { setViewMode('table'); localStorage.setItem('vazana-carts-viewMode', 'table') }} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="טבלה">
+          <Table2 className="w-4 h-4" />
+        </button>
+        <button onClick={() => { setViewMode('grid'); localStorage.setItem('vazana-carts-viewMode', 'grid') }} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="כרטיסים">
+          <LayoutGrid className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Carts */}
       {filteredCarts.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
@@ -132,7 +146,7 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
             </div>
           </CardContent>
         </Card>
-      ) : (
+      ) : viewMode === 'table' ? (
         <div className="border rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
@@ -163,6 +177,33 @@ export default function CartsPage({ showHeader = true }: CartsPageProps) {
               ))}
             </tbody>
           </table>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCarts.map((cart) => (
+            <Card key={cart.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-orange-100 rounded"><ShoppingCart className="h-4 w-4 text-orange-600" /></div>
+                    <div>
+                      <p className="font-hebrew font-semibold">{cart.name}</p>
+                      {cart.license_plate && <p className="text-xs font-mono text-gray-500">{cart.license_plate}</p>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingCart(cart); setEditModalOpen(true) }}>
+                      <Edit className="w-3.5 h-3.5 text-gray-600" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCart(cart.id)}>
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+                {cart.details && <p className="text-sm text-gray-600">{cart.details}</p>}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 

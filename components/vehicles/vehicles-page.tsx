@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Truck, Edit, Trash2 } from "lucide-react"
+import { Plus, Search, Truck, Edit, Trash2, LayoutGrid, Table2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import VehicleEditModal from "@/components/vehicles/vehicle-edit-modal"
@@ -28,6 +28,10 @@ export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
   const [loading, setLoading] = useState(true)
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-vehicles-viewMode') as 'grid' | 'table') || 'table'
+    return 'table'
+  })
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -129,7 +133,17 @@ export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
         </>
       )}
 
-      {/* Vehicles Table */}
+      {/* View toggle */}
+      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+        <button onClick={() => { setViewMode('table'); localStorage.setItem('vazana-vehicles-viewMode', 'table') }} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="טבלה">
+          <Table2 className="w-4 h-4" />
+        </button>
+        <button onClick={() => { setViewMode('grid'); localStorage.setItem('vazana-vehicles-viewMode', 'grid') }} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} title="כרטיסים">
+          <LayoutGrid className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Vehicles */}
       {filteredVehicles.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
@@ -142,7 +156,7 @@ export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
             </div>
           </CardContent>
         </Card>
-      ) : (
+      ) : viewMode === 'table' ? (
         <div className="border rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
@@ -173,6 +187,33 @@ export default function VehiclesPage({ showHeader = true }: VehiclesPageProps) {
               ))}
             </tbody>
           </table>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredVehicles.map((vehicle) => (
+            <Card key={vehicle.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-blue-100 rounded"><Truck className="h-4 w-4 text-blue-600" /></div>
+                    <div>
+                      <p className="font-hebrew font-semibold">{vehicle.name}</p>
+                      <p className="text-xs font-mono text-gray-500">{vehicle.license_plate}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingVehicle(vehicle); setEditModalOpen(true) }}>
+                      <Edit className="w-3.5 h-3.5 text-gray-600" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteVehicle(vehicle.id)}>
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+                {vehicle.details && <p className="text-sm text-gray-600">{vehicle.details}</p>}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
       <VehicleEditModal

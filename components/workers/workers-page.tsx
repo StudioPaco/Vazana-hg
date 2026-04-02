@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Edit, Trash2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Plus, Search, Edit, Trash2, LayoutGrid, Table2, Phone, MapPin } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import WorkerEditModal from "@/components/workers/worker-edit-modal"
@@ -32,6 +33,10 @@ export default function WorkersPage({ showHeader = true }: WorkersPageProps) {
   const [loading, setLoading] = useState(true)
   const [editingWorker, setEditingWorker] = useState<Worker | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
+    if (typeof window !== 'undefined') return (localStorage.getItem('vazana-workers-viewMode') as 'grid' | 'table') || 'table'
+    return 'table'
+  })
 
   useEffect(() => {
     const fetchWorkers = async () => {
@@ -148,7 +153,25 @@ export default function WorkersPage({ showHeader = true }: WorkersPageProps) {
         </>
       )}
 
-      {/* Workers Table */}
+      {/* View toggle */}
+      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+        <button
+          onClick={() => { setViewMode('table'); localStorage.setItem('vazana-workers-viewMode', 'table') }}
+          className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          title="תצוגת טבלה"
+        >
+          <Table2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => { setViewMode('grid'); localStorage.setItem('vazana-workers-viewMode', 'grid') }}
+          className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          title="תצוגת כרטיסים"
+        >
+          <LayoutGrid className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Workers */}
       {filteredWorkers.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
@@ -161,7 +184,7 @@ export default function WorkersPage({ showHeader = true }: WorkersPageProps) {
             </div>
           </CardContent>
         </Card>
-      ) : (
+      ) : viewMode === 'table' ? (
         <>
           <div className="border rounded-lg overflow-hidden">
             <table className="w-full text-sm">
@@ -239,6 +262,44 @@ export default function WorkersPage({ showHeader = true }: WorkersPageProps) {
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-200 inline-block" /> לא זמין</span>
           </div>
         </>
+      ) : (
+        /* Grid view */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredWorkers.map((worker) => {
+            const avail = getAvailabilityRow(worker.availability)
+            return (
+              <Card key={worker.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-hebrew font-semibold">{worker.name}</p>
+                      <p className="text-sm text-gray-500">₪{worker.shift_rate}/משמרת</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingWorker(worker); setEditModalOpen(true) }}>
+                        <Edit className="w-3.5 h-3.5 text-gray-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteWorker(worker.id)}>
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    {worker.phone_number && <div className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {worker.phone_number}</div>}
+                    {worker.address && <div className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {worker.address}</div>}
+                  </div>
+                  <div className="flex items-center gap-0.5 pt-1">
+                    {avail.map((day, i) => (
+                      <div key={i} title={`${day.name}: ${day.title}`} className={`w-5 h-5 rounded text-[8px] font-bold flex items-center justify-center text-white ${day.color}`}>
+                        {day.name.replace("׳", "")}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
       )}
       <WorkerEditModal
         worker={editingWorker}
