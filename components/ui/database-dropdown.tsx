@@ -43,6 +43,7 @@ interface DatabaseDropdownProps {
     ascending?: boolean
   }
   customDisplayFormat?: (item: DataItem) => string // Custom formatting function
+  warningItems?: Set<string> // IDs to show in red (unavailable resources)
 }
 
 export default function DatabaseDropdown({
@@ -67,7 +68,8 @@ export default function DatabaseDropdown({
   placeholder = "בחר...",
   className = "",
   disabled = false,
-  required = false
+  required = false,
+  warningItems,
 }: DatabaseDropdownProps) {
   const [items, setItems] = useState<DataItem[]>([])
   const [loading, setLoading] = useState(!data) // Don't load if data is provided
@@ -215,11 +217,19 @@ export default function DatabaseDropdown({
             {placeholder}
           </SelectItem>
         )}
-        {items.map((item) => (
-          <SelectItem key={getItemValue(item)} value={getItemValue(item)} className="text-right" dir="rtl">
-            {getItemLabel(item)}
-          </SelectItem>
-        ))}
+        {items.map((item) => {
+          const isWarning = warningItems?.has(getItemValue(item))
+          return (
+            <SelectItem
+              key={getItemValue(item)}
+              value={getItemValue(item)}
+              className={`text-right ${isWarning ? 'text-red-600 font-medium' : ''}`}
+              dir="rtl"
+            >
+              {getItemLabel(item)}{isWarning ? ' (לא זמין)' : ''}
+            </SelectItem>
+          )
+        })}
       </SelectContent>
     </Select>
   )
